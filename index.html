@@ -10958,14 +10958,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function startAssignment(){
     if(!current?.assignment || current.assignment.enabled===false) return;
-    const table=Number(current.assignment.game_config?.table);
-    if(current.assignment.game_id==="multiplication" && table>=1 && table<=10){
-      MZ.closeModal("missionBoardModal");
-      $("#activityView")?.classList.add("hidden");
-      MZ.games.multiplication.openRequired(table);
-      return;
-    }
-    MZ.missionBoard.launch(current.assignment.game_id);
+    MZ.missionBoard.launch(current.assignment.game_id,current.assignment.game_config||{});
   }
 
   function recordQuestion(event){
@@ -11103,7 +11096,18 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>(() => {
   'use strict';
   const MZ=window.Mattezoo, $=id=>document.getElementById(id);
-  const games={scientificNotation:['Grundpotensform','openScientificNotation'],pow10:['Tiopotenser','openPow10'],equations:['Ekvationer','openEquations'],unitConvert:['Enhetsomvandling','openUnitConvert'],percentConvert:['Bråk · Decimal · Procent','openPercentConvert']};
+  const games={
+    multiplication:['Multiplikation','openMultiplication'],
+    equations:['Ekvationer','openEquations'],
+    pow10:['× och ÷ med 10, 100, 1000','openPow10'],
+    fractionDecimal:['Bråk ↔ Decimal','openFractionDecimal'],
+    fractionArithmetic:['Räkna med bråk','openFractionArithmetic'],
+    percentConvert:['Bråk · Decimal · Procent','openPercentConvert'],
+    prefixMatch:['Prefix – para ihop','openPrefixMatch'],
+    unitConvert:['Enhetsomvandling','openUnitConvert'],
+    statistics:['Statistik','openStatistics'],
+    scientificNotation:['Grundpotensform','openScientificNotation']
+  };
   const storeKey='matteparken_randomMissions_v1';
   let returningFocus=null, dateSeen='';
   function today(){return MZ.getLocalDateKey();}
@@ -11163,9 +11167,41 @@ document.addEventListener("DOMContentLoaded", () => {
     if(tutorialSeed) window.setTimeout(()=>$('missionSeedStart')?.focus(),40);
     else panel.focus();
   }
-  function launch(gameId){
-    const button=games[gameId]?.[1];if(!button)return;
-    MZ.closeModal('missionBoardModal');$('activityView').classList.add('hidden');MZ.openModal('officeModal');$(button).click();
+  function parseConfig(config){
+    if(config && typeof config==='object')return config;
+    if(typeof config==='string'){
+      try{const parsed=JSON.parse(config);return parsed && typeof parsed==='object'?parsed:{};}catch{}
+    }
+    return {};
+  }
+  function launch(gameId,config={}){
+    const button=games[gameId]?.[1];
+    if(!button){
+      const status=$('status');if(status)status.textContent='📌 Det här läraruppdraget kunde inte öppnas. Prova att ladda om sidan.';
+      return;
+    }
+
+    MZ.closeModal('missionBoardModal');
+    $('activityView')?.classList.add('hidden');
+
+    if(!MZ.state.onboarding?.keyTaken){
+      const status=$('status');if(status)status.textContent='🔑 Ta först nyckeln till Parkkontoret på anslagstavlan. Sedan kan du starta läraruppdraget.';
+      MZ.openModal('boardModal');
+      return;
+    }
+
+    if(gameId==='multiplication'){
+      const cfg=parseConfig(config);
+      const table=Number(cfg.table);
+      if(table>=1 && table<=10){
+        MZ.games.multiplication.openRequired(table);
+        window.setTimeout(()=>$('startBtn')?.click(),60);
+        return;
+      }
+    }
+
+    MZ.openModal('officeModal');
+    $(button)?.click();
   }
   function record(event){
     const s=current();if(s?.assignment && s.assignment.enabled!==false){render();return;}
