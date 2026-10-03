@@ -60,14 +60,20 @@
   .activity-row span{font-weight:800}
   .empty{padding:14px;border-radius:12px;background:#f5f5f1;color:var(--muted)}
   .small{font-size:13px}
-  @media(max-width:850px){.grid,.detail-grid{grid-template-columns:1fr}.assignment-controls{grid-template-columns:1fr}}
+  .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+  .inline-grid{display:grid;grid-template-columns:1fr 1.3fr auto;gap:10px;align-items:end}
+  .code-tools{display:grid;grid-template-columns:150px auto auto;gap:10px;align-items:end}
+  .generated-codes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .code-chip{padding:7px 10px;border-radius:999px;background:#edf3e9;border:1px solid #cfdbca;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:900;letter-spacing:.05em}
+  .section-note{padding:11px 13px;border-radius:13px;background:#f4f7f0;color:var(--muted);font-size:13px;margin-top:12px}
+  @media(max-width:850px){.grid,.detail-grid,.manage-grid{grid-template-columns:1fr}.assignment-controls,.inline-grid,.code-tools{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="brand">
     <div class="brand-mark">🌲</div>
-    <div><h1>Matteparken</h1><div class="muted">Läraradmin · första molnversionen</div></div>
+    <div><h1>Matteparken</h1><div class="muted">Läraradmin · klasser, elevkoder och uppdrag</div></div>
   </div>
 
   <section id="loginView" class="card login-card">
@@ -102,12 +108,30 @@
         <div class="assignment-controls">
           <label class="wide">Matteområde
             <select id="gameId">
-              <option value="scientificNotation">Grundpotensform</option>
-              <option value="pow10">Tiopotenser</option>
-              <option value="equations">Ekvationer</option>
-              <option value="unitConvert">Enhetsomvandling</option>
-              <option value="percentConvert">Bråk · Decimal · Procent</option>
-              <option value="fractionArithmetic">Räkna med bråk</option>
+              <optgroup label="Multiplikation">
+                <option value="multiplication">Multiplikation · valfri tabell 1–10</option>
+                <option value="multiplication:1">1:ans tabell</option>
+                <option value="multiplication:2">2:ans tabell</option>
+                <option value="multiplication:3">3:ans tabell</option>
+                <option value="multiplication:4">4:ans tabell</option>
+                <option value="multiplication:5">5:ans tabell</option>
+                <option value="multiplication:6">6:ans tabell</option>
+                <option value="multiplication:7">7:ans tabell</option>
+                <option value="multiplication:8">8:ans tabell</option>
+                <option value="multiplication:9">9:ans tabell</option>
+                <option value="multiplication:10">10:ans tabell</option>
+              </optgroup>
+              <optgroup label="Övriga spel">
+                <option value="equations">Ekvationer</option>
+                <option value="pow10">× och ÷ med 10, 100, 1000</option>
+                <option value="fractionDecimal">Bråk ↔ Decimal</option>
+                <option value="fractionArithmetic">Räkna med bråk</option>
+                <option value="percentConvert">Bråk · Decimal · Procent</option>
+                <option value="prefixMatch">Prefix – para ihop</option>
+                <option value="unitConvert">Enhetsomvandling</option>
+                <option value="statistics">Statistik</option>
+                <option value="scientificNotation">Grundpotensform</option>
+              </optgroup>
             </select>
           </label>
           <label>Antal uppgifter<input id="target" type="number" min="1" max="500" value="20"></label>
@@ -130,6 +154,42 @@
         </div>
       </section>
     </div>
+
+    <section class="manage-grid">
+      <section class="card">
+        <div class="section-head">
+          <div><h2>🏫 Lägg till klass</h2><p class="muted">Skapa en ny klass och koppla den direkt till ditt lärarkonto.</p></div>
+        </div>
+        <div class="inline-grid">
+          <label>Klasskod<input id="newClassCode" maxlength="20" placeholder="t.ex. 7A"></label>
+          <label>Namn, valfritt<input id="newClassName" maxlength="60" placeholder="t.ex. Matematik 7A"></label>
+          <button class="btn primary" id="createClassBtn" type="button">Skapa klass</button>
+        </div>
+        <div class="feedback" id="classFeedback"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div><h2>🔑 Elevkoder</h2><p class="muted">Generera anonyma sexteckenskoder till den valda klassen.</p></div>
+        </div>
+        <div class="code-tools">
+          <label>Antal
+            <select id="codeCount">
+              <option value="1">1 kod</option>
+              <option value="5" selected>5 koder</option>
+              <option value="10">10 koder</option>
+              <option value="20">20 koder</option>
+              <option value="30">30 koder</option>
+            </select>
+          </label>
+          <button class="btn primary" id="generateCodesBtn" type="button">Generera elevkoder</button>
+          <button class="btn secondary hidden" id="copyCodesBtn" type="button">Kopiera koder</button>
+        </div>
+        <div class="generated-codes" id="generatedCodes"></div>
+        <div class="feedback" id="codesFeedback"></div>
+        <div class="section-note">Koderna innehåller inte namn eller mejladresser. De nya eleverna dyker direkt upp i Elevöversikt.</div>
+      </section>
+    </section>
 
     <section class="card detail hidden" id="studentDetail">
       <div class="section-head">
@@ -165,13 +225,40 @@
 
   const $=id=>document.getElementById(id);
   const gameMeta={
-    scientificNotation:{title:"Grundpotensform",description:"Träna grundpotensform och lös uppgifterna."},
-    pow10:{title:"Tiopotenser",description:"Träna tiopotenser och lös uppgifterna."},
-    equations:{title:"Ekvationer",description:"Träna ekvationer och lös uppgifterna."},
-    unitConvert:{title:"Enhetsomvandling",description:"Träna enhetsomvandling och lös uppgifterna."},
+    multiplication:{title:"Multiplikation",description:"Träna multiplikationstabellerna 1–10."},
+    equations:{title:"Ekvationer",description:"Lös linjära ekvationer steg för steg."},
+    pow10:{title:"× och ÷ med 10, 100, 1000",description:"Träna platsvärde genom att multiplicera och dividera med 10, 100 och 1000."},
+    fractionDecimal:{title:"Bråk ↔ Decimal",description:"Matcha bråk med motsvarande decimaltal."},
+    fractionArithmetic:{title:"Räkna med bråk",description:"Addera, subtrahera, multiplicera och dividera bråk."},
     percentConvert:{title:"Bråk · Decimal · Procent",description:"Träna sambandet mellan bråk, decimal och procent."},
-    fractionArithmetic:{title:"Räkna med bråk",description:"Träna på att räkna med bråk och lös uppgifterna."}
+    prefixMatch:{title:"Prefix – para ihop",description:"Matcha kilo, hekto, deci, centi och milli med rätt värde."},
+    unitConvert:{title:"Enhetsomvandling",description:"Omvandla längd, massa och volym mellan vanliga metriska enheter."},
+    statistics:{title:"Statistik",description:"Träna frekvens, relativ frekvens och lägesmått."},
+    scientificNotation:{title:"Grundpotensform",description:"Gör om stora tal till grundpotensform och tillbaka igen."}
   };
+
+  function parseGameSelection(value){
+    const parts=String(value||"").split(":");
+    const gameId=parts[0];
+    const table=gameId==="multiplication" && parts[1] ? Number(parts[1]) : null;
+    const meta=gameMeta[gameId]||{title:gameId,description:"Träna valt matteområde."};
+    if(table && table>=1 && table<=10){
+      return {
+        gameId,
+        gameConfig:{table},
+        title:`Multiplikation · ${table}:ans tabell`,
+        description:`Träna ${table}:ans multiplikationstabell och lös uppgifterna.`
+      };
+    }
+    return {gameId,gameConfig:{},title:meta.title,description:meta.description};
+  }
+
+  function assignmentSelection(a){
+    const table=Number(a?.game_config?.table);
+    return a?.game_id==="multiplication" && table>=1 && table<=10
+      ? `multiplication:${table}`
+      : (a?.game_id||"scientificNotation");
+  }
 
   let user=null, classes=[], classId=null, assignment=null, students=[], progressMap=new Map(), activity=[], selectedStudentId=null;
   let refreshTimer=null;
@@ -262,7 +349,7 @@
     if(!silent)setFeedback("globalFeedback","Hämtar data …");
     try{
       const [aRes,sRes]=await Promise.all([
-        sb.from("assignments").select("id,class_id,game_id,title,description,target,enabled,updated_at").eq("class_id",classId).maybeSingle(),
+        sb.from("assignments").select("*").eq("class_id",classId).maybeSingle(),
         sb.from("students").select("id,code,last_active,class_id").eq("class_id",classId).eq("active",true).order("code")
       ]);
       if(aRes.error)throw aRes.error;
@@ -304,7 +391,7 @@
     $("classPill").textContent=cls?"Klass "+cls.code:"Klass";
 
     if(assignment){
-      $("gameId").value=assignment.game_id;
+      $("gameId").value=assignmentSelection(assignment);
       $("target").value=assignment.target;
       $("enabled").checked=assignment.enabled!==false;
     }
@@ -365,29 +452,105 @@
 
   async function saveAssignment(){
     if(!classId)return;
-    const gameId=$("gameId").value;
-    const meta=gameMeta[gameId];
+    const selected=parseGameSelection($("gameId").value);
     const target=Math.max(1,Math.min(500,Number($("target").value)||20));
     const enabled=$("enabled").checked;
     $("saveAssignmentBtn").disabled=true;
     setFeedback("assignmentFeedback","Sparar …");
     try{
-      const res=await sb.rpc("teacher_save_assignment",{
+      let res=await sb.rpc("teacher_save_assignment",{
         p_class_id:classId,
-        p_game_id:gameId,
-        p_title:meta.title,
-        p_description:meta.description,
+        p_game_id:selected.gameId,
+        p_title:selected.title,
+        p_description:selected.description,
         p_target:target,
-        p_enabled:enabled
+        p_enabled:enabled,
+        p_game_config:selected.gameConfig
       });
+      // Före databasuppdatering v2 kan vanliga spel fortfarande sparas via gamla RPC:n.
+      if(res.error && Object.keys(selected.gameConfig).length===0){
+        res=await sb.rpc("teacher_save_assignment",{
+          p_class_id:classId,
+          p_game_id:selected.gameId,
+          p_title:selected.title,
+          p_description:selected.description,
+          p_target:target,
+          p_enabled:enabled
+        });
+      }
       if(res.error)throw res.error;
       if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara");
       setFeedback("assignmentFeedback","Uppdraget är sparat i Supabase.","good");
       await loadClassData({silent:true});
     }catch(error){
       console.error(error);
-      setFeedback("assignmentFeedback","Kunde inte spara uppdraget. Kontrollera att admin-SQL-steget är kört.","bad");
+      setFeedback("assignmentFeedback","Kunde inte spara uppdraget. Om du valt en specifik multiplikationstabell behöver Admin v2-SQL vara körd.","bad");
     }finally{$("saveAssignmentBtn").disabled=false;}
+  }
+
+  async function createClass(){
+    const code=String($("newClassCode").value||"").trim().toUpperCase();
+    const name=String($("newClassName").value||"").trim();
+    if(!code){setFeedback("classFeedback","Skriv en klasskod, till exempel 7A.","bad");return;}
+    $("createClassBtn").disabled=true;
+    setFeedback("classFeedback","Skapar klass …");
+    try{
+      const res=await sb.rpc("teacher_create_class",{p_code:code,p_name:name});
+      if(res.error)throw res.error;
+      if(!res.data?.ok){
+        const reason=res.data?.reason;
+        throw new Error(reason==="class_exists"?"Den klasskoden finns redan.":reason||"Kunde inte skapa klass");
+      }
+      await loadClasses();
+      classId=res.data.class_id;
+      renderClassSelect();
+      $("newClassCode").value="";
+      $("newClassName").value="";
+      selectedStudentId=null;
+      setFeedback("classFeedback",`Klassen ${res.data.code} är skapad.`,"good");
+      await loadClassData({silent:true});
+    }catch(error){
+      console.error(error);
+      setFeedback("classFeedback",error?.message?.includes("teacher_create_class")?"Kör Admin v2-SQL i Supabase först.":(error?.message||"Kunde inte skapa klassen."),"bad");
+    }finally{$("createClassBtn").disabled=false;}
+  }
+
+  let lastGeneratedCodes=[];
+
+  async function generateCodes(){
+    if(!classId)return;
+    const count=Math.max(1,Math.min(40,Number($("codeCount").value)||1));
+    $("generateCodesBtn").disabled=true;
+    setFeedback("codesFeedback","Genererar koder …");
+    try{
+      const res=await sb.rpc("teacher_generate_student_codes",{p_class_id:classId,p_count:count});
+      if(res.error)throw res.error;
+      if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte skapa elevkoder");
+      lastGeneratedCodes=Array.isArray(res.data.codes)?res.data.codes:[];
+      $("generatedCodes").innerHTML="";
+      lastGeneratedCodes.forEach(code=>{
+        const chip=document.createElement("span");
+        chip.className="code-chip";
+        chip.textContent=code;
+        $("generatedCodes").appendChild(chip);
+      });
+      $("copyCodesBtn").classList.toggle("hidden",!lastGeneratedCodes.length);
+      setFeedback("codesFeedback",`${lastGeneratedCodes.length} nya elevkoder skapade.`,"good");
+      await loadClassData({silent:true});
+    }catch(error){
+      console.error(error);
+      setFeedback("codesFeedback",error?.message?.includes("teacher_generate_student_codes")?"Kör Admin v2-SQL i Supabase först.":"Kunde inte generera elevkoder.","bad");
+    }finally{$("generateCodesBtn").disabled=false;}
+  }
+
+  async function copyCodes(){
+    if(!lastGeneratedCodes.length)return;
+    try{
+      await navigator.clipboard.writeText(lastGeneratedCodes.join("\n"));
+      setFeedback("codesFeedback","Koderna är kopierade.","good");
+    }catch{
+      setFeedback("codesFeedback","Kunde inte kopiera automatiskt. Markera koderna ovan.","bad");
+    }
   }
 
   async function restore(){
@@ -401,6 +564,10 @@
   $("logoutBtn").addEventListener("click",logout);
   $("refreshBtn").addEventListener("click",()=>loadClassData());
   $("saveAssignmentBtn").addEventListener("click",saveAssignment);
+  $("createClassBtn").addEventListener("click",createClass);
+  $("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
+  $("generateCodesBtn").addEventListener("click",generateCodes);
+  $("copyCodesBtn").addEventListener("click",copyCodes);
   $("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;$("studentDetail").classList.add("hidden");render();});
   $("classSelect").addEventListener("change",async()=>{classId=$("classSelect").value;selectedStudentId=null;await loadClassData();});
   restore();
