@@ -10961,7 +10961,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const today=new Date();
     const same=d.toDateString()===today.toDateString();
     return same
-      ? \`idag \${d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}\`
+      ? `idag ${d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}`
       : d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});
   }
 
@@ -10972,7 +10972,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   function activityDescriptor(detail){
     if(detail.gameId==="multiplication" && Number.isFinite(Number(detail.table))){
       const table=Number(detail.table);
-      return {key:\`multiplication:\${table}\`,label:\`\${table}:ans tabell\`};
+      return {key:`multiplication:${table}`,label:`${table}:ans tabell`};
     }
     return {key:detail.gameId,label:gameTitle(detail.gameId)};
   }
@@ -10991,7 +10991,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const el=$("#studentLoginFeedback");
     if(!el) return;
     el.textContent=message;
-    el.className=\`feedback\${kind?" "+kind:""}\`;
+    el.className=`feedback${kind?" "+kind:""}`;
   }
 
   function client(){
@@ -11098,7 +11098,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const code=current.student.code;
     const assignment=current.assignment;
 
-    $("#studentIdentityPill").textContent=\`\${classCode} · \${code}\`;
+    $("#studentIdentityPill").textContent=`${classCode} · ${code}`;
 
     const mainBlock=document.querySelector("#studentAssignmentPanel .assignment-current > div:first-child");
     const startButton=$("#startStudentAssignment");
@@ -11123,19 +11123,19 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const completed=Math.min(Math.max(0,Number(current.progress?.completed)||0),target);
     const pct=Math.min(100,Math.round(completed/target*100));
 
-    $("#studentAssignmentTitle").textContent=\`🔬 \${assignment.title}\`;
+    $("#studentAssignmentTitle").textContent=`🔬 ${assignment.title}`;
     $("#studentAssignmentDescription").textContent=enabled
       ? assignment.description
       : "Läraruppdraget är pausat. Du kan träna fritt i Matteparken.";
-    $("#studentAssignmentProgressLabel").textContent=\`\${completed} av \${target} uppgifter klara\`;
-    $("#studentAssignmentPercent").textContent=\`\${pct} %\`;
-    $("#studentAssignmentProgressFill").style.width=\`\${pct}%\`;
+    $("#studentAssignmentProgressLabel").textContent=`${completed} av ${target} uppgifter klara`;
+    $("#studentAssignmentPercent").textContent=`${pct} %`;
+    $("#studentAssignmentProgressFill").style.width=`${pct}%`;
 
     const last=current.progress?.last_active || current.student.last_active;
     $("#studentAssignmentLastActive").textContent=completed>=target
-      ? \`✓ Uppdraget är klart. Senast aktiv \${formatLast(last)}.\`
+      ? `✓ Uppdraget är klart. Senast aktiv ${formatLast(last)}.`
       : last
-        ? \`Senast aktiv \${formatLast(last)}.\`
+        ? `Senast aktiv ${formatLast(last)}.`
         : "Inte påbörjat ännu.";
 
     if(startButton){
@@ -11160,7 +11160,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     try{
       await claim(classCode,studentCode);
       feedback("");
-      $("#status").textContent=\`☁️ \${classCode} · \${studentCode} är kopplad till Matteparkens databas.\`;
+      $("#status").textContent=`☁️ ${classCode} · ${studentCode} är kopplad till Matteparkens databas.`;
     }catch(error){
       console.error("Supabase login:",error);
       current=null;
