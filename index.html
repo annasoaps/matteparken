@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.81 Dagens uppdrag</title>
+<title>Matteparken – v0.4.82 Lärartestläge</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -1587,6 +1587,9 @@ button.office-fixture:focus-visible{outline:4px solid #fff4a6;outline-offset:4px
 .office-delivery-message{position:sticky;bottom:14px;z-index:100;margin:-62px auto 12px;width:min(640px,90%);padding:13px 16px;border:4px solid #665332;border-radius:12px;background:#fff0b9;box-shadow:0 8px 24px rgba(44,35,25,.25);font-weight:950;text-align:center;opacity:0;transform:translateY(15px);transition:.18s ease}.office-delivery-message.open{opacity:1;transform:translateY(0)}
 .office-drawer{margin-top:16px;padding:18px;border:5px solid #66533c;border-radius:12px;background:#f2ead3;box-shadow:0 7px 0 rgba(72,57,40,.14)}
 .office-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.office-drawer-head h2{margin:0 0 3px!important}.office-drawer-head p{margin:0}.office-test-tools{margin-top:15px;border:3px dashed #938b73;border-radius:10px;padding:9px 12px;background:#e8e0c9}.office-test-tools summary{cursor:pointer;font-weight:900;color:#5c6357}
+.teacher-test-badge{position:fixed;right:18px;top:16px;z-index:180;display:flex;align-items:center;gap:9px;padding:9px 11px;border:3px solid #584426;border-radius:10px;background:#fff0ad;color:#4d3d25;box-shadow:0 5px 0 rgba(54,40,27,.3);font-size:12px;letter-spacing:.04em}
+.teacher-test-badge button{border:2px solid #6d5937;border-radius:7px;background:#fff8dc;color:#493a25;padding:5px 8px;font-weight:900;cursor:pointer}
+.teacher-test-badge.hidden{display:none!important}
 
 /* Beställningskatalogen får ett eget postorder-utseende */
 #catalogModal{z-index:110}
@@ -2276,6 +2279,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 </head>
 <body>
 <main class="game" aria-label="Matteparken">
+  <div id="teacherTestBadge" class="teacher-test-badge hidden" role="status">
+    <strong>🧪 TESTLÄGE</strong>
+    <button id="exitTeacherTestMode" type="button">Stäng</button>
+  </div>
 <header class="topbar">
     <div class="brand"><span>🌿</span><span>Matteparken</span></div>
     <div class="pill">🌰 <span id="np">0</span> kottar</div>
@@ -2544,7 +2551,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           <div class="field-guide-grid" id="fieldGuideGrid"></div>
         </section>
 
-        <details class="office-test-tools">
+        <details class="office-test-tools hidden">
           <summary>🧪 Testverktyg för utveckling</summary>
           <p class="muted">TUTORIALTEST = börja om tutorialen · PARKTEST = 100 kottar · SEEDTEST = fröpåse · CRATETEST = dekorationslåda · DAYTEST = nästa parkdag · BADGETEST = testmärke · BERGTEST = Berget · SJOTEST = Sjön · FISKTEST = testfiskar + troféer · TIDTEST = 10 testminuter · LOGGTEST = exempeldata.</p>
           <div class="answer-row" style="justify-content:flex-start"><input class="answer" id="cheatCode" type="text" autocomplete="off" placeholder="Testkod" style="width:190px;font-size:17px" /><button class="primary" id="applyCheatCode">Använd kod</button></div>
@@ -7994,6 +8001,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function applyCheatCode(){
+    if(!MZ.teacherTest?.enabled) return;
     const code = $("#cheatCode").value.trim().toUpperCase();
     const feedback = $("#cheatFeedback");
 
@@ -10771,6 +10779,47 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  "use strict";
+  const MZ=window.Mattezoo;
+  MZ.teacherTest={enabled:false};
+  const requested=new URLSearchParams(window.location.search).get("teacher-test")==="1";
+  const exitBtn=document.getElementById("exitTeacherTestMode");
+  exitBtn?.addEventListener("click",()=>{
+    const url=new URL(window.location.href);
+    url.searchParams.delete("teacher-test");
+    window.location.href=url.toString();
+  });
+  if(!requested)return;
+
+  (async()=>{
+    try{
+      if(!window.supabase?.createClient)throw new Error("Supabase saknas.");
+      const teacherClient=window.supabase.createClient(
+        "https://mjgkkwdgowvxuehiudvj.supabase.co",
+        "sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg",
+        {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"matteparken-admin-auth-v1"}}
+      );
+      const userResult=await teacherClient.auth.getUser();
+      if(userResult.error||!userResult.data?.user)throw new Error("Ingen verifierad lärarsession.");
+      const teacherResult=await teacherClient.from("teacher_classes").select("class_id").limit(1);
+      if(teacherResult.error||!teacherResult.data?.length)throw new Error("Kontot är inte kopplat som lärare.");
+
+      MZ.teacherTest.enabled=true;
+      document.querySelector(".office-test-tools")?.classList.remove("hidden");
+      document.getElementById("teacherTestBadge")?.classList.remove("hidden");
+      document.body.classList.add("teacher-test-mode");
+    }catch(error){
+      console.warn("Lärartestläge nekades:",error);
+      MZ.teacherTest.enabled=false;
+      const url=new URL(window.location.href);
+      url.searchParams.delete("teacher-test");
+      window.history.replaceState({},document.title,url.toString());
+    }
+  })();
+})();
+</script>
 <script>
 (() => {
 "use strict";
