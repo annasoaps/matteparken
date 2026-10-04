@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.77 Gemensam uppdragsstart</title>
+<title>Matteparken – v0.4.78 Läxans första omgång</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10864,7 +10864,7 @@ function render(){
     time.textContent=st.locked?"🔒 Öppnar "+formatMoment(hw.opens_at):(hw.due_at?"Deadline "+formatMoment(hw.due_at)+(st.late?" · klar efter deadline":""):"Ingen deadline");info.appendChild(time);
     const reward=document.createElement("div");reward.className="homework-reward";reward.textContent=st.complete?"🎁 Blind bag utdelad när läxan blev klar":"🎁 Belöning: 1 blind bag";info.appendChild(reward);
     const actions=document.createElement("div"),btn=document.createElement("button");btn.className="primary";btn.type="button";
-    const next=st.tasks.find(a=>Number(current.progressMap.get(a.id)?.completed)<1);
+    const next=st.tasks.find(a=>Number(current.progressMap.get(a.id)?.completed ?? 0)<1);
     btn.disabled=st.locked||st.complete||!next;
     btn.textContent=st.complete?"Klar":st.locked?"Inte öppen än":!st.total?"Ladda om läxan":st.done?"Fortsätt läxan":"Starta läxan";
     if(next){btn.dataset.startAssignment=next.id;btn.dataset.assignmentKind="homework";}
