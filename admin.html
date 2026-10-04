@@ -262,7 +262,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         if(act.error)throw act.error;activity=act.data||[];
       }
       render();setFeedback("globalFeedback","");$("refreshText").textContent="Senast uppdaterad "+new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});
-    }catch(error){console.error(error);setFeedback("globalFeedback","Kunde inte hämta lärardata. Om du nyss uppgraderat, kör Admin v3-SQL i Supabase.","bad");}
+    }catch(error){console.error(error);setFeedback("globalFeedback","Kunde inte hämta lärardata. Om du nyss uppgraderat, kör den nya fleruppdrags-SQL-filen i Supabase.","bad");}
   }
 
   function render(){
