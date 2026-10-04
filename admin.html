@@ -64,6 +64,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       <div><span class="pill" id="classPill">Klass</span><div class="muted small" id="refreshText">Inte uppdaterad ännu</div></div>
       <div class="top-actions">
         <select id="classSelect" aria-label="Välj klass"></select>
+        <button class="btn primary" id="openTestModeBtn" type="button">🧪 Öppna testläge</button>
         <button class="btn secondary" id="refreshBtn" type="button">↻ Uppdatera</button>
         <button class="btn secondary" id="logoutBtn" type="button">Logga ut</button>
       </div>
@@ -550,9 +551,14 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   }
 
   function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+  function openTeacherTestMode(){
+    const url=new URL("index.html",window.location.href);
+    url.searchParams.set("teacher-test","1");
+    window.open(url.toString(),"_blank","noopener");
+  }
   async function restore(){const {data,error}=await sb.auth.getSession();if(error){console.error(error);return;}if(data?.session?.user){user=data.session.user;await enterAdmin();}}
 
-  $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("logoutBtn").addEventListener("click",logout);$("refreshBtn").addEventListener("click",()=>loadClassData());
+  $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("logoutBtn").addEventListener("click",logout);$("openTestModeBtn").addEventListener("click",openTeacherTestMode);$("refreshBtn").addEventListener("click",()=>loadClassData());
   $("saveAssignmentBtn").addEventListener("click",saveAssignment);$("cancelEditBtn").addEventListener("click",cancelEdit);$("createClassBtn").addEventListener("click",createClass);$("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
   $("generateCodesBtn").addEventListener("click",generateCodes);$("copyCodesBtn").addEventListener("click",copyCodes);$("createHomeworkBtn").addEventListener("click",createHomework);$("createQuizBtn").addEventListener("click",createQuiz);$("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;$("studentDetail").classList.add("hidden");renderStudents();});
   $("classSelect").addEventListener("change",async()=>{classId=$("classSelect").value;selectedStudentId=null;editingAssignmentId=null;cancelEdit();await loadClassData();});
