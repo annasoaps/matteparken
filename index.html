@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.96 Stabil flyttning</title>
+<title>Matteparken – v0.4.97 Återställd flyttning</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -401,9 +401,6 @@ window.MATTEZOO_TEACHER_PLAN = {
   .placed-item.selected{outline:4px solid #fff7b5;outline-offset:5px;border-radius:10px;filter:drop-shadow(0 5px 0 rgba(45,65,45,.14)) brightness(1.14)}
   .item-action-banner{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:18;display:none;align-items:center;gap:10px;max-width:92%;padding:10px 13px;border:3px solid #6f805f;border-radius:12px;background:#fff7d8;box-shadow:0 4px 0 rgba(70,85,65,.25);font-weight:900}
   .item-action-banner.open{display:flex}
-  .item-action-banner.compact-move{gap:0;padding:6px 8px;border-width:2px;border-radius:10px}
-  .item-action-banner.compact-move #itemActionText,.item-action-banner.compact-move #moveItemAction,.item-action-banner.compact-move #cancelItemAction{display:none!important}
-  .item-action-banner.compact-move #confirmItemAction{margin:0;padding:8px 12px}
   .danger{border:3px solid #9a4c43;border-radius:10px;background:#fff3e9;color:#7e302b;padding:9px 13px;cursor:pointer;font-weight:900}
   .seed-choices{display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
   .seed-choices.open{display:grid}
@@ -7125,7 +7122,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     selectedParkItemId = null;
     $("#moveItemAction").classList.add("hidden");
     $("#cancelItemAction").classList.remove("hidden");
-    $("#itemActionBanner").classList.remove("open","compact-move");
+    $("#itemActionBanner").classList.remove("open");
     renderParkItems();
   }
 
@@ -7213,8 +7210,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     removePlacementGhost();
     $(".park")?.classList.remove("carrying-item");
     $("#placementBanner").classList.remove("open");
-    $("#itemActionBanner").classList.remove("compact-move");
-    $(".build-zone").forEach((zone) => zone.classList.remove("active"));
+    $$(".build-zone").forEach((zone) => zone.classList.remove("active"));
     renderParkItems();
   }
 
@@ -7237,9 +7233,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const movingName = itemDisplayName(visualType);
     $("#moveItemAction").classList.add("hidden");
     $("#cancelItemAction").classList.add("hidden");
-    $("#confirmItemAction").textContent = movingNature ? "Ta bort" : "Ställ i förrådet";
-    $("#itemActionText").textContent = "";
-    $("#itemActionBanner").classList.add("open","compact-move");
+    $("#confirmItemAction").textContent = movingNature ? "Ta bort" : "Till förrådet";
+    $("#itemActionText").textContent = movingNature
+      ? `${movingIcon} ${movingName.charAt(0).toUpperCase()+movingName.slice(1)} är uppgrävd och följer muspekaren. Klicka i parken för att plantera om den.`
+      : `${movingIcon} ${equipmentMeta[item.type]?.name || "Dekoration"} följer muspekaren. Klicka i parken för att ställa ner den.`;
+    $("#itemActionBanner").classList.add("open");
     $("#placementBanner").classList.remove("open");
 
     const availableZones=unlockedZoneIds();
@@ -7918,33 +7916,16 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       const item = state.parkItems.find((candidate) => candidate.id === movingParkItemId);
       if(item){
         item.x=nextX; item.y=nextY; item.zone=zoneId; item.anchorMode="base";
+        storage.saveParkItems(); renderHabitatProgress();
         const movedType=effectivePlantType(item);
-        const movedMessage = isMovableNatureItem(item)
+        $("#status").textContent = isMovableNatureItem(item)
           ? `🌱 ${itemDisplayName(movedType)} planterades om i ${zoneName(zoneId)}.`
           : `✨ ${itemDisplayName(item.type)} flyttades till ${zoneName(zoneId)}.`;
-
-        // Avsluta flyttläget innan någon sparning/rendering körs.
-        // Annars kan renderParkItems tillfälligt tro att föremålet fortfarande
-        // är det burna föremålet och därför hoppa över det.
-        selectedParkItemId = null;
-        movingParkItemId = null;
-        placementMode = null;
-        placementSource = null;
-        placementGrabOffset = {x:0,y:0};
-        removePlacementGhost();
-        $(".park")?.classList.remove("carrying-item");
-        $("#placementBanner").classList.remove("open");
-        $("#itemActionBanner").classList.remove("open","compact-move");
-        $("#cancelItemAction").classList.remove("hidden");
-        $(".build-zone").forEach((buildZone) => buildZone.classList.remove("active"));
-
-        storage.saveParkItems();
-        renderHabitatProgress();
-        renderParkItems();
-        $("#status").textContent = movedMessage;
-      }else{
-        exitPlacementMode();
       }
+      selectedParkItemId = null;
+      $("#itemActionBanner").classList.remove("open");
+      $("#cancelItemAction").classList.remove("hidden");
+      exitPlacementMode();
       return;
     }
 
