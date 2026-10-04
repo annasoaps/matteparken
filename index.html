@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.91 Läxförhör öppnas ovanpå kontoret</title>
+<title>Matteparken – v0.4.92 Tydlig parkprogression</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -3372,21 +3372,22 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     benchPrice: 50,
     lanternPrice: 80,
     multiplicationRewardNP: 10,
-    roundsForReward: 3,
+    roundsForReward: 1,
     equationRewardNP: 10,
     equationsForReward: 3,
     fractionArithmeticQuestions: 3,
     fractionArithmeticRewardNP: 10,
     standardRoundQuestions: 10,
     standardRoundRewardNP: 10,
-    extendedRoundRewardNP: 20,
+    extendedRoundRewardNP: 10,
     starterSeedQuestions: 5,
     starterTutorialConeReward: 60,
     seedPackEveryMathRewards: 2,
     crateEveryMathRewards: 5,
     firstHabitatUniqueItems: 4,
     firstHabitatSpecies: 3,
-    firstHabitatBadges: 2
+    firstHabitatBadges: 3,
+    firstHabitatMathRounds: 15
   });
 
   MZ.keys = Object.freeze({
@@ -3586,6 +3587,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   state.habitats.unlocked.northwest = Boolean(state.habitats.unlocked.northwest);
   state.habitats.unlocked.northeast = Boolean(state.habitats.unlocked.northeast);
   state.habitats.unlocked.southeast = Boolean(state.habitats.unlocked.southeast);
+  state.habitats.mathRoundsTotal = Math.max(0, Number(state.habitats.mathRoundsTotal) || 0);
+  if(!state.habitats.mathBaselines || typeof state.habitats.mathBaselines !== "object" || Array.isArray(state.habitats.mathBaselines)) state.habitats.mathBaselines = {};
+  Object.keys(state.habitats.mathBaselines).forEach((id) => {
+    state.habitats.mathBaselines[id] = Math.max(0, Number(state.habitats.mathBaselines[id]) || 0);
+  });
   Object.keys(state.habitats.badges).forEach((id) => {
     state.habitats.badges[id] = Boolean(state.habitats.badges[id]);
   });
@@ -3799,6 +3805,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       }
       if(!completionProcessor) throw new Error("Ingen progressionsmotor är registrerad.");
       const result = completionProcessor(Object.freeze({...activity}));
+      if(result?.progressionRound) MZ.habitats?.recordMathRound?.(1);
       MZ.events.dispatchEvent(new CustomEvent("mathcomplete", {detail:{activity,result}}));
       return result;
     }
@@ -3825,50 +3832,33 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       if(activity.gameId === "multiplication" && activity.type === "table-round"){
         const table = Number(activity.table);
         if(!config.tables.includes(table)) throw new RangeError("Okänd multiplikationstabell.");
-
-        let progress = getTableProgress(table) + 1;
-        let rewarded = false;
-
-        if(progress >= config.roundsForReward){
-          progress = 0;
-          rewarded = true;
-          storage.addNaturePoints(config.multiplicationRewardNP);
-        }
-
-        state.rewardProgress[String(table)] = progress;
+        state.rewardProgress[String(table)] = 0;
         storage.saveRewardProgress();
-        return {progress, rewarded, rewardNP: rewarded ? config.multiplicationRewardNP : 0};
+        storage.addNaturePoints(config.multiplicationRewardNP);
+        return {progress:0,rewarded:true,rewardNP:config.multiplicationRewardNP,progressionRound:true};
       }
-
 
       if(activity.gameId === "equations" && activity.type === "solved-random-equation"){
         let progress = state.equationProgress + 1;
         let rewarded = false;
-
         if(progress >= config.equationsForReward){
           progress = 0;
           rewarded = true;
           storage.addNaturePoints(config.equationRewardNP);
         }
-
         state.equationProgress = progress;
         storage.saveEquationProgress();
-        return {
-          progress,
-          rewarded,
-          rewardNP: rewarded ? config.equationRewardNP : 0
-        };
+        return {progress,rewarded,rewardNP:rewarded ? config.equationRewardNP : 0,progressionRound:rewarded};
       }
-
 
       if(activity.gameId === "fractionArithmetic" && activity.type === "three-calculation-round"){
         const entry = state.simpleGameStats.fractionArithmetic || (state.simpleGameStats.fractionArithmetic = {rounds:0, correct:0});
         entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
         entry.correct = Math.max(0, Number(entry.correct) || 0) + (config.fractionArithmeticQuestions || 3);
         storage.saveSimpleGameStats();
-        const rewardNP = config.fractionArithmeticRewardNP || config.standardRoundRewardNP;
+        const rewardNP = config.standardRoundRewardNP;
         storage.addNaturePoints(rewardNP);
-        return {progress:0, rewarded:true, rewardNP, rounds:entry.rounds, correct:entry.correct};
+        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,progressionRound:true};
       }
 
       if(activity.gameId === "fractionDecimal" && activity.type === "matching-board"){
@@ -3876,10 +3866,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
         entry.correct = Math.max(0, Number(entry.correct) || 0) + Math.max(0, Number(activity.pairs) || 0);
         storage.saveSimpleGameStats();
-        const rewarded = Boolean(activity.perfect);
-        const rewardNP = rewarded ? config.standardRoundRewardNP : 0;
-        if(rewarded) storage.addNaturePoints(rewardNP);
-        return {progress:0, rewarded, rewardNP, rounds:entry.rounds, correct:entry.correct};
+        const rewardNP = config.standardRoundRewardNP;
+        storage.addNaturePoints(rewardNP);
+        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,perfect:Boolean(activity.perfect),progressionRound:true};
       }
 
       if(activity.gameId === "percentConvert" && activity.type === "six-trio-round"){
@@ -3890,7 +3879,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         storage.saveSimpleGameStats();
         const rewardNP = config.standardRoundRewardNP;
         storage.addNaturePoints(rewardNP);
-        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct};
+        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,progressionRound:true};
       }
 
       if(["pow10","mgn","prefixMatch","unitConvert","statistics","scientificNotation"].includes(activity.gameId) && activity.type === "ten-question-round"){
@@ -3899,29 +3888,16 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
         entry.correct = Math.max(0, Number(entry.correct) || 0) + config.standardRoundQuestions;
         storage.saveSimpleGameStats();
-        const rewardNP = ["unitConvert","statistics"].includes(gameId)
-          ? config.extendedRoundRewardNP
-          : config.standardRoundRewardNP;
+        const rewardNP = config.standardRoundRewardNP;
         storage.addNaturePoints(rewardNP);
-        return {
-          progress:0,
-          rewarded:true,
-          rewardNP,
-          rounds:entry.rounds,
-          correct:entry.correct
-        };
+        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,progressionRound:true};
       }
 
       if(activity.gameId === "multiplication" && activity.type === "starter-seed-correct"){
         if(state.onboarding.seedGrown){
-          return {progress:config.starterSeedQuestions, grown:true, rewarded:false, rewardNP:0};
+          return {progress:config.starterSeedQuestions,grown:true,rewarded:false,rewardNP:0,progressionRound:false};
         }
-
-        state.onboarding.seedQuestCorrect = Math.min(
-          config.starterSeedQuestions,
-          state.onboarding.seedQuestCorrect + 1
-        );
-
+        state.onboarding.seedQuestCorrect = Math.min(config.starterSeedQuestions,state.onboarding.seedQuestCorrect + 1);
         let rewardNP=0;
         if(state.onboarding.seedQuestCorrect >= config.starterSeedQuestions){
           state.onboarding.seedGrown = true;
@@ -3931,17 +3907,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
             state.onboarding.tutorialStarterRewardGranted=true;
           }
         }
-
         storage.saveOnboarding();
-        return {
-          progress:state.onboarding.seedQuestCorrect,
-          grown:state.onboarding.seedGrown,
-          rewarded:rewardNP>0,
-          rewardNP
-        };
+        return {progress:state.onboarding.seedQuestCorrect,grown:state.onboarding.seedGrown,rewarded:rewardNP>0,rewardNP,progressionRound:false};
       }
 
-      return {accepted:false};
+      return {accepted:false,progressionRound:false};
     }
   };
 
@@ -5081,6 +5051,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function discoveryCount(){ return Object.keys(species).filter((id) => state.wildlife.discovered[id]).length; }
+  function discoveryCountForHabitat(habitatId){ return Object.values(species).filter((entry) => entry.habitat===habitatId && state.wildlife.discovered[entry.id]).length; }
+  function speciesCountForHabitat(habitatId){ return Object.values(species).filter((entry) => entry.habitat===habitatId).length; }
   function speciesCount(){ return Object.keys(species).length; }
   function statusText(parkDay){
     const event = getBoardMessage(parkDay);
@@ -5089,7 +5061,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     return "Inga nya arter idag";
   }
 
-  MZ.wildlife = {species, processParkDay, getBoardMessage, visibleVisitors, discoveryCount, speciesCount, statusText, hasAttractor:hasRecipe, hasRecipe};
+  MZ.wildlife = {species, processParkDay, getBoardMessage, visibleVisitors, discoveryCount, discoveryCountForHabitat, speciesCountForHabitat, speciesCount, statusText, hasAttractor:hasRecipe, hasRecipe};
 })();
 </script>
 <script>
@@ -5099,26 +5071,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const {state, storage, config} = MZ;
 
   const badgeDefinitions = Object.freeze({
-    firstBloom:{
-      id:"firstBloom", icon:"🌼", name:"Första odlingen",
-      description:"Få din första startväxt att slå ut."
-    },
-    natureWatcher:{
-      id:"natureWatcher", icon:"🐾", name:"Naturspanare",
-      description:"Upptäck tre arter i Fältguiden."
-    },
-    mathHelper:{
-      id:"mathHelper", icon:"🧮", name:"Parkmatematiker",
-      description:"Få tre kottbelöningar genom matematikträning."
-    }
+    firstBloom:{id:"firstBloom",icon:"🌼",name:"Första odlingen",description:"Få din första startväxt att slå ut."},
+    parkBuilder:{id:"parkBuilder",icon:"🪴",name:"Parkbyggare",description:"Ha fyra olika växter eller dekorationer i Startgläntan."},
+    natureWatcher:{id:"natureWatcher",icon:"🐾",name:"Naturspanare",description:"Upptäck tre arter i Startgläntan."}
   });
 
+  const startBadgeIds=Object.freeze(["firstBloom","parkBuilder","natureWatcher"]);
   const habitats = Object.freeze({
     southwest:{id:"southwest", name:"Startgläntan", icon:"🌿", unlockedByDefault:true},
-    northwest:{
-      id:"northwest", name:"Skogsdungen", icon:"🌲",
-      requirements:{uniqueItems:config.firstHabitatUniqueItems, species:config.firstHabitatSpecies, badges:config.firstHabitatBadges}
-    },
+    northwest:{id:"northwest",name:"Skogsdungen",icon:"🌲",requirements:{uniqueItems:config.firstHabitatUniqueItems,species:config.firstHabitatSpecies,badges:config.firstHabitatBadges,mathRounds:config.firstHabitatMathRounds}},
     northeast:{id:"northeast", name:"Berget", icon:"⛰️", futureLocked:true},
     southeast:{id:"southeast", name:"Sjön", icon:"💧", futureLocked:true}
   });
@@ -5126,38 +5087,59 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const itemProgressType = (item) => item.type === "starterSeed" ? (item.variety || "starterSeed") : item.type;
 
   function uniqueDevelopedItems(zoneId="southwest"){
-    return new Set(state.parkItems
-      .filter((item) => (item.zone || "southwest") === zoneId)
-      .map(itemProgressType).filter(Boolean)).size;
+    return new Set(state.parkItems.filter((item)=>(item.zone||"southwest")===zoneId).map(itemProgressType).filter(Boolean)).size;
   }
-  const badgeIds = () => Object.keys(state.habitats.badges).filter((id) => state.habitats.badges[id]);
-  const badgeCount = () => badgeIds().length;
+
+  function badgeIds(){
+    const earned=Object.keys(badgeDefinitions).filter((id)=>Boolean(state.habitats.badges[id]));
+    const tests=Object.keys(state.habitats.badges).filter((id)=>id.startsWith("testBadge")&&state.habitats.badges[id]);
+    return [...earned,...tests];
+  }
+  const badgeCount=()=>badgeIds().length;
 
   function awardBadge(id){
-    if(state.habitats.badges[id]) return false;
-    state.habitats.badges[id] = true;
+    if(!badgeDefinitions[id] || state.habitats.badges[id]) return false;
+    state.habitats.badges[id]=true;
     storage.saveHabitats();
+    MZ.events.dispatchEvent(new CustomEvent("parkbadgeawarded",{detail:{badge:badgeDefinitions[id]}}));
     return true;
+  }
+
+  function recordMathRound(amount=1){
+    const add=Math.max(0,Math.floor(Number(amount)||0));
+    if(!add) return state.habitats.mathRoundsTotal;
+    state.habitats.mathRoundsTotal=Math.max(0,Number(state.habitats.mathRoundsTotal)||0)+add;
+    storage.saveHabitats();
+    return state.habitats.mathRoundsTotal;
   }
 
   function refreshMilestones(){
     const awarded=[];
     if(state.onboarding.seedGrown && awardBadge("firstBloom")) awarded.push("firstBloom");
-    if(MZ.wildlife.discoveryCount() >= 3 && awardBadge("natureWatcher")) awarded.push("natureWatcher");
-    if(state.rewards.mathRewardCycles >= 3 && awardBadge("mathHelper")) awarded.push("mathHelper");
+    if(uniqueDevelopedItems("southwest")>=config.firstHabitatUniqueItems && awardBadge("parkBuilder")) awarded.push("parkBuilder");
+    if(MZ.wildlife.discoveryCountForHabitat("southwest")>=config.firstHabitatSpecies && awardBadge("natureWatcher")) awarded.push("natureWatcher");
     return awarded;
   }
 
   function snapshot(habitatId="northwest"){
     const def=habitats[habitatId];
     if(def?.futureLocked){
-      return {habitat:def,current:{uniqueItems:0,species:0,badges:badgeCount()},requirements:{},checks:{},completed:0,total:0,ready:false,unlocked:Boolean(state.habitats.unlocked[habitatId]),futureLocked:true};
+      return {habitat:def,current:{badges:badgeCount(),mathRounds:0},requirements:{},checks:{},completed:0,total:0,ready:false,unlocked:Boolean(state.habitats.unlocked[habitatId]),futureLocked:true};
     }
-    const req=def?.requirements || {uniqueItems:0,species:0,badges:0};
-    const current={uniqueItems:uniqueDevelopedItems("southwest"), species:MZ.wildlife.discoveryCount(), badges:badgeCount()};
-    const checks={uniqueItems:current.uniqueItems>=req.uniqueItems, species:current.species>=req.species, badges:current.badges>=req.badges};
+    const req=def?.requirements||{uniqueItems:0,species:0,badges:0,mathRounds:0};
+    const uniqueItems=uniqueDevelopedItems("southwest");
+    const species=MZ.wildlife.discoveryCountForHabitat("southwest");
+    const mathRounds=Math.max(0,Number(state.habitats.mathRoundsTotal)||0);
+    const checks={
+      firstBloom:Boolean(state.habitats.badges.firstBloom),
+      parkBuilder:Boolean(state.habitats.badges.parkBuilder),
+      natureWatcher:Boolean(state.habitats.badges.natureWatcher),
+      mathRounds:mathRounds>=req.mathRounds
+    };
+    const requiredBadgesEarned=startBadgeIds.filter((id)=>checks[id]).length;
+    const current={uniqueItems,species,badges:requiredBadgesEarned,mathRounds};
     const completed=Object.values(checks).filter(Boolean).length;
-    return {habitat:def,current,requirements:req,checks,completed,total:Object.keys(checks).length,ready:Object.values(checks).every(Boolean),unlocked:Boolean(state.habitats.unlocked[habitatId])};
+    return {habitat:def,current,requirements:req,checks,requiredBadgeIds:startBadgeIds,requiredBadgesEarned,completed,total:4,ready:Object.values(checks).every(Boolean),unlocked:Boolean(state.habitats.unlocked[habitatId])};
   }
 
   function unlock(habitatId){
@@ -5166,10 +5148,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const progress=snapshot(habitatId);
     if(!progress.ready) return {ok:false,reason:"requirements",progress};
     state.habitats.unlocked[habitatId]=true;
+    if(habitatId==="northwest") state.habitats.mathBaselines.northwest=Math.max(0,Number(state.habitats.mathRoundsTotal)||0);
     storage.saveHabitats();
     return {ok:true,progress:snapshot(habitatId)};
   }
-  const isUnlocked=(habitatId) => Boolean(state.habitats.unlocked[habitatId]);
+  const isUnlocked=(habitatId)=>Boolean(state.habitats.unlocked[habitatId]);
 
   function addTestBadge(){
     let n=1;
@@ -5180,7 +5163,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     return id;
   }
 
-  MZ.habitats={habitats,badgeDefinitions,uniqueDevelopedItems,badgeIds,badgeCount,refreshMilestones,snapshot,unlock,isUnlocked,addTestBadge};
+  MZ.habitats={habitats,badgeDefinitions,startBadgeIds,uniqueDevelopedItems,badgeIds,badgeCount,recordMathRound,refreshMilestones,snapshot,unlock,isUnlocked,addTestBadge};
 })();
 
 </script>
