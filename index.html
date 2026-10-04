@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.84 Procenttrior rättningsfix</title>
+<title>Matteparken – v0.4.85 Procentfält fix</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10243,8 +10243,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     if(kind==="fraction"){
       const wrap=$("#percentFractionInput");wrap.classList.toggle("correct",result.correct);wrap.classList.toggle("wrong",!result.correct);
     }else{
-      const input=$(kind==="decimal"?"percentDecimalAnswer":"percentPercentAnswer");
-      input.classList.toggle("correct",result.correct);input.classList.toggle("wrong",!result.correct);
+      const input=$(kind==="decimal"?"#percentDecimalAnswer":"#percentPercentAnswer");
+      input?.classList.toggle("correct",result.correct);input?.classList.toggle("wrong",!result.correct);
     }
     cell.classList.toggle("has-error",!result.correct);
     cell.classList.toggle("solved",result.correct);
