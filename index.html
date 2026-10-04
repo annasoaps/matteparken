@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.85 Procentfält fix</title>
+<title>Matteparken – v0.4.86 Förkortningsbekräftelse</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10117,7 +10117,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const MZ=window.Mattezoo;
   const {$,storage}=MZ;
   const ROUND_SIZE=6;
-  let current=null,completed=0,roundFinished=false,roundPlan=[],planIndex=0;
+  let current=null,completed=0,roundFinished=false,roundPlan=[],planIndex=0,awaitingReduceConfirm=false;
 
   const coreValues=[
     [1,2],[1,4],[3,4],
@@ -10207,6 +10207,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#percentConvertFeedback").textContent="";
     $("#percentConvertFeedback").className="feedback";
     $("#percentConvertCheck").disabled=false;
+    $("#percentConvertCheck").textContent="Kontrollera";
+    awaitingReduceConfirm=false;
     window.setTimeout(focusFirstMissing,30);
   }
 
@@ -10276,6 +10278,12 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function check(){
     if(!current||roundFinished)return;
+    if(awaitingReduceConfirm){
+      awaitingReduceConfirm=false;
+      $("#percentConvertCheck").textContent="Kontrollera";
+      if(completed>=ROUND_SIZE)finish(); else next();
+      return;
+    }
     const results={};
     if(current.from!=="fraction")results.fraction=fractionCheck(current);
     if(current.from!=="decimal")results.decimal=decimalCheck(current);
@@ -10298,13 +10306,22 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     MZ.math.recordQuestion({gameId:"percentConvert"});
     completed++;renderProgress();
     const fractionResult=results.fraction;
-    const reduceNote=fractionResult&&fractionResult.correct&&!fractionResult.simplest
-      ?" Rätt! "+fractionResult.n+"/"+fractionResult.d+" är likvärdigt med "+current.n+"/"+current.d+"."
-      :" Rätt! Samma tal på tre sätt. 🌿";
-    $("#percentConvertFeedback").textContent=reduceNote;
+    const reducible=Boolean(fractionResult&&fractionResult.correct&&!fractionResult.simplest);
     $("#percentConvertFeedback").className="feedback good";
     $("#percentConvertCheck").disabled=true;
 
+    if(reducible){
+      const factor=gcd(fractionResult.n,fractionResult.d);
+      const simpleN=fractionResult.n/factor,simpleD=fractionResult.d/factor;
+      $("#percentConvertFeedback").textContent=fractionResult.n+"/"+fractionResult.d+" är rätt, men det kan förkortas med "+factor+" och är då "+simpleN+"/"+simpleD+" i enklaste form.";
+      awaitingReduceConfirm=true;
+      $("#percentConvertCheck").disabled=false;
+      $("#percentConvertCheck").textContent="OK, jag har läst";
+      ["#percentFractionNumerator","#percentFractionDenominator","#percentDecimalAnswer","#percentPercentAnswer"].forEach(id=>{if($(id))$(id).disabled=true;});
+      return;
+    }
+
+    $("#percentConvertFeedback").textContent="Rätt! Samma tal på tre sätt. 🌿";
     if(completed>=ROUND_SIZE)window.setTimeout(finish,650);
     else window.setTimeout(next,650);
   }
