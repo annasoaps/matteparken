@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.5.04 Andel i läraruppdrag</title>
+<title>Matteparken – v0.5.05 Andel i läxförhör</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2143,8 +2143,8 @@ button.office-fixture:focus-visible{outline:4px solid #fff4a6;outline-offset:4px
 .office-homework-quiz{position:absolute;z-index:7;left:17.2%;top:58.5%;width:13.5%;height:15.5%;border:0;background:transparent url("assets/homework_quiz_stack.webp") center/contain no-repeat;cursor:pointer;filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24));transition:transform .14s ease,filter .14s ease}
 .office-homework-quiz.has-quiz{animation:quizPaperGlow 2.2s ease-in-out infinite}.office-homework-quiz:focus-visible{outline:4px solid #fff4a6;outline-offset:3px;border-radius:10px}.office-homework-quiz:hover{transform:translateY(-3px) scale(1.025)}
 @keyframes quizPaperGlow{0%,100%{filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24))}50%{filter:drop-shadow(0 0 10px rgba(255,226,113,.95))}}
-#homeworkQuizModal{z-index:140}#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
-@media(max-width:720px){.student-homework-card,.quiz-list-item{grid-template-columns:1fr}.office-homework-quiz{left:17.2%;top:58.5%;width:13.5%;height:15.5%}}
+#homeworkQuizModal{z-index:140}#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-share-part{display:none}.quiz-share-part.open{display:block}.quiz-share-part-visual{display:flex;justify-content:center;margin:4px auto 16px}.quiz-share-part-grid{display:grid;gap:3px;width:min(100%,360px)}.quiz-share-part-cell{aspect-ratio:1/1;border:1px solid #9e987f;border-radius:2px;background:#fffdf5}.quiz-share-part-cell.filled{background:#dc7449;border-color:#a95031}.quiz-share-part-answers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px;margin:0 auto}.quiz-share-part-answers label{display:flex;flex-direction:column;gap:6px;font-weight:850;text-align:center}.quiz-share-part-answers input{min-height:46px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:8px 10px;font:inherit;font-size:18px;text-align:center}.quiz-share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:5px;width:96px;margin:auto}.quiz-share-part-fraction .line{background:#405441}.quiz-share-part-percent{display:flex;align-items:center;gap:7px}.quiz-share-part-percent input{min-width:0;width:100%}.quiz-share-part-percent strong{font-size:21px}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
+@media(max-width:720px){.student-homework-card,.quiz-list-item{grid-template-columns:1fr}.office-homework-quiz{left:17.2%;top:58.5%;width:13.5%;height:15.5%}.quiz-share-part-answers{grid-template-columns:1fr;max-width:210px}}
 </style>
 <style>
 /* Matteparken v0447 — an actual noticeboard, with the welcome gift attached. */
@@ -11864,6 +11864,16 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(mode===1)return{prompt:v.p+" % = ? i decimalform",kind:"number",answer:v.d,display:svNum(v.d)};
       return{prompt:svNum(v.d)+" = ? %",kind:"number",answer:v.p,display:v.p+" %"};
     }
+    if(gameId==="sharePart"){
+      const pool=[
+        {rows:2,cols:5,part:1},{rows:2,cols:5,part:3},{rows:2,cols:5,part:6},{rows:2,cols:5,part:7},{rows:2,cols:5,part:9},
+        {rows:1,cols:5,part:1},{rows:1,cols:5,part:2},{rows:1,cols:5,part:4},
+        {rows:1,cols:4,part:1},{rows:1,cols:4,part:3},
+        {rows:10,cols:10,part:1},{rows:10,cols:10,part:9},{rows:10,cols:10,part:17},{rows:10,cols:10,part:23},{rows:10,cols:10,part:37},{rows:10,cols:10,part:42},{rows:10,cols:10,part:64},{rows:10,cols:10,part:75}
+      ];
+      const x=pool[rand(0,pool.length-1)],whole=x.rows*x.cols,decimal=x.part/whole,percent=decimal*100;
+      return{prompt:"Hur stor andel är färgad?",kind:"sharePart",rows:x.rows,cols:x.cols,part:x.part,whole,decimal,percent,display:x.part+"/"+whole+" = "+svNum(decimal)+" = "+svNum(percent)+" %"};
+    }
     if(gameId==="prefixMatch"){
       const items=[["kilometer","meter",1000],["hektogram","gram",100],["decimeter","meter",.1],["centimeter","meter",.01],["millimeter","meter",.001]],x=items[rand(0,items.length-1)];
       return{prompt:"1 "+x[0]+" = ? "+x[1],kind:"number",answer:x[2],display:svNum(x[2])};
@@ -11929,8 +11939,23 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     $("homeworkQuizList").classList.add("hidden");$("homeworkQuizResult").classList.add("hidden");$("homeworkQuizTest").classList.remove("hidden");$("quizTestTitle").textContent=q.title;showQuestion();
   }
 
+  function renderSharePartQuestion(q){
+    const grid=$("quizSharePartGrid");grid.replaceChildren();grid.style.gridTemplateColumns="repeat("+q.cols+",minmax(0,1fr))";grid.style.maxWidth=q.cols>=10?"330px":"360px";
+    for(let i=0;i<q.whole;i++){const cell=document.createElement("span");cell.className="quiz-share-part-cell"+(i<q.part?" filled":"");grid.appendChild(cell);}
+    ["quizShareNum","quizShareDen","quizShareDecimal","quizSharePercent"].forEach(id=>{$(id).value="";$(id).disabled=false;});
+    $("quizSharePartBtn").disabled=false;
+  }
   function showQuestion(){
-    answered=false;const q=questions[index];$("quizTestProgress").textContent=(index+1)+" / "+questions.length;$("quizQuestionText").textContent=q.prompt;$("quizAnswerInput").value="";$("quizAnswerInput").disabled=false;$("quizAnswerBtn").disabled=false;$("quizAnswerBtn").classList.remove("hidden");$("quizNextBtn").classList.add("hidden");$("quizFeedback").textContent="";$("quizFeedback").className="feedback";$("quizAnswerInput").focus();
+    answered=false;const q=questions[index];
+    $("quizTestProgress").textContent=(index+1)+" / "+questions.length;
+    $("quizQuestionText").textContent=q.prompt;
+    $("quizFeedback").textContent="";$("quizFeedback").className="feedback";
+    $("quizNextBtn").classList.add("hidden");
+    const share=q.kind==="sharePart";
+    $("quizAnswerRow").classList.toggle("hidden",share);
+    $("quizSharePart").classList.toggle("open",share);
+    if(share){renderSharePartQuestion(q);$("quizShareNum").focus();return;}
+    $("quizAnswerInput").value="";$("quizAnswerInput").disabled=false;$("quizAnswerBtn").disabled=false;$("quizAnswerBtn").classList.remove("hidden");$("quizAnswerInput").focus();
   }
 
   function answer(){
@@ -11939,6 +11964,23 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     answered=true;const ok=check(q,value);if(ok)score++;
     $("quizAnswerInput").disabled=true;$("quizAnswerBtn").disabled=true;
     $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;$("quizFeedback").className="feedback "+(ok?"good":"bad");
+    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Visa resultat":"Nästa fråga";
+  }
+  function answerSharePart(){
+    if(answered||!activeQuiz)return;
+    const q=questions[index];if(q?.kind!=="sharePart")return;
+    const num=Number($("quizShareNum").value),den=Number($("quizShareDen").value),dec=parseNumber($("quizShareDecimal").value),pct=parseNumber($("quizSharePercent").value);
+    if(!Number.isFinite(num)||!Number.isFinite(den)||dec===null||pct===null)return;
+    answered=true;
+    const fractionOK=num===q.part&&den===q.whole;
+    const decimalOK=Math.abs(dec-q.decimal)<1e-8;
+    const percentOK=Math.abs(pct-q.percent)<1e-8;
+    const ok=fractionOK&&decimalOK&&percentOK;
+    if(ok)score++;
+    ["quizShareNum","quizShareDen","quizShareDecimal","quizSharePercent"].forEach(id=>$(id).disabled=true);
+    $("quizSharePartBtn").disabled=true;
+    $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;
+    $("quizFeedback").className="feedback "+(ok?"good":"bad");
     $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Visa resultat":"Nästa fråga";
   }
 
@@ -11974,6 +12016,8 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     $("officeHomeworkQuizBtn")?.addEventListener("click",open);
     $("quizAnswerBtn")?.addEventListener("click",answer);
     $("quizAnswerInput")?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!answered)answer();});
+    $("quizSharePartBtn")?.addEventListener("click",answerSharePart);
+    ["quizShareNum","quizShareDen","quizShareDecimal","quizSharePercent"].forEach(id=>$(id)?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!answered)answerSharePart();}));
     $("quizNextBtn")?.addEventListener("click",next);
     renderPaper();
   }
@@ -12019,7 +12063,18 @@ document.addEventListener("DOMContentLoaded", () => {
   <div class="quiz-test-head"><strong id="quizTestTitle">Läxförhör</strong><span id="quizTestProgress">1 / 10</span></div>
   <div class="quiz-warning">Första genomförandet räknas. Du får en blind bag när förhöret är genomfört, oavsett resultat.</div>
   <div class="quiz-question" id="quizQuestionText"></div>
-  <div class="quiz-answer-row"><input id="quizAnswerInput" autocomplete="off" inputmode="decimal" placeholder="Skriv ditt svar"><button class="primary" id="quizAnswerBtn" type="button">Svara</button></div>
+  <div class="quiz-answer-row" id="quizAnswerRow"><input id="quizAnswerInput" autocomplete="off" inputmode="decimal" placeholder="Skriv ditt svar"><button class="primary" id="quizAnswerBtn" type="button">Svara</button></div>
+  <div class="quiz-share-part" id="quizSharePart">
+    <div class="quiz-share-part-visual"><div class="quiz-share-part-grid" id="quizSharePartGrid" aria-hidden="true"></div></div>
+    <div class="quiz-share-part-answers">
+      <label>Bråkform
+        <div class="quiz-share-part-fraction"><input id="quizShareNum" inputmode="numeric" aria-label="Täljare"><span class="line"></span><input id="quizShareDen" inputmode="numeric" aria-label="Nämnare"></div>
+      </label>
+      <label>Decimalform<input id="quizShareDecimal" inputmode="decimal" placeholder="0,..."></label>
+      <label>Procentform<div class="quiz-share-part-percent"><input id="quizSharePercent" inputmode="decimal" placeholder="..."><strong>%</strong></div></label>
+    </div>
+    <div class="assignment-actions" style="margin-top:12px"><button class="primary" id="quizSharePartBtn" type="button">Svara</button></div>
+  </div>
   <div class="feedback" id="quizFeedback" style="text-align:center;min-height:26px;margin-top:10px"></div>
   <div class="assignment-actions" style="margin-top:10px"><button class="secondary hidden" id="quizNextBtn" type="button">Nästa fråga</button></div>
 </div>
