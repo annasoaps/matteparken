@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matteparken · Läraradmin v4</title>
+<title>Matteparken · Läraradmin v5</title>
 <style>
 :root{
   color-scheme:light;
@@ -43,7 +43,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="brand-mark">🌲</div><div><h1>Matteparken</h1><div class="muted">Läraradmin · flera uppdrag · ett uppdrag = en omgång</div></div></div>
+  <div class="brand"><div class="brand-mark">🌲</div><div><h1>Matteparken</h1><div class="muted">Läraradmin · flera uppdrag · permanenta elevnummer</div></div></div>
 
   <section id="loginView" class="card login-card">
     <h2>👩‍🏫 Logga in som lärare</h2>
@@ -78,13 +78,13 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       </section>
 
       <section class="card">
-        <div class="section-head"><div><h2>🔑 Elevkoder</h2><p class="muted">Skapa anonyma koder till vald klass.</p></div></div>
+        <div class="section-head"><div><h2>🔑 Elevkoder</h2><p class="muted">Skapa anonyma koder till vald klass. Varje kod får ett permanent listnummer i skapelseordning.</p></div></div>
         <div class="code-controls">
           <label>Antal<select id="codeCount"><option>1</option><option>5</option><option selected>10</option><option>20</option><option>30</option></select></label>
           <button class="btn primary" id="generateCodesBtn" type="button">Generera koder</button>
         </div>
         <div class="generated-codes" id="generatedCodes"></div>
-        <button class="btn secondary hidden" id="copyCodesBtn" type="button" style="margin-top:10px">Kopiera nya koder</button>
+        <button class="btn secondary hidden" id="copyCodesBtn" type="button" style="margin-top:10px">Kopiera nummer + koder</button>
         <div class="feedback" id="codesFeedback"></div>
       </section>
     </div>
@@ -136,7 +136,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     <section class="card">
       <div class="section-head"><div><h2>🌱 Elevöversikt</h2><p class="muted">Klicka på en elevkod för uppdrag och aktivitet.</p></div><strong id="studentCount">0 elever</strong></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Elevkod</th><th>Läraruppdrag</th><th>Status</th><th>Senast aktiv</th></tr></thead>
+        <thead><tr><th>Nr</th><th>Elevkod</th><th>Läraruppdrag</th><th>Status</th><th>Senast aktiv</th></tr></thead>
         <tbody id="studentRows"></tbody>
       </table></div>
     </section>
@@ -242,12 +242,16 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   async function loadClassData({silent=false}={}){
     if(!classId)return;if(!silent)setFeedback("globalFeedback","Hämtar data …");
     try{
-      const [aRes,sRes]=await Promise.all([
-        sb.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,created_at,updated_at").eq("class_id",classId).order("created_at",{ascending:true}),
-        sb.from("students").select("id,code,last_active,class_id").eq("class_id",classId).eq("active",true).order("code")
-      ]);
+      const aPromise=sb.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,created_at,updated_at").eq("class_id",classId).order("created_at",{ascending:true});
+      let sRes=await sb.from("students").select("id,code,list_number,last_active,class_id").eq("class_id",classId).eq("active",true).order("list_number",{ascending:true}).order("code");
+      if(sRes.error && String(sRes.error.message||"").includes("list_number")){
+        sRes=await sb.from("students").select("id,code,last_active,class_id").eq("class_id",classId).eq("active",true).order("code");
+      }
+      const aRes=await aPromise;
       if(aRes.error)throw aRes.error;if(sRes.error)throw sRes.error;
-      assignments=aRes.data||[];students=sRes.data||[];progressMap=new Map();
+      assignments=aRes.data||[];students=sRes.data||[];
+      students.sort((a,b)=>(Number(a.list_number)||999999)-(Number(b.list_number)||999999)||String(a.code).localeCompare(String(b.code),"sv"));
+      progressMap=new Map();
 
       const assignmentIds=assignments.map(a=>a.id);
       if(assignmentIds.length){
@@ -295,7 +299,8 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       const total=active.length;const pct=total?Math.round(done/total*100):0;
       const anyProgress=active.some(a=>Number(getProgress(student.id,a.id).completed)>0);
       const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
-      tr.innerHTML="<td><strong>"+escapeHtml(student.code)+"</strong></td>"+
+      tr.innerHTML="<td><strong>"+(Number(student.list_number)||"–")+"</strong></td>"+
+        "<td><strong>"+escapeHtml(student.code)+"</strong></td>"+
         "<td><strong>"+done+" / "+total+" klara</strong><div class='progressbar'><span style='width:"+pct+"%'></span></div></td>"+
         "<td><span class='status "+(total&&done===total?"done":"")+"'>"+(!total?"Inga aktiva":done===total?"✓ Alla klara":anyProgress?"Pågår":"Ej startad")+"</span></td>"+
         "<td>"+formatLast(student.last_active)+"</td>";
@@ -312,7 +317,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   function fillList(id,items){const el=$(id);el.innerHTML="";if(!items.length){el.innerHTML='<div class="empty">Ingen registrerad träning ännu.</div>';return;}items.forEach(item=>{const row=document.createElement("div");row.className="activity-row";row.innerHTML="<strong>"+escapeHtml(item.label)+"</strong><span>"+item.count+"</span>";el.appendChild(row);});}
   function renderDetail(){
     const student=students.find(s=>s.id===selectedStudentId);if(!student){$("studentDetail").classList.add("hidden");return;}
-    $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+student.code;$("detailSubtitle").textContent="Varje läraruppdrag blir klart efter en hel omgång. Aktiviteten räknar samtidigt enskilda rätta svar.";
+    $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+(student.list_number?"nr "+student.list_number+" · ":"")+student.code;$("detailSubtitle").textContent="Varje läraruppdrag blir klart efter en hel omgång. Aktiviteten räknar samtidigt enskilda rätta svar.";
     const taskBox=$("detailAssignments");taskBox.innerHTML="";
     if(!assignments.length)taskBox.innerHTML='<div class="empty">Inga läraruppdrag.</div>';
     assignments.forEach(a=>{const p=getProgress(student.id,a.id);const done=Number(p.completed)>=1;const row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(a.title)+(a.enabled?"":" · pausat")+"</strong><div>"+(done?"✓ Klar":"○ Inte klar")+" · 1 hel omgång</div><div class='progressbar'><span style='width:"+(done?100:0)+"%'></span></div>";taskBox.appendChild(row);});
@@ -370,11 +375,28 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   }
   async function generateCodes(){
     if(!classId)return;const count=Math.max(1,Math.min(40,Number($("codeCount").value)||1));$("generateCodesBtn").disabled=true;setFeedback("codesFeedback","Genererar koder …");
-    try{const res=await sb.rpc("teacher_generate_student_codes",{p_class_id:classId,p_count:count});if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte skapa elevkoder");lastGeneratedCodes=Array.isArray(res.data.codes)?res.data.codes:[];$("generatedCodes").innerHTML="";lastGeneratedCodes.forEach(code=>{const chip=document.createElement("span");chip.className="code-chip";chip.textContent=code;$("generatedCodes").appendChild(chip);});$("copyCodesBtn").classList.toggle("hidden",!lastGeneratedCodes.length);setFeedback("codesFeedback",lastGeneratedCodes.length+" nya elevkoder skapade.","good");await loadClassData({silent:true});}
+    try{
+      const res=await sb.rpc("teacher_generate_student_codes",{p_class_id:classId,p_count:count});if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte skapa elevkoder");
+      if(Array.isArray(res.data.students)){
+        lastGeneratedCodes=res.data.students.map(x=>({list_number:Number(x.list_number)||null,code:String(x.code||"")}));
+      }else{
+        lastGeneratedCodes=(Array.isArray(res.data.codes)?res.data.codes:[]).map(code=>({list_number:null,code:String(code)}));
+      }
+      $("generatedCodes").innerHTML="";
+      lastGeneratedCodes.forEach(item=>{const chip=document.createElement("span");chip.className="code-chip";chip.textContent=(item.list_number?item.list_number+" · ":"")+item.code;$("generatedCodes").appendChild(chip);});
+      $("copyCodesBtn").classList.toggle("hidden",!lastGeneratedCodes.length);
+      setFeedback("codesFeedback",lastGeneratedCodes.length+" nya elevkoder skapade"+(lastGeneratedCodes.some(x=>x.list_number)?" med permanenta listnummer.":". Kör listnummer-SQL för permanenta nummer."),"good");
+      await loadClassData({silent:true});
+    }
     catch(error){console.error(error);setFeedback("codesFeedback","Kunde inte generera elevkoder.","bad");}
     finally{$("generateCodesBtn").disabled=false;}
   }
-  async function copyCodes(){if(!lastGeneratedCodes.length)return;try{await navigator.clipboard.writeText(lastGeneratedCodes.join("\n"));setFeedback("codesFeedback","Koderna är kopierade.","good");}catch{setFeedback("codesFeedback","Kunde inte kopiera automatiskt. Markera koderna ovan.","bad");}}
+  async function copyCodes(){
+    if(!lastGeneratedCodes.length)return;
+    const text=lastGeneratedCodes.map(item=>(item.list_number?item.list_number+"\t":"")+item.code).join("\n");
+    try{await navigator.clipboard.writeText(text);setFeedback("codesFeedback","Nummer och koder är kopierade.","good");}
+    catch{setFeedback("codesFeedback","Kunde inte kopiera automatiskt. Markera koderna ovan.","bad");}
+  }
 
   function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
   async function restore(){const {data,error}=await sb.auth.getSession();if(error){console.error(error);return;}if(data?.session?.user){user=data.session.user;await enterAdmin();}}
