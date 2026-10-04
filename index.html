@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.79 Läxans tider</title>
+<title>Matteparken – v0.4.80 Ditt uppdrag idag</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2250,6 +2250,27 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 .student-switch-row{justify-content:flex-end;margin-top:12px}
 .assignment-empty-cloud{padding:13px;border:2px dashed #b8aa87;border-radius:9px;background:#f6f0df;color:#687168}
 @media(max-width:720px){.student-cloud-task{grid-template-columns:1fr}.student-cloud-task .assignment-actions{justify-content:flex-start}}
+</style>
+
+<style id="dailyAssignmentBoardV1">
+#studentAssignmentCard .mission-kicker{display:block;margin:0 0 7px;font-size:12px;font-weight:950;letter-spacing:.14em;color:#53634d}
+#studentAssignmentCard .identity-saving-note{margin:6px 0 8px}
+.student-switch-top{justify-content:flex-start;margin:0 0 14px}
+.student-switch-top .secondary{padding:8px 13px;font-size:12px}
+.daily-assignment-overview{display:grid;gap:4px;margin:0 0 13px;padding:11px 13px;border-left:4px solid #7c966d;border-radius:5px;background:#eef3e4}
+.daily-assignment-overview strong{font-size:14px;color:#344d36}
+.daily-assignment-overview span{font-size:12px;color:#66573c;font-weight:750}
+#studentHomeworkPaper .student-homework-section{margin:0;padding:0;border:0}
+#studentHomeworkPaper .student-homework-card{grid-template-columns:1fr;align-items:start}
+#studentHomeworkPaper .student-homework-card>div:last-child{display:flex;justify-content:flex-start}
+#studentHomeworkPaper .student-homework-card .primary{width:100%}
+#studentHomeworkPaper .mission-kicker{display:block;margin:0 0 7px}
+#extraParkChallengeCard{background:#e8edda}
+#extraParkChallengeCard .mission-kicker{display:block;margin:0 0 7px}
+@media(max-width:700px){
+  .student-switch-top{justify-content:flex-start}
+  #studentHomeworkPaper .student-homework-card .primary{width:auto}
+}
 </style>
 </head>
 <body>
@@ -10802,6 +10823,52 @@ function getActiveAssignment(){return localStorage.getItem(ACTIVE_ASSIGNMENT_KEY
 function setActiveAssignment(id){id?localStorage.setItem(ACTIVE_ASSIGNMENT_KEY,id):localStorage.removeItem(ACTIVE_ASSIGNMENT_KEY);}
 function feedback(msg="",kind=""){const el=$("#studentLoginFeedback");if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
 
+const DAILY_ASSIGNMENT_STORE_KEY="matteparkenDailyTeacherAssignments_v1";
+function stockholmDateKey(value=new Date()){
+ const d=value instanceof Date?value:new Date(value);if(Number.isNaN(d.getTime()))return"";
+ try{
+  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Stockholm",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);
+  const x=Object.fromEntries(parts.filter(p=>p.type!=="literal").map(p=>[p.type,p.value]));
+  return x.year+"-"+x.month+"-"+x.day;
+ }catch{
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+ }
+}
+function dailyProfileKey(){
+ const cls=current?.classInfo?.code||getSelection()?.classId||"",code=current?.student?.code||getSelection()?.code||"";
+ return cls&&code?cls+":"+code:"";
+}
+function readDailyAssignmentState(){try{const x=JSON.parse(localStorage.getItem(DAILY_ASSIGNMENT_STORE_KEY)||"{}");return x&&typeof x==="object"&&!Array.isArray(x)?x:{};}catch{return {};}}
+function writeDailyAssignmentState(data){
+ Object.values(data||{}).forEach(days=>{if(!days||typeof days!=="object")return;const keys=Object.keys(days).sort();keys.slice(0,Math.max(0,keys.length-45)).forEach(k=>delete days[k]);});
+ localStorage.setItem(DAILY_ASSIGNMENT_STORE_KEY,JSON.stringify(data||{}));
+}
+function dailyAssignmentBucket(create=false){
+ const who=dailyProfileKey(),day=stockholmDateKey();if(!who||!day)return null;
+ const all=readDailyAssignmentState();
+ if(create){all[who]=all[who]&&typeof all[who]==="object"?all[who]:{};all[who][day]=all[who][day]&&typeof all[who][day]==="object"?all[who][day]:{completed:{},rewardClaimed:false};all[who][day].completed=all[who][day].completed&&typeof all[who][day].completed==="object"?all[who][day].completed:{};writeDailyAssignmentState(all);}
+ return{all,who,day,bucket:all[who]?.[day]||null};
+}
+function dailyAssignmentDone(a){
+ if(!a)return false;const local=dailyAssignmentBucket(false)?.bucket;if(local?.completed?.[a.id])return true;
+ const p=current?.progressMap?.get(a.id);const stamp=p?.completed_at||p?.updated_at||"";
+ return Number(p?.completed)>=1&&stockholmDateKey(stamp)===stockholmDateKey();
+}
+function markDailyAssignmentDone(id){
+ const x=dailyAssignmentBucket(true);if(!x)return;x.bucket.completed[id]=true;x.all[x.who][x.day]=x.bucket;writeDailyAssignmentState(x.all);
+}
+function dailyAssignmentRewardClaimed(){return Boolean(dailyAssignmentBucket(false)?.bucket?.rewardClaimed);}
+function markDailyAssignmentRewardClaimed(){
+ const x=dailyAssignmentBucket(true);if(!x)return;x.bucket.rewardClaimed=true;x.all[x.who][x.day]=x.bucket;writeDailyAssignmentState(x.all);
+}
+function dailyAssignmentProgress(){
+ const tasks=current?.assignments||[],done=tasks.filter(dailyAssignmentDone).length;return{tasks,done,total:tasks.length,complete:tasks.length>0&&done===tasks.length};
+}
+function maybeGrantDailyAssignmentReward(){
+ const p=dailyAssignmentProgress();if(!p.complete||dailyAssignmentRewardClaimed())return false;
+ markDailyAssignmentRewardClaimed();MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();return true;
+}
+
 function client(){
  if(sb)return sb;
  if(!window.supabase?.createClient)throw new Error("Supabase-biblioteket kunde inte laddas.");
@@ -10860,10 +10927,17 @@ function render(){
  window.setTimeout(()=>MZ.missionBoard?.render?.(),0);
  $("#studentLoginPanel")?.classList.toggle("hidden",loggedIn);
  $("#studentAssignmentsPanel")?.classList.toggle("hidden",!loggedIn);
- if(!loggedIn){if($("#studentIdentityPill"))$("#studentIdentityPill").textContent="Inte inloggad";if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent="Mina läraruppdrag";return;}
+ $("#studentHomeworkPaper")?.classList.toggle("hidden",!loggedIn);
+ if(!loggedIn){
+  if($("#studentIdentityPill"))$("#studentIdentityPill").textContent="Inte inloggad";
+  if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent="Ditt uppdrag idag";
+  if($("#studentAssignmentIntro"))$("#studentAssignmentIntro").textContent="Logga in med klass och elevkod för att se dagens uppdrag.";
+  return;
+ }
  const localName=cleanDisplayName(getSelection()?.displayName||"");
  $("#studentIdentityPill").textContent=(current.classInfo?.code||getSelection()?.classId||"")+" · "+current.student.code;
- if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent=localName?"Välkommen, "+localName+"!":"Mina läraruppdrag";
+ if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent=localName?"Välkommen, "+localName+"!":"Ditt uppdrag idag";
+ if($("#studentAssignmentIntro"))$("#studentAssignmentIntro").textContent=current.assignments.length?"Gör hela dagens uppdrag. I morgon börjar du om från början.":"Inget läraruppdrag är aktivt idag.";
  const homeworkList=$("#studentHomeworkList");
  if(homeworkList){
   homeworkList.innerHTML="";
@@ -10888,19 +10962,28 @@ function render(){
   });
  }
  const list=$("#studentAssignmentsList");if(!list)return;list.innerHTML="";
- if(!current.assignments.length){list.innerHTML='<div class="assignment-empty-cloud">🌿 Inga vanliga läraruppdrag är aktiva just nu.</div>';return;}
+ if(!current.assignments.length){
+  list.innerHTML='<div class="assignment-empty-cloud">🌿 Inget läraruppdrag är aktivt idag.</div>';
+  if($("#dailyAssignmentSummary"))$("#dailyAssignmentSummary").textContent="Inget dagsuppdrag är aktivt";
+  if($("#dailyAssignmentReward"))$("#dailyAssignmentReward").textContent="🎁 Belöningen aktiveras när läraren lägger ut ett dagsuppdrag";
+  return;
+ }
  current.assignments.forEach(a=>{
-  const p=current.progressMap.get(a.id)||{completed:0,last_active:null},done=Number(p.completed)>=1,pct=done?100:0;
+  const p=current.progressMap.get(a.id)||{completed:0,last_active:null},done=dailyAssignmentDone(a),pct=done?100:0;
   const card=document.createElement("div");card.className="student-cloud-task"+(done?" done":"");
   const info=document.createElement("div"),h=document.createElement("h4");h.textContent=(done?"✓ ":"📌 ")+a.title;info.appendChild(h);
   const desc=document.createElement("div");desc.className="muted";desc.textContent=a.description||roundDescription(a);info.appendChild(desc);
   const note=document.createElement("div");note.className="round-note";note.textContent=roundDescription(a);info.appendChild(note);
-  const copy=document.createElement("div");copy.className="assignment-progress-copy";copy.innerHTML="<span>"+(done?"✓ Uppdraget är klart":"○ En hel omgång återstår")+"</span><strong>"+pct+" %</strong>";info.appendChild(copy);
+  const copy=document.createElement("div");copy.className="assignment-progress-copy";copy.innerHTML="<span>"+(done?"✓ Klar idag":"○ En hel omgång återstår idag")+"</span><strong>"+pct+" %</strong>";info.appendChild(copy);
   const bar=document.createElement("div");bar.className="progress";bar.innerHTML='<div style="width:'+pct+'%"></div>';info.appendChild(bar);
-  const last=document.createElement("div");last.className="assignment-demo-note";last.textContent=done?"Klart"+(p.last_active?" · "+formatLast(p.last_active):"")+".":p.last_active?"Senast aktiv "+formatLast(p.last_active)+".":"Inte påbörjat ännu.";info.appendChild(last);
+  const last=document.createElement("div");last.className="assignment-demo-note";last.textContent=done?"Dagens del är klar.":p.last_active?"Senast tränad "+formatLast(p.last_active)+".":"Inte påbörjat idag.";info.appendChild(last);
   const actions=document.createElement("div");actions.className="assignment-actions";const btn=document.createElement("button");btn.className="primary";btn.type="button";btn.textContent=done?"Träna igen":"Starta uppdraget";btn.dataset.startAssignment=a.id;btn.dataset.assignmentKind="teacher";actions.appendChild(btn);
   card.append(info,actions);list.appendChild(card);
  });
+ const daily=dailyAssignmentProgress(),justRewarded=maybeGrantDailyAssignmentReward();
+ if($("#dailyAssignmentSummary"))$("#dailyAssignmentSummary").textContent=daily.total?(daily.done+" av "+daily.total+" delar klara idag"):"Inget dagsuppdrag är aktivt";
+ if($("#dailyAssignmentReward"))$("#dailyAssignmentReward").textContent=daily.complete?"🎁 Dagens blind bag är utdelad":"🎁 Belöning: 1 blind bag när hela dagens uppdrag är klart";
+ if(justRewarded)$("#status").textContent="🎉 Dagens uppdrag är klart! En blind bag väntar bland Överraskningar.";
 }
 
 async function login(){
@@ -10960,6 +11043,13 @@ function recordQuestion(event){
 function matchingRound(a,x){if(!a||!x||a.game_id!==x.gameId||expectedRoundTypes[a.game_id]!==x.type)return false;const t=Number(a.game_config?.table);return !(a.game_id==="multiplication"&&t>=1&&t<=10)||Number(x.table)===t;}
 function recordRound(event){
  const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
+ if(a&&!a.homework_id){
+  markDailyAssignmentDone(id);
+  setActiveAssignment(null);
+  const reward=maybeGrantDailyAssignmentReward();
+  $("#status").textContent=reward?"🎉 Dagens uppdrag är klart! En blind bag väntar bland Överraskningar.":"✓ Dagens deluppdrag är klart: "+a.title+".";
+  render();
+ }
  writeQueue=writeQueue.then(async()=>{
   await ensureStudentConnection();if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");
   let r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;
@@ -10974,9 +11064,12 @@ function recordRound(event){
       if(reward.error)throw reward.error;
       if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();$("#status").textContent="🎉 Läxan är klar! En blind bag väntar bland Överraskningar.";}
       else $("#status").textContent="🏠 Omgången är klar. Fortsätt med resten av läxan.";
-    }else $("#status").textContent="🎉 Läraruppdraget är klart: "+a.title+".";
-  }else{$("#status").textContent="📌 Omgången registrerades, men uppdraget kunde inte markeras klart ännu.";}render();MZ.homeworkQuiz?.render?.();
- }).catch(error=>{console.error("Supabase assignment round:",error);$("#status").textContent="☁️ Omgången kunde inte synkas just nu. Matteparken försöker återansluta.";window.setTimeout(()=>reconnectSaved(),1500);});
+    }else{
+      const daily=dailyAssignmentProgress();
+      $("#status").textContent=daily.complete?"🎉 Dagens uppdrag är klart!":"✓ Dagens deluppdrag är klart: "+a.title+".";
+    }
+  }else if(a.homework_id){$("#status").textContent="📌 Omgången registrerades, men läxan kunde inte markeras klar ännu.";}render();MZ.homeworkQuiz?.render?.();
+ }).catch(error=>{console.error("Supabase assignment round:",error);$("#status").textContent=a&&!a.homework_id?"☁️ Dagens del är sparad här, men molnsynkningen tappade kontakten en stund.":"☁️ Omgången kunde inte synkas just nu. Matteparken försöker återansluta.";window.setTimeout(()=>reconnectSaved(),1500);});
 }
 
 async function restore(){if(!getSelection()){current=null;render();return;}await reconnectSaved({showFeedback:true});}
@@ -10987,7 +11080,7 @@ function clearAssignmentOnFreeNavigation(event){
 }
 
 function init(){
- $("#studentAssignmentCard")?.addEventListener("click",async event=>{
+ $("#missionBoardModal")?.addEventListener("click",async event=>{
    const startBtn=event.target?.closest?.("[data-start-assignment]");
    if(startBtn){
      event.preventDefault();
@@ -11237,41 +11330,70 @@ document.addEventListener("DOMContentLoaded", () => {
 <section class="modal mission-noticeboard" role="dialog" aria-modal="true" aria-labelledby="missionBoardTitle" tabindex="-1">
 <button class="close" data-close="missionBoardModal" aria-label="Stäng dagens uppdrag">×</button>
 <div class="board-plaque" id="missionBoardTitle">DAGENS UPPDRAG<span>MATTEPARKEN · PARKKONTORET</span></div>
-<div class="mission-board-grid"><div class="mission-paper-stack">        <section class="card assignment-card" id="studentAssignmentCard">
-          <div class="assignment-card-head">
-            <div><h3 id="studentAssignmentHeading">Mina läraruppdrag</h3><div class="muted">Logga in med klass och elevkod för att se dina uppdrag.</div></div>
-            <span class="pill" id="studentIdentityPill">Inte inloggad</span>
-          </div>
-          <p class="muted identity-saving-note">Din elevkod koms ihåg i den här webbläsaren tills du väljer ”Byt elevkod”.</p>
-          <div id="studentLoginPanel">
-            <div class="student-login-grid">
-              <label>Klass<input id="studentClassCode" value="9A" maxlength="20" autocomplete="off" /></label>
-              <label>Elevkod<input id="studentCode" placeholder="din elevkod" maxlength="16" autocomplete="off" /></label>
-              <label>Vad vill du kallas? <span class="student-local-name-note">frivilligt · sparas bara här</span><input id="studentDisplayName" placeholder="t.ex. Anna eller A" maxlength="24" autocomplete="off" /></label>
-              <button class="primary" id="studentLoginBtn" type="button">Logga in</button>
-            </div>
-            <div class="feedback" id="studentLoginFeedback" style="text-align:left;min-height:24px;margin:6px 0 0"></div>
-            <div class="assignment-demo-note">Läraruppdrag och matteaktivitet synkas via Matteparkens databas. Själva parken sparas fortfarande lokalt i den här webbläsaren.</div>
-          </div>
-          <div id="studentAssignmentsPanel" class="hidden">
-            <div class="student-homework-section" id="studentHomeworkSection">
-              <h4>🏠 Läxa</h4>
-              <div id="studentHomeworkList" class="student-homework-list"></div>
-            </div>
-            <div id="studentAssignmentsList" class="student-assignment-list"></div>
-            <div id="studentStartFeedback" class="feedback" style="min-height:22px;margin-top:8px"></div>
-            <div class="assignment-actions student-switch-row"><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
-          </div>
-        </section>
+<div class="mission-board-grid">
+  <div class="mission-paper-stack">
+    <section class="card assignment-card" id="studentAssignmentCard">
+      <div class="assignment-card-head">
+        <div>
+          <span class="mission-kicker">DITT UPPDRAG IDAG</span>
+          <h3 id="studentAssignmentHeading">Ditt uppdrag idag</h3>
+          <div class="muted" id="studentAssignmentIntro">Logga in med klass och elevkod för att se dagens uppdrag.</div>
+        </div>
+        <span class="pill" id="studentIdentityPill">Inte inloggad</span>
+      </div>
+      <p class="muted identity-saving-note">Din elevkod koms ihåg i den här webbläsaren tills du väljer ”Byt elevkod”.</p>
+      <div id="studentLoginPanel">
+        <div class="student-login-grid">
+          <label>Klass<input id="studentClassCode" value="9A" maxlength="20" autocomplete="off" /></label>
+          <label>Elevkod<input id="studentCode" placeholder="din elevkod" maxlength="16" autocomplete="off" /></label>
+          <label>Vad vill du kallas? <span class="student-local-name-note">frivilligt · sparas bara här</span><input id="studentDisplayName" placeholder="t.ex. Anna eller A" maxlength="24" autocomplete="off" /></label>
+          <button class="primary" id="studentLoginBtn" type="button">Logga in</button>
+        </div>
+        <div class="feedback" id="studentLoginFeedback" style="text-align:left;min-height:24px;margin:6px 0 0"></div>
+        <div class="assignment-demo-note">Läraruppdrag och matteaktivitet synkas via Matteparkens databas. Själva parken sparas fortfarande lokalt i den här webbläsaren.</div>
+      </div>
+      <div id="studentAssignmentsPanel" class="hidden">
+        <div class="assignment-actions student-switch-row student-switch-top"><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
+        <div class="daily-assignment-overview">
+          <strong id="dailyAssignmentSummary">0 av 0 delar klara idag</strong>
+          <span id="dailyAssignmentReward">🎁 Belöning: 1 blind bag när hela dagens uppdrag är klart</span>
+        </div>
+        <div id="studentAssignmentsList" class="student-assignment-list"></div>
+        <div id="studentStartFeedback" class="feedback" style="min-height:22px;margin-top:8px"></div>
+      </div>
+    </section>
 
+    <section class="mission-paper extra-mission" id="extraParkChallengeCard">
+      <span class="mission-kicker">NÄR DU ÄR KLAR</span>
+      <h3>🌿 Extra parkutmaning</h3>
+      <p>Tre matteomgångar ger en blind bag till parken.</p>
+      <button class="secondary" id="missionDailyExtra" type="button">Visa parkutmaningen</button>
+    </section>
 
-<section class="mission-paper" id="randomAssignmentCard"><span class="mission-kicker">ETT UPPDRAG FÖR DIG</span><h2 id="randomMissionTitle"></h2><p id="randomMissionDescription"></p><p id="randomMissionProgress" role="status"></p><div class="progress"><div id="randomMissionFill"></div></div><button class="primary" id="startRandomMission" type="button">Starta uppdraget</button><p class="muted">Ett slumpat uppdrag varje dag. Du kan fortsätta där du slutade.</p></section>
-<section class="mission-paper" id="seedMissionCard"><h3>🌱 Hjälp ditt första frö att växa</h3><p id="missionSeedHint">Svara rätt på fem multiplikationsfrågor. Varje rätt svar hjälper fröet att växa.</p><p id="missionSeedProgress"></p><button class="primary" id="missionSeedStart" type="button">Starta första matteuppdraget</button></section>
-</div><aside class="mission-side">
-<section class="mission-paper"><span class="mission-kicker">MIN PARKVECKA</span><h3>Lite i taget växer det</h3><div id="missionWeekDays" class="mission-week-days"></div><p id="missionWeekSummary"></p><button class="secondary" id="missionOpenJournal" type="button">Visa alla mina framsteg</button></section>
-<section class="mission-paper extra-mission"><h3>🌿 Extra parkutmaning</h3><p>Tre matteomgångar ger en blind bag till parken.</p><button class="secondary" id="missionDailyExtra" type="button">Visa parkutmaningen</button></section>
-<p class="mission-local-note">Molntest: elevkod, läraruppdrag och mattearbetet synkas via Supabase. Själva parken, kottarna och dekorationerna sparas fortfarande lokalt i den här webbläsaren.</p>
-</aside></div></section></div>
+    <section class="mission-paper" id="randomAssignmentCard"><span class="mission-kicker">ETT UPPDRAG FÖR DIG</span><h2 id="randomMissionTitle"></h2><p id="randomMissionDescription"></p><p id="randomMissionProgress" role="status"></p><div class="progress"><div id="randomMissionFill"></div></div><button class="primary" id="startRandomMission" type="button">Starta uppdraget</button><p class="muted">Ett slumpat uppdrag varje dag. Du kan fortsätta där du slutade.</p></section>
+    <section class="mission-paper" id="seedMissionCard"><h3>🌱 Hjälp ditt första frö att växa</h3><p id="missionSeedHint">Svara rätt på fem multiplikationsfrågor. Varje rätt svar hjälper fröet att växa.</p><p id="missionSeedProgress"></p><button class="primary" id="missionSeedStart" type="button">Starta första matteuppdraget</button></section>
+  </div>
+
+  <aside class="mission-side">
+    <section class="mission-paper homework-paper hidden" id="studentHomeworkPaper">
+      <span class="mission-kicker">VECKANS LÄXA</span>
+      <h3>🏠 Veckans läxa</h3>
+      <div class="student-homework-section" id="studentHomeworkSection">
+        <div id="studentHomeworkList" class="student-homework-list"></div>
+      </div>
+    </section>
+
+    <section class="mission-paper">
+      <span class="mission-kicker">MIN PARKVECKA</span>
+      <h3>Lite i taget växer det</h3>
+      <div id="missionWeekDays" class="mission-week-days"></div>
+      <p id="missionWeekSummary"></p>
+      <button class="secondary" id="missionOpenJournal" type="button">Visa alla mina framsteg</button>
+    </section>
+
+    <p class="mission-local-note">Elevkod, läraruppdrag och mattearbetet synkas via Matteparkens databas. Själva parken, kottarna och dekorationerna sparas lokalt i den här webbläsaren.</p>
+  </aside>
+</div></section></div>
 <script>(() => {
   'use strict';
   const MZ=window.Mattezoo, $=id=>document.getElementById(id);
@@ -11324,9 +11446,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!$('missionBoardModal'))return;
     const seedTutorial=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     $('missionBoardModal').classList.toggle('seed-tutorial-only',seedTutorial);
-    const s=current(),teacher=Boolean(s?.assignments?.length||s?.homeworks?.length);
-    $('studentAssignmentCard').querySelector('.assignment-card-head .muted').textContent=s?(teacher?(s.displayName?'Här är dina läraruppdrag, '+s.displayName+'. Varje uppdrag är en hel omgång.':'Välj ett av dina läraruppdrag. Varje uppdrag är en hel omgång.'):'Du är inloggad. Inget läraruppdrag är aktivt, så du får ett slumpat dagsuppdrag.'):'Logga in med klass och elevkod för att se dina läraruppdrag.';
-    $('randomAssignmentCard').classList.toggle('hidden',teacher);
+    const s=current(),hasDaily=Boolean(s?.assignments?.length);
+    if($('studentAssignmentIntro'))$('studentAssignmentIntro').textContent=s?(hasDaily?'Gör hela dagens uppdrag. I morgon börjar du om från början.':'Du är inloggad. Inget läraruppdrag är aktivt idag, så du får ett slumpat dagsuppdrag.'):'Logga in med klass och elevkod för att se dagens uppdrag.';
+    $('randomAssignmentCard').classList.toggle('hidden',hasDaily);
     if(!teacher){const m=randomMission();$('randomMissionTitle').textContent=games[m.gameId][0];$('randomMissionDescription').textContent=`Lös ${m.target} uppgifter i ${games[m.gameId][0].toLowerCase()}.`;
       $('randomMissionProgress').textContent=m.completed>=m.target?`✓ Klart! Du har löst ${m.target} uppgifter.`:`${m.completed} av ${m.target} uppgifter klara`;
       $('randomMissionFill').style.width=Math.min(100,m.completed/m.target*100)+'%';$('startRandomMission').textContent=m.completed>=m.target?'Träna vidare':'Starta uppdraget';}
