@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.72 Välkomstnamn</title>
+<title>Matteparken – v0.4.73 Läxa och läxförhör</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2126,6 +2126,19 @@ button.office-fixture:focus-visible{outline:4px solid #fff4a6;outline-offset:4px
 .teacher-week-summary{margin-top:18px;padding-top:16px;border-top:2px dashed #c9b994}.teacher-week-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}.teacher-week-head h4{margin:2px 0 3px;font-size:16px}.teacher-week-head p{margin:0;color:#6d736a;font-size:12px}.teacher-week-total{font-size:12px;font-weight:900;color:#49634b;background:#edf2e6;padding:5px 9px;border-radius:999px}.teacher-week-list{display:grid;gap:6px;margin-top:11px}.teacher-week-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 11px;border-left:4px solid #8ca17d;background:#f6f1e4;border-radius:5px}.teacher-week-row strong{font-size:13px}.teacher-week-count{font-weight:900;color:#3f5f43;white-space:nowrap}
 @media(max-width:700px){.teacher-prototype-launch{right:8px;top:8px;padding:7px 9px;font-size:11px}.student-login-grid,.teacher-admin-controls{grid-template-columns:1fr}.assignment-current{grid-template-columns:1fr}.assignment-actions{justify-content:flex-start}}
 
+
+/* v0.4.73 – Läxa + läxförhör */
+.student-homework-section{margin:15px 0 4px;padding-top:13px;border-top:2px dashed #c7b994}.student-homework-section h4{margin:0 0 9px;font:700 16px Georgia,serif;color:#4c4436}
+.student-homework-list{display:grid;gap:10px}.student-homework-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:2px solid #c8b78e;border-radius:8px;background:#fffaf0}.student-homework-card.done{background:#eef5e9;border-color:#9bad85}.student-homework-card.locked{opacity:.72;background:#f1eee5}.student-homework-card h5{margin:0 0 4px;font-size:15px}.homework-window{font-size:11px;color:#72766d;margin-top:5px}.homework-reward{font-size:11px;font-weight:850;color:#6a5331;margin-top:5px}
+.office-homework-quiz{position:absolute;z-index:6;left:28.5%;top:71%;width:10.5%;height:13%;border:0;background:transparent;cursor:pointer;transform:rotate(-3deg);filter:drop-shadow(3px 5px 2px rgba(30,24,18,.28))}
+.office-homework-quiz .quiz-paper{position:absolute;left:8%;top:5%;width:72%;height:86%;background:#eee2bd;border:2px solid #7e6545;box-shadow:inset 0 0 0 2px #d5c59b}
+.office-homework-quiz .quiz-paper:before{content:"LÄXFÖRHÖR";position:absolute;left:9%;right:9%;top:13%;padding-bottom:6%;border-bottom:2px solid #9a8767;color:#5b4936;font-size:clamp(6px,.75vw,11px);font-weight:950;letter-spacing:.04em}
+.office-homework-quiz .quiz-paper:after{content:"";position:absolute;left:13%;right:13%;top:43%;height:35%;background:repeating-linear-gradient(180deg,transparent 0 8px,#aa9877 9px 10px)}
+.office-homework-quiz .quiz-pencil{position:absolute;right:5%;top:8%;width:13%;height:88%;background:linear-gradient(90deg,#9c632e 0 20%,#d7a04e 20% 76%,#e5c18b 76%);border:2px solid #6e4a2b;transform:rotate(13deg);clip-path:polygon(0 0,100% 0,85% 92%,50% 100%,15% 92%)}
+.office-homework-quiz.has-quiz{animation:quizPaperGlow 2.2s ease-in-out infinite}.office-homework-quiz:focus-visible{outline:4px solid #fff4a6;outline-offset:4px;border-radius:8px}.office-homework-quiz:hover{transform:rotate(-3deg) translateY(-3px)}
+@keyframes quizPaperGlow{0%,100%{filter:drop-shadow(3px 5px 2px rgba(30,24,18,.28))}50%{filter:drop-shadow(0 0 9px rgba(255,226,113,.9))}}
+#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
+@media(max-width:720px){.student-homework-card,.quiz-list-item{grid-template-columns:1fr}.office-homework-quiz{left:29%;top:70%;width:12%;height:15%}}
 </style>
 <style>
 /* Matteparken v0447 — an actual noticeboard, with the welcome gift attached. */
@@ -2409,6 +2422,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
             <span class="fixture-hint">Klicka för att välja fiskar</span>
           </section>
           <div id="aquariumFishOverlay" class="aquarium-fish-overlay" aria-hidden="true"></div>
+
+          <button class="office-homework-quiz" id="officeHomeworkQuizBtn" type="button" aria-label="Läxförhör" title="Läxförhör">
+            <span class="quiz-paper" aria-hidden="true"></span><span class="quiz-pencil" aria-hidden="true"></span>
+          </button>
 
           <section class="office-fixture office-desk" aria-label="Parkkontorets skrivbord">
             <span class="desk-lamp" aria-hidden="true">◉</span>
@@ -3428,6 +3445,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   state.rewards.seedPacks = Math.max(0, Number(state.rewards.seedPacks) || 0);
   state.rewards.crates = Math.max(0, Number(state.rewards.crates) || 0);
   state.rewards.mathRewardCycles = Math.max(0, Number(state.rewards.mathRewardCycles) || 0);
+  state.rewards.bonusBlindBags = Math.max(0, Number(state.rewards.bonusBlindBags) || 0);
+  state.rewards.activeBonusChoices = Array.isArray(state.rewards.activeBonusChoices) ? state.rewards.activeBonusChoices : null;
   state.rewards.activeSeedChoices = Array.isArray(state.rewards.activeSeedChoices) ? state.rewards.activeSeedChoices : null;
   state.rewards.activeCrateChoices = Array.isArray(state.rewards.activeCrateChoices) ? state.rewards.activeCrateChoices : null;
   state.rewards.activeSeedHabitat = typeof state.rewards.activeSeedHabitat === "string" ? state.rewards.activeSeedHabitat : "";
@@ -4284,6 +4303,28 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     return {...item,placementSource:"reward"};
   }
 
+  function addBonusBlindBag(amount=1){
+    state.rewards.bonusBlindBags=Math.max(0,Number(state.rewards.bonusBlindBags)||0)+Math.max(0,Number(amount)||0);
+    save();
+  }
+  function createBonusChoices(){
+    if(state.rewards.activeBonusChoices?.length===3) return state.rewards.activeBonusChoices;
+    if((Number(state.rewards.bonusBlindBags)||0)<1) return null;
+    state.rewards.bonusBlindBags-=1;
+    state.rewards.activeBonusChoices=variedChoices(dailyBlindBagPool,3,false);
+    save(); return state.rewards.activeBonusChoices;
+  }
+  function chooseBonus(type){
+    if(!state.rewards.activeBonusChoices?.includes(type)) return null;
+    const item=findItem(type); state.rewards.activeBonusChoices=null;
+    if(item.kind==="equipment"){
+      state.inventory[item.type]=Math.max(0,Number(state.inventory[item.type])||0)+1; storage.saveInventory(); save();
+      return {...item,placementSource:"storage"};
+    }
+    state.rewards.pendingItem={type:item.type,kind:"nature",name:item.name,icon:item.icon}; save();
+    return {...item,placementSource:"reward"};
+  }
+
   // ----- Seasonal crate foundation -----
   function seasonPool(seasonId){
     return itemDefinitions.filter((item)=>item.source === "seasonal" && item.season === seasonId && isAvailable(item));
@@ -4329,7 +4370,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   MZ.rewards={
     itemDefinitions,catalogPool,seedPackPool,decorBoxPool,dailyBlindBagPool,seasonalCrateDefinitions,
     addSeedPack,addCrate,createSeedChoices,createCrateChoices,chooseSeed,chooseCrate,
-    createDailyChoices,chooseDaily,findItem,clearPendingItem,catalogItems,availableHabitatsForSource,
+    createDailyChoices,chooseDaily,addBonusBlindBag,createBonusChoices,chooseBonus,findItem,clearPendingItem,catalogItems,availableHabitatsForSource,
     activeSeasonalCrates,seasonalCount,addSeasonalCrate,createSeasonalChoices,chooseSeasonal
   };
 })();
@@ -5099,6 +5140,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     return Math.max(0, Number(state.rewards?.seedPacks)||0)
       + Math.max(0, Number(state.rewards?.crates)||0)
       + seasonal
+      + Math.max(0,Number(state.rewards?.bonusBlindBags)||0)
+      + (state.rewards?.activeBonusChoices?.length ? 1 : 0)
       + (state.rewards?.pendingItem ? 1 : 0)
       + (dailyBlindBagWaiting() ? 1 : 0);
   }
@@ -5153,13 +5196,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function renderBlindBagShelf(){
     const snapshot=MZ.daily?.getSnapshot?.();
-    const ready=Boolean(snapshot?.completed && !snapshot?.claimed);
+    const dailyReady=Boolean(snapshot?.completed && !snapshot?.claimed);
+    const bonusCount=Math.max(0,Number(state.rewards?.bonusBlindBags)||0)+(state.rewards?.activeBonusChoices?.length?1:0);
+    const total=(dailyReady?1:0)+bonusCount;
     const status=document.getElementById("dailyBlindBagShelfStatus");
     const button=document.getElementById("openDailyBlindBagFromShelf");
     const row=document.getElementById("dailyBlindBagShelfItem");
-    if(status) status.textContent=ready ? "1 blind bag väntar" : snapshot?.claimed ? "Dagens belöning är hämtad" : "Klara dagens uppdrag";
-    if(button){button.disabled=!ready;button.textContent=ready ? "Öppna" : snapshot?.claimed ? "Hämtad" : "Inte klar än";}
-    row?.classList.toggle("reward-ready",ready);
+    if(status) status.textContent=total ? total+" blind bag"+(total===1?"":"s")+" väntar" : snapshot?.claimed ? "Ingen blind bag väntar just nu" : "Klara dagens uppdrag eller en läxa";
+    if(button){button.disabled=total<1;button.textContent=total?"Öppna":"Ingen väntar";}
+    row?.classList.toggle("reward-ready",total>0);
   }
 
   function render(){
@@ -7842,15 +7887,18 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   function renderRewardChoiceModal(kind, habitatId=null, seasonId=null){
     const grid=$("#rewardChoiceGrid"),picker=$("#rewardHabitatPicker");
     grid.innerHTML=""; picker.innerHTML=""; picker.classList.add("hidden");
-    const isSeed=kind==="seed", isCrate=kind==="crate", isDaily=kind==="daily", isSeasonal=kind==="seasonal";
+    const isSeed=kind==="seed", isCrate=kind==="crate", isDaily=kind==="daily", isBonus=kind==="bonus", isSeasonal=kind==="seasonal";
 
-    const title=isSeed?"🌱 Öppna fröpåsen":isCrate?"📦 Öppna dekorationslådan":isSeasonal?(MZ.rewards.seasonalCrateDefinitions[seasonId]?.icon||"✨")+" "+(MZ.rewards.seasonalCrateDefinitions[seasonId]?.name||"Säsongslåda"):"🎁 Dagens blind bag";
+    const title=isSeed?"🌱 Öppna fröpåsen":isCrate?"📦 Öppna dekorationslådan":isSeasonal?(MZ.rewards.seasonalCrateDefinitions[seasonId]?.icon||"✨")+" "+(MZ.rewards.seasonalCrateDefinitions[seasonId]?.name||"Säsongslåda"):"🎁 Blind bag";
     $("#rewardModalTitle").textContent=title;
 
     let choices=null;
     if(isDaily){
       choices=MZ.rewards.createDailyChoices();
       $("#rewardModalIntro").textContent="Tre slumpade belöningar. Välj den du vill behålla.";
+    }else if(isBonus){
+      choices=MZ.rewards.createBonusChoices();
+      $("#rewardModalIntro").textContent="Din belöning för genomfört skolarbete. Välj en av tre.";
     }else if(isSeasonal){
       choices=MZ.rewards.createSeasonalChoices(seasonId);
       $("#rewardModalIntro").textContent="En tillfällig samling. Välj den säsongspryl du vill behålla.";
@@ -7912,7 +7960,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           }
           return;
         }
-        const chosen=MZ.rewards.chooseDaily(type); MZ.closeModal("rewardModal"); renderDailyMission(); renderDailyQuest(); updateRewardShelf(); updateShopUI();
+        const chosen=isBonus?MZ.rewards.chooseBonus(type):MZ.rewards.chooseDaily(type); MZ.closeModal("rewardModal"); renderDailyMission(); renderDailyQuest(); updateRewardShelf(); updateShopUI();
         if(chosen){
           if(chosen.placementSource==="storage"){ state.inventory[chosen.type]-=1; storage.saveInventory(); enterPlacementMode(chosen.type,"storage"); }
           else enterPlacementMode(chosen.type,"reward");
@@ -8097,7 +8145,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
     $("#openSeedPackBtn").addEventListener("click", () => renderRewardChoiceModal("seed"));
     $("#openCrateBtn").addEventListener("click", () => renderRewardChoiceModal("crate"));
-    $("#openDailyBlindBagFromShelf")?.addEventListener("click", () => renderRewardChoiceModal("daily"));
+    $("#openDailyBlindBagFromShelf")?.addEventListener("click", () => {
+      const snapshot=MZ.daily?.getSnapshot?.();
+      renderRewardChoiceModal(snapshot?.completed&&!snapshot?.claimed?"daily":"bonus");
+    });
     $("#placePendingRewardBtn").addEventListener("click", () => {
       const pending = state.rewards.pendingItem;
       if(pending) enterPlacementMode(pending.type, "reward");
@@ -10869,6 +10920,24 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 <div class="modal-backdrop" id="officeAquariumModal"><section class="modal wide" role="dialog" aria-modal="true" aria-labelledby="officeAquariumTitle"><button class="close" data-close="officeAquariumModal" aria-label="Stäng">×</button><h2 id="officeAquariumTitle">🐠 Akvariet</h2><p class="aquarium-panel-intro">Välj upp till tre arter du har fångat. De simmar sedan i akvariet på Parkkontoret. Du behöver inte mata eller sköta dem.</p><p><strong id="aquariumCount">0 av 3 fiskar</strong></p><div id="aquariumCurrent" class="aquarium-current empty">Akvariet är tomt.</div><h3>Välj bland dina fångster</h3><div id="aquariumFishChoices" class="aquarium-choice-grid"></div><p class="aquarium-limit-note">Fiskarna representerar arten. Rekordvikten används bara för en liten storleksskillnad, så en jättestor gädda tar inte över hela glaset.</p></section></div>
 
+<div class="modal-backdrop" id="homeworkQuizModal">
+<section class="modal" role="dialog" aria-modal="true" aria-labelledby="homeworkQuizTitle">
+<button class="close" data-close="homeworkQuizModal" aria-label="Stäng">×</button>
+<h2 id="homeworkQuizTitle">📄 Läxförhör</h2>
+<p class="muted" id="homeworkQuizIntro">Här får du visa vad som sitter efter veckans träning.</p>
+<div id="homeworkQuizList" class="quiz-list"></div>
+<div id="homeworkQuizTest" class="quiz-test-card hidden">
+  <div class="quiz-test-head"><strong id="quizTestTitle">Läxförhör</strong><span id="quizTestProgress">1 / 10</span></div>
+  <div class="quiz-warning">Första genomförandet räknas. Du får en blind bag när förhöret är genomfört, oavsett resultat.</div>
+  <div class="quiz-question" id="quizQuestionText"></div>
+  <div class="quiz-answer-row"><input id="quizAnswerInput" autocomplete="off" inputmode="decimal" placeholder="Skriv ditt svar"><button class="primary" id="quizAnswerBtn" type="button">Svara</button></div>
+  <div class="feedback" id="quizFeedback" style="text-align:center;min-height:26px;margin-top:10px"></div>
+  <div class="assignment-actions" style="margin-top:10px"><button class="secondary hidden" id="quizNextBtn" type="button">Nästa fråga</button></div>
+</div>
+<div id="homeworkQuizResult" class="quiz-result hidden"></div>
+</section>
+</div>
+
 <div class="modal-backdrop" id="missionBoardModal">
 <section class="modal mission-noticeboard" role="dialog" aria-modal="true" aria-labelledby="missionBoardTitle" tabindex="-1">
 <button class="close" data-close="missionBoardModal" aria-label="Stäng dagens uppdrag">×</button>
@@ -10890,6 +10959,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="assignment-demo-note">Läraruppdrag och matteaktivitet synkas via Matteparkens databas. Själva parken sparas fortfarande lokalt i den här webbläsaren.</div>
           </div>
           <div id="studentAssignmentsPanel" class="hidden">
+            <div class="student-homework-section" id="studentHomeworkSection">
+              <h4>🏠 Läxa</h4>
+              <div id="studentHomeworkList" class="student-homework-list"></div>
+            </div>
             <div id="studentAssignmentsList" class="student-assignment-list"></div>
             <div class="assignment-actions student-switch-row"><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
           </div>
