@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.97 Återställd flyttning</title>
+<title>Matteparken – v0.4.98 Klickbar genom flyttruta</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -401,6 +401,8 @@ window.MATTEZOO_TEACHER_PLAN = {
   .placed-item.selected{outline:4px solid #fff7b5;outline-offset:5px;border-radius:10px;filter:drop-shadow(0 5px 0 rgba(45,65,45,.14)) brightness(1.14)}
   .item-action-banner{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:18;display:none;align-items:center;gap:10px;max-width:92%;padding:10px 13px;border:3px solid #6f805f;border-radius:12px;background:#fff7d8;box-shadow:0 4px 0 rgba(70,85,65,.25);font-weight:900}
   .item-action-banner.open{display:flex}
+  .park.carrying-item .item-action-banner{pointer-events:none}
+  .park.carrying-item .item-action-banner button{pointer-events:auto}
   .danger{border:3px solid #9a4c43;border-radius:10px;background:#fff3e9;color:#7e302b;padding:9px 13px;cursor:pointer;font-weight:900}
   .seed-choices{display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
   .seed-choices.open{display:grid}
