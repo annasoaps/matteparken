@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.99 Parktomten test</title>
+<title>Matteparken – v0.5.00 Smidigare TOMTETEST</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -1594,7 +1594,7 @@ button.office-fixture:focus-visible{outline:4px solid #fff4a6;outline-offset:4px
 .office-delivery-message{position:sticky;bottom:14px;z-index:100;margin:-62px auto 12px;width:min(640px,90%);padding:13px 16px;border:4px solid #665332;border-radius:12px;background:#fff0b9;box-shadow:0 8px 24px rgba(44,35,25,.25);font-weight:950;text-align:center;opacity:0;transform:translateY(15px);transition:.18s ease}.office-delivery-message.open{opacity:1;transform:translateY(0)}
 .office-drawer{margin-top:16px;padding:18px;border:5px solid #66533c;border-radius:12px;background:#f2ead3;box-shadow:0 7px 0 rgba(72,57,40,.14)}
 .office-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.office-drawer-head h2{margin:0 0 3px!important}.office-drawer-head p{margin:0}.office-test-tools{margin-top:15px;border:3px dashed #938b73;border-radius:10px;padding:9px 12px;background:#e8e0c9}.office-test-tools summary{cursor:pointer;font-weight:900;color:#5c6357}
-.teacher-test-badge{position:fixed;right:18px;top:16px;z-index:180;display:flex;align-items:center;gap:9px;padding:9px 11px;border:3px solid #584426;border-radius:10px;background:#fff0ad;color:#4d3d25;box-shadow:0 5px 0 rgba(54,40,27,.3);font-size:12px;letter-spacing:.04em}
+.teacher-test-badge{position:fixed;left:18px;right:auto;top:16px;z-index:180;display:flex;align-items:center;gap:9px;padding:9px 11px;border:3px solid #584426;border-radius:10px;background:#fff0ad;color:#4d3d25;box-shadow:0 5px 0 rgba(54,40,27,.3);font-size:12px;letter-spacing:.04em}
 .teacher-test-badge button{border:2px solid #6d5937;border-radius:7px;background:#fff8dc;color:#493a25;padding:5px 8px;font-weight:900;cursor:pointer}
 .teacher-test-badge.hidden{display:none!important}
 
@@ -8262,6 +8262,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       showGnomeSighting({forced:true});
       feedback.textContent = "Testkod godkänd: ett tomtespår tittar fram på en slumpad plats.";
       $("#status").textContent = "🍄 Något rött skymtar i utkanten av Startgläntan...";
+      window.setTimeout(()=>MZ.closeModal("officeModal"),180);
     }else if(code === "PARKTEST"){
       storage.addNaturePoints(100);
       feedback.textContent = "Testkod godkänd: +100 kottar.";
