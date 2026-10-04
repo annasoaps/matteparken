@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.73 Läxa och läxförhör</title>
+<title>Matteparken – v0.4.74 Läxstart fix</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10864,8 +10864,10 @@ function render(){
     const reward=document.createElement("div");reward.className="homework-reward";reward.textContent=st.complete?"🎁 Blind bag utdelad när läxan blev klar":"🎁 Belöning: 1 blind bag";info.appendChild(reward);
     const actions=document.createElement("div"),btn=document.createElement("button");btn.className="primary";btn.type="button";
     const next=st.tasks.find(a=>Number(current.progressMap.get(a.id)?.completed)<1);
-    btn.disabled=st.locked||st.complete||!next;btn.textContent=st.complete?"Klar":st.locked?"Inte öppen än":st.done?"Fortsätt läxan":"Starta läxan";
+    btn.disabled=st.locked||st.complete||!next;
+    btn.textContent=st.complete?"Klar":st.locked?"Inte öppen än":!st.total?"Ladda om läxan":st.done?"Fortsätt läxan":"Starta läxan";
     if(next)btn.addEventListener("click",()=>startAssignment(next.id));
+    else if(!st.locked&&!st.complete)btn.disabled=false,btn.addEventListener("click",async()=>{$("#status").textContent="☁️ Hämtar läxans omgångar igen …";await readCloudState();});
     actions.appendChild(btn);card.append(info,actions);homeworkList.appendChild(card);
   });
  }
@@ -10893,7 +10895,20 @@ async function login(){
  finally{busy=false;if($("#studentLoginBtn"))$("#studentLoginBtn").disabled=false;}
 }
 async function logout(){setSelection(null);setActiveAssignment(null);current=null;if($("#studentCode"))$("#studentCode").value="";if($("#studentDisplayName"))$("#studentDisplayName").value="";feedback("");render();try{await client().auth.signOut({scope:"local"});}catch(error){console.warn(error);}}
-function startAssignment(id){const a=current?.allAssignments?.find(x=>x.id===id);if(!a)return;setActiveAssignment(a.id);MZ.missionBoard.launch(a.game_id,a.game_config||{});$("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";}
+function startAssignment(id){
+ const a=current?.allAssignments?.find(x=>x.id===id);
+ if(!a){$("#status").textContent="⚠️ Uppdraget kunde inte hittas. Ladda om sidan och försök igen.";return;}
+ if(a.homework_id){
+  const hw=current?.homeworks?.find(x=>x.id===a.homework_id);
+  if(hw?.opens_at&&Date.now()<new Date(hw.opens_at).getTime()){
+    $("#status").textContent="🔒 Läxan öppnar "+formatMoment(hw.opens_at)+".";
+    render();return;
+  }
+ }
+ MZ.missionBoard.launch(a.game_id,a.game_config||{});
+ setActiveAssignment(a.id);
+ $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";
+}
 
 async function reconnectSaved({showFeedback=false,refresh=false}={}){
  const saved=getSelection();if(!saved)return null;if($("#studentClassCode"))$("#studentClassCode").value=saved.classId||"9A";if($("#studentCode"))$("#studentCode").value=saved.code||"";if($("#studentDisplayName"))$("#studentDisplayName").value=cleanDisplayName(saved.displayName||"");if(reconnectPromise)return reconnectPromise;
@@ -10929,7 +10944,10 @@ function recordRound(event){
 
 async function restore(){if(!getSelection()){current=null;render();return;}await reconnectSaved({showFeedback:true});}
 async function keepConnected(){if(getSelection())await reconnectSaved({refresh:Boolean(current?.student)});}
-function clearAssignmentOnFreeNavigation(event){const b=event.target?.closest?.("button");if(b&&(b.classList.contains("game-card")||b.id==="backToShelf"||b.id.startsWith("backFrom")))setActiveAssignment(null);}
+function clearAssignmentOnFreeNavigation(event){
+ const b=event.target?.closest?.("button");if(!b)return;
+ if(b.id==="backToShelf"||b.id.startsWith("backFrom"))setActiveAssignment(null);
+}
 
 function init(){
  $("#studentLoginBtn")?.addEventListener("click",login);$("#studentClassCode")?.addEventListener("keydown",e=>{if(e.key==="Enter")$("#studentCode")?.focus();});$("#studentCode")?.addEventListener("keydown",e=>{if(e.key==="Enter")$("#studentDisplayName")?.focus();});$("#studentDisplayName")?.addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("#studentLogoutBtn")?.addEventListener("click",logout);
