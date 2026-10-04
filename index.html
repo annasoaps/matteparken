@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.94 Kompakt andel</title>
+<title>Matteparken – v0.4.95 Större Startglänta</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -401,6 +401,9 @@ window.MATTEZOO_TEACHER_PLAN = {
   .placed-item.selected{outline:4px solid #fff7b5;outline-offset:5px;border-radius:10px;filter:drop-shadow(0 5px 0 rgba(45,65,45,.14)) brightness(1.14)}
   .item-action-banner{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:18;display:none;align-items:center;gap:10px;max-width:92%;padding:10px 13px;border:3px solid #6f805f;border-radius:12px;background:#fff7d8;box-shadow:0 4px 0 rgba(70,85,65,.25);font-weight:900}
   .item-action-banner.open{display:flex}
+  .item-action-banner.compact-move{gap:0;padding:6px 8px;border-width:2px;border-radius:10px}
+  .item-action-banner.compact-move #itemActionText,.item-action-banner.compact-move #moveItemAction,.item-action-banner.compact-move #cancelItemAction{display:none!important}
+  .item-action-banner.compact-move #confirmItemAction{margin:0;padding:8px 12px}
   .danger{border:3px solid #9a4c43;border-radius:10px;background:#fff3e9;color:#7e302b;padding:9px 13px;cursor:pointer;font-weight:900}
   .seed-choices{display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
   .seed-choices.open{display:grid}
@@ -923,7 +926,7 @@ window.MATTEZOO_TEACHER_PLAN = {
 /* Habitatprogression v0.1 */
 .badge-pill{background:#fff4c9}
 .northwest-zone{left:4.5%;top:5%;bottom:auto;width:45.5%;height:41%}
-.southwest-zone{left:4.5%;bottom:5%;width:45.5%;height:43%}
+.southwest-zone{left:4.5%;bottom:5%;width:45.5%;height:45.5%}
 .northeast-zone{right:4.5%;top:5%;left:auto;bottom:auto;width:45.5%;height:41%}
 .southeast-zone{right:4.5%;bottom:5%;left:auto;width:45.5%;height:43%}
 .habitat-lock{position:absolute;z-index:9;min-width:210px;border:4px solid #51644b;border-radius:16px;background:rgba(244,238,207,.94);color:var(--ink);padding:12px 15px;box-shadow:0 6px 0 rgba(55,70,50,.24);cursor:pointer;text-align:center;transition:transform .15s ease,background .15s ease}
@@ -7122,7 +7125,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     selectedParkItemId = null;
     $("#moveItemAction").classList.add("hidden");
     $("#cancelItemAction").classList.remove("hidden");
-    $("#itemActionBanner").classList.remove("open");
+    $("#itemActionBanner").classList.remove("open","compact-move");
     renderParkItems();
   }
 
@@ -7210,7 +7213,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     removePlacementGhost();
     $(".park")?.classList.remove("carrying-item");
     $("#placementBanner").classList.remove("open");
-    $$(".build-zone").forEach((zone) => zone.classList.remove("active"));
+    $("#itemActionBanner").classList.remove("compact-move");
+    $(".build-zone").forEach((zone) => zone.classList.remove("active"));
     renderParkItems();
   }
 
@@ -7233,11 +7237,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const movingName = itemDisplayName(visualType);
     $("#moveItemAction").classList.add("hidden");
     $("#cancelItemAction").classList.add("hidden");
-    $("#confirmItemAction").textContent = movingNature ? "Ta bort" : "Till förrådet";
-    $("#itemActionText").textContent = movingNature
-      ? `${movingIcon} ${movingName.charAt(0).toUpperCase()+movingName.slice(1)} är uppgrävd och följer muspekaren. Klicka i parken för att plantera om den.`
-      : `${movingIcon} ${equipmentMeta[item.type]?.name || "Dekoration"} följer muspekaren. Klicka i parken för att ställa ner den.`;
-    $("#itemActionBanner").classList.add("open");
+    $("#confirmItemAction").textContent = movingNature ? "Ta bort" : "Ställ i förrådet";
+    $("#itemActionText").textContent = "";
+    $("#itemActionBanner").classList.add("open","compact-move");
     $("#placementBanner").classList.remove("open");
 
     const availableZones=unlockedZoneIds();
