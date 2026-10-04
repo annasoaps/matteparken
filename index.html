@@ -10943,6 +10943,181 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 </script>
 
 <script>
+(() => {
+  "use strict";
+  const MZ=window.Mattezoo,$=id=>document.getElementById(id);
+  let activeQuiz=null,questions=[],index=0,score=0,answered=false,startedAt=null;
+
+  const rand=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+  const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;};
+  const simp=(n,d)=>{if(d<0){n=-n;d=-d;}const g=gcd(n,d);return[n/g,d/g];};
+  const svNum=n=>String(Number(n.toFixed?.(6)??n)).replace(".",",");
+  const fracText=(n,d)=>d===1?String(n):n+"/"+d;
+  const parseNumber=v=>{const x=Number(String(v||"").trim().replace(/s+/g,"").replace("%","").replace(",","."));return Number.isFinite(x)?x:null;};
+  const parseFraction=v=>{const m=String(v||"").trim().replace(/s+/g,"").match(/^(-?\d+)\/(-?\d+)$/);if(!m||Number(m[2])===0)return null;return simp(Number(m[1]),Number(m[2]));};
+  function parseSci(v){
+    let t=String(v||"").trim().toLowerCase().replace(/s+/g,"").replace(",",".").replace(/[×·x]/g,"*");
+    let m=t.match(/^([+-]?\d+(?:\.\d+)?)e([+-]?\d+)$/);
+    if(m)return{c:Number(m[1]),e:Number(m[2])};
+    m=t.match(/^([+-]?\d+(?:\.\d+)?)\*?10\^?([+-]?\d+)$/);
+    if(m)return{c:Number(m[1]),e:Number(m[2])};
+    return null;
+  }
+  function check(q,value){
+    if(q.kind==="fraction"){const f=parseFraction(value);return Boolean(f&&f[0]===q.answer[0]&&f[1]===q.answer[1]);}
+    if(q.kind==="sci"){const x=parseSci(value);return Boolean(x&&Math.abs(x.c-q.answer.c)<1e-9&&x.e===q.answer.e);}
+    const n=parseNumber(value);return n!==null&&Math.abs(n-Number(q.answer))<1e-8;
+  }
+  function makeQuestion(gameId,config={}){
+    if(gameId==="multiplication"){
+      const table=Number(config.table)>=1&&Number(config.table)<=10?Number(config.table):rand(2,10),b=rand(1,10);
+      return{prompt:table+" × "+b+" = ?",kind:"number",answer:table*b,display:String(table*b)};
+    }
+    if(gameId==="equations"){
+      const a=rand(2,8),x=rand(1,12),b=rand(1,15),c=a*x+b;
+      return{prompt:a+"x + "+b+" = "+c+". Vad är x?",kind:"number",answer:x,display:String(x)};
+    }
+    if(gameId==="pow10"){
+      const factor=[10,100,1000][rand(0,2)],multiply=Math.random()<.5;
+      if(multiply){const base=rand(1,99)/(Math.random()<.35?10:1),ans=base*factor;return{prompt:svNum(base)+" × "+factor+" = ?",kind:"number",answer:ans,display:svNum(ans)};}
+      const ans=rand(1,99)/(Math.random()<.35?10:1),start=ans*factor;return{prompt:svNum(start)+" ÷ "+factor+" = ?",kind:"number",answer:ans,display:svNum(ans)};
+    }
+    if(gameId==="fractionDecimal"){
+      const pairs=[[1,2],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,10]],p=pairs[rand(0,pairs.length-1)],dec=p[0]/p[1];
+      if(Math.random()<.5)return{prompt:p[0]+"/"+p[1]+" = ? i decimalform",kind:"number",answer:dec,display:svNum(dec)};
+      return{prompt:svNum(dec)+" = ? som bråk i enklaste form",kind:"fraction",answer:p,display:fracText(...p)};
+    }
+    if(gameId==="fractionArithmetic"){
+      let a=rand(1,5),b=rand(a+1,8),c=rand(1,5),d=rand(c+1,8),op=["+","-","×"][rand(0,2)],n,den;
+      if(op==="-"&&a/b<c/d){[a,c]=[c,a];[b,d]=[d,b];}
+      if(op==="+"){n=a*d+c*b;den=b*d;}else if(op==="-"){n=a*d-c*b;den=b*d;}else{n=a*c;den=b*d;}
+      const ans=simp(n,den);return{prompt:a+"/"+b+" "+op+" "+c+"/"+d+" = ? Svara som förkortat bråk.",kind:"fraction",answer:ans,display:fracText(...ans)};
+    }
+    if(gameId==="percentConvert"){
+      const vals=[{f:"1/2",d:.5,p:50},{f:"1/4",d:.25,p:25},{f:"3/4",d:.75,p:75},{f:"1/5",d:.2,p:20},{f:"2/5",d:.4,p:40},{f:"1/10",d:.1,p:10}],v=vals[rand(0,vals.length-1)],mode=rand(0,2);
+      if(mode===0)return{prompt:v.f+" = ? %",kind:"number",answer:v.p,display:v.p+" %"};
+      if(mode===1)return{prompt:v.p+" % = ? i decimalform",kind:"number",answer:v.d,display:svNum(v.d)};
+      return{prompt:svNum(v.d)+" = ? %",kind:"number",answer:v.p,display:v.p+" %"};
+    }
+    if(gameId==="prefixMatch"){
+      const items=[["kilometer","meter",1000],["hektogram","gram",100],["decimeter","meter",.1],["centimeter","meter",.01],["millimeter","meter",.001]],x=items[rand(0,items.length-1)];
+      return{prompt:"1 "+x[0]+" = ? "+x[1],kind:"number",answer:x[2],display:svNum(x[2])};
+    }
+    if(gameId==="unitConvert"){
+      const items=[
+        ["250 cm = ? m",2.5],["3,4 m = ? cm",340],["7500 mm = ? m",7.5],["2,5 kg = ? g",2500],
+        ["650 g = ? kg",.65],["1,8 l = ? ml",1800],["450 ml = ? l",.45],["4,2 m = ? mm",4200]
+      ],x=items[rand(0,items.length-1)];return{prompt:x[0],kind:"number",answer:x[1],display:svNum(x[1])};
+    }
+    if(gameId==="statistics"){
+      const mode=rand(0,2),n=rand(2,12);
+      if(mode===0){const arr=[n,n+2,n+4,n+6,n+8];return{prompt:"Medelvärdet av "+arr.join(", ")+" = ?",kind:"number",answer:n+4,display:String(n+4)};}
+      if(mode===1){const arr=[n+8,n,n+4,n+2,n+6];return{prompt:"Medianen av "+arr.join(", ")+" = ?",kind:"number",answer:n+4,display:String(n+4)};}
+      const b=n+2,arr=[n,b,b,n+5,n+7];return{prompt:"Typvärdet i "+arr.join(", ")+" = ?",kind:"number",answer:b,display:String(b)};
+    }
+    if(gameId==="scientificNotation"){
+      const c=rand(1,9),e=rand(2,6),value=c*(10**e);
+      if(Math.random()<.5)return{prompt:value.toLocaleString("sv-SE")+" i grundpotensform = ?",kind:"sci",answer:{c,e},display:c+" × 10^"+e};
+      return{prompt:c+" × 10^"+e+" = ?",kind:"number",answer:value,display:value.toLocaleString("sv-SE")};
+    }
+    return{prompt:"2 + 2 = ?",kind:"number",answer:4,display:"4"};
+  }
+
+  function current(){return MZ.cloudStudent?.currentState?.()||null;}
+  function availableQuizzes(){return current()?.quizzes||[];}
+  function attemptFor(id){return current()?.quizAttempts?.find(a=>a.quiz_id===id)||null;}
+  function isLocked(q){return Boolean(q.opens_at&&Date.now()<new Date(q.opens_at).getTime());}
+  function isLate(q){return Boolean(q.due_at&&Date.now()>new Date(q.due_at).getTime());}
+
+  function renderPaper(){
+    const btn=$("officeHomeworkQuizBtn");if(!btn)return;
+    const c=current(),qs=c?.quizzes||[];
+    const waiting=qs.some(q=>!attemptFor(q.id)&&!isLocked(q));
+    btn.classList.toggle("has-quiz",waiting);
+    btn.title=waiting?"Ett läxförhör väntar":"Läxförhör";
+  }
+
+  function renderList(){
+    const list=$("homeworkQuizList"),test=$("homeworkQuizTest"),result=$("homeworkQuizResult");if(!list)return;
+    test.classList.add("hidden");result.classList.add("hidden");list.classList.remove("hidden");list.innerHTML="";
+    const c=current();
+    if(!c?.student){list.innerHTML='<div class="assignment-empty-cloud">Logga in med klass och elevkod på anslagstavlan först.</div>';return;}
+    const qs=availableQuizzes();
+    if(!qs.length){list.innerHTML='<div class="assignment-empty-cloud">Inget läxförhör väntar just nu.</div>';return;}
+    qs.forEach(q=>{
+      const attempt=attemptFor(q.id),locked=isLocked(q),late=isLate(q);
+      const row=document.createElement("div");row.className="quiz-list-item"+(attempt?" done":"");
+      const info=document.createElement("div"),h=document.createElement("strong");h.textContent=(attempt?"✓ ":"📄 ")+q.title;info.appendChild(h);
+      const meta=document.createElement("div");meta.className="muted";meta.textContent=attempt?("Första resultatet: "+attempt.score+" / "+attempt.total+" · "+MZ.cloudStudent.formatMoment(attempt.completed_at)):(locked?"Öppnar "+MZ.cloudStudent.formatMoment(q.opens_at):(q.due_at?(late?"Deadline passerad · kan fortfarande lämnas in":"Senast "+MZ.cloudStudent.formatMoment(q.due_at)):"Kan göras nu"));info.appendChild(meta);
+      const actions=document.createElement("div"),btn=document.createElement("button");btn.className="primary";btn.type="button";btn.disabled=Boolean(attempt||locked);btn.textContent=attempt?"Genomfört":locked?"Låst":"Starta";if(!attempt&&!locked)btn.addEventListener("click",()=>startQuiz(q.id));actions.appendChild(btn);
+      row.append(info,actions);list.appendChild(row);
+    });
+  }
+
+  function open(){
+    MZ.openModal("homeworkQuizModal");renderList();
+  }
+
+  function startQuiz(id){
+    const q=availableQuizzes().find(x=>x.id===id);if(!q||attemptFor(id)||isLocked(q))return;
+    activeQuiz=q;questions=Array.from({length:q.question_count},()=>makeQuestion(q.game_id,q.game_config||{}));index=0;score=0;answered=false;startedAt=new Date().toISOString();
+    $("homeworkQuizList").classList.add("hidden");$("homeworkQuizResult").classList.add("hidden");$("homeworkQuizTest").classList.remove("hidden");$("quizTestTitle").textContent=q.title;showQuestion();
+  }
+
+  function showQuestion(){
+    answered=false;const q=questions[index];$("quizTestProgress").textContent=(index+1)+" / "+questions.length;$("quizQuestionText").textContent=q.prompt;$("quizAnswerInput").value="";$("quizAnswerInput").disabled=false;$("quizAnswerBtn").disabled=false;$("quizAnswerBtn").classList.remove("hidden");$("quizNextBtn").classList.add("hidden");$("quizFeedback").textContent="";$("quizFeedback").className="feedback";$("quizAnswerInput").focus();
+  }
+
+  function answer(){
+    if(answered||!activeQuiz)return;
+    const q=questions[index],value=$("quizAnswerInput").value;if(!String(value).trim())return;
+    answered=true;const ok=check(q,value);if(ok)score++;
+    $("quizAnswerInput").disabled=true;$("quizAnswerBtn").disabled=true;
+    $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;$("quizFeedback").className="feedback "+(ok?"good":"bad");
+    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Visa resultat":"Nästa fråga";
+  }
+
+  async function next(){
+    if(!answered)return;
+    if(index<questions.length-1){index++;showQuestion();return;}
+    await finish();
+  }
+
+  async function finish(){
+    $("quizNextBtn").disabled=true;
+    try{
+      const c=MZ.cloudStudent.getClient();
+      const r=await c.rpc("submit_quiz_attempt",{p_quiz_id:activeQuiz.id,p_score:score,p_total:questions.length,p_started_at:startedAt});
+      if(r.error)throw r.error;if(r.data?.ok===false)throw new Error(r.data?.reason||"Kunde inte spara resultatet.");
+      const first=Boolean(r.data?.first);
+      let rewardGranted=false;
+      if(first){
+        const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
+        if(reward.error)throw reward.error;
+        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();rewardGranted=true;}
+      }
+      $("homeworkQuizTest").classList.add("hidden");const result=$("homeworkQuizResult");result.classList.remove("hidden");
+      result.innerHTML="<h3>Förhöret är klart</h3><p><strong>"+r.data.score+" / "+r.data.total+"</strong></p><p>Det första resultatet är sparat.</p>"+(rewardGranted?"<p>🎁 Du fick en blind bag! Den väntar bland Överraskningar.</p>":"")+"<button class='secondary' id='quizBackToList' type='button'>Till läxförhören</button>";
+      result.querySelector("#quizBackToList").addEventListener("click",async()=>{await MZ.cloudStudent.readCloudState();renderList();});
+      await MZ.cloudStudent.readCloudState();renderPaper();
+    }catch(error){
+      console.error("Quiz submit:",error);$("quizFeedback").textContent="Kunde inte spara resultatet just nu. Försök igen."; $("quizFeedback").className="feedback bad";$("quizNextBtn").disabled=false;
+    }
+  }
+
+  function init(){
+    $("officeHomeworkQuizBtn")?.addEventListener("click",open);
+    $("quizAnswerBtn")?.addEventListener("click",answer);
+    $("quizAnswerInput")?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!answered)answer();});
+    $("quizNextBtn")?.addEventListener("click",next);
+    renderPaper();
+  }
+
+  MZ.homeworkQuiz={init,render:renderPaper,open,renderList};
+})();
+</script>
+
+<script>
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
   const M = window.Mattezoo;
@@ -10962,6 +11137,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.Mattezoo.games.scientificNotation.init();
   window.Mattezoo.activity.init();
   window.Mattezoo.cloudStudent.init();
+  window.Mattezoo.homeworkQuiz.init();
 });
 
 </script>
@@ -11075,7 +11251,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!$('missionBoardModal'))return;
     const seedTutorial=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     $('missionBoardModal').classList.toggle('seed-tutorial-only',seedTutorial);
-    const s=current(),teacher=Boolean(s?.assignments?.length);
+    const s=current(),teacher=Boolean(s?.assignments?.length||s?.homeworks?.length);
     $('studentAssignmentCard').querySelector('.assignment-card-head .muted').textContent=s?(teacher?(s.displayName?'Här är dina läraruppdrag, '+s.displayName+'. Varje uppdrag är en hel omgång.':'Välj ett av dina läraruppdrag. Varje uppdrag är en hel omgång.'):'Du är inloggad. Inget läraruppdrag är aktivt, så du får ett slumpat dagsuppdrag.'):'Logga in med klass och elevkod för att se dina läraruppdrag.';
     $('randomAssignmentCard').classList.toggle('hidden',teacher);
     if(!teacher){const m=randomMission();$('randomMissionTitle').textContent=games[m.gameId][0];$('randomMissionDescription').textContent=`Lös ${m.target} uppgifter i ${games[m.gameId][0].toLowerCase()}.`;
