@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.5.01 Parktomte asset</title>
+<title>Matteparken – v0.5.02 Tydligt TOMTETEST</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2355,6 +2355,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 /* v0.4.99 – extremt sällsynt parktomte-test */
 .gnome-sighting{position:absolute;z-index:5;display:none;pointer-events:none;opacity:0;transform:translate(-50%,-50%);filter:drop-shadow(0 5px 0 rgba(45,65,45,.12));transition:opacity .45s ease}
 .gnome-sighting.visible{display:block;opacity:1;animation:gnomePeek .42s ease-out}
+.gnome-sighting.test-preview{z-index:20}
 .gnome-sighting.leaving{display:block;opacity:0}
 .gnome-sighting img{display:block;width:100%;height:auto;image-rendering:pixelated;user-select:none}
 @keyframes gnomePeek{from{opacity:0;transform:translate(-50%,-44%) scale(.92)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
@@ -5668,15 +5669,27 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     clearTimeout(gnomeShowTimer);gnomeShowTimer=null;
     const el=$("#gnomeSighting");if(!el)return;
     el.classList.add("leaving");
-    window.setTimeout(()=>{el.classList.remove("visible","leaving");},500);
+    window.setTimeout(()=>{el.classList.remove("visible","leaving","test-preview");},500);
   }
   function showGnomeSighting({forced=false,spawnIndex=null}={}){
     clearTimeout(gnomeDelayTimer);clearTimeout(gnomeShowTimer);
-    const el=$("#gnomeSighting");if(!el)return;
-    const index=Number.isInteger(spawnIndex)?spawnIndex:Math.floor(Math.random()*GNOME_SPAWN_POINTS.length);
-    const spot=GNOME_SPAWN_POINTS[Math.max(0,Math.min(GNOME_SPAWN_POINTS.length-1,index))];
+    const el=$("#gnomeSighting"),img=$("#gnomeSightingImg");if(!el)return;
+    let spot;
+    if(forced){
+      // TOMTETEST ska vara omöjligt att missa: stor och på en tydlig plats.
+      // Den vanliga, extremt sällsynta tomtesynen använder fortfarande kantgömställena.
+      spot={left:"18%",top:"70%",width:150};
+      el.classList.add("test-preview");
+    }else{
+      const index=Number.isInteger(spawnIndex)?spawnIndex:Math.floor(Math.random()*GNOME_SPAWN_POINTS.length);
+      spot=GNOME_SPAWN_POINTS[Math.max(0,Math.min(GNOME_SPAWN_POINTS.length-1,index))];
+      el.classList.remove("test-preview");
+    }
     el.style.left=spot.left;el.style.top=spot.top;el.style.width=spot.width+"px";
     el.classList.remove("leaving");el.classList.add("visible");
+    if(img && img.complete && !img.naturalWidth){
+      $("#status").textContent="🍄 TOMTETEST startade, men luvbilden kunde inte laddas.";
+    }
     if(!forced){const st=readGnomeSightingState();st.shown=true;saveGnomeSightingState(st);}
     gnomeShowTimer=window.setTimeout(hideGnomeSighting,forced?70000:GNOME_SHOW_MS);
   }
