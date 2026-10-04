@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.74 Läxstart fix</title>
+<title>Matteparken – v0.4.75 Direkt läxstart</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10895,6 +10895,31 @@ async function login(){
  finally{busy=false;if($("#studentLoginBtn"))$("#studentLoginBtn").disabled=false;}
 }
 async function logout(){setSelection(null);setActiveAssignment(null);current=null;if($("#studentCode"))$("#studentCode").value="";if($("#studentDisplayName"))$("#studentDisplayName").value="";feedback("");render();try{await client().auth.signOut({scope:"local"});}catch(error){console.warn(error);}}
+function launchAssignmentGame(a){
+ const buttonMap={
+  multiplication:"openMultiplication",equations:"openEquations",pow10:"openPow10",
+  fractionDecimal:"openFractionDecimal",fractionArithmetic:"openFractionArithmetic",
+  percentConvert:"openPercentConvert",prefixMatch:"openPrefixMatch",unitConvert:"openUnitConvert",
+  statistics:"openStatistics",scientificNotation:"openScientificNotation"
+ };
+ const cfg=(a?.game_config&&typeof a.game_config==="object")?a.game_config:{};
+ MZ.closeModal("missionBoardModal");
+ $("#activityView")?.classList.add("hidden");
+ if(a.game_id==="multiplication"){
+   const table=Number(cfg.table);
+   if(table>=1&&table<=10){
+     MZ.games.multiplication.openRequired(table);
+     window.setTimeout(()=>$("#startBtn")?.click(),80);
+     return true;
+   }
+ }
+ const button=buttonMap[a.game_id];
+ if(!button)return false;
+ MZ.openModal("officeModal");
+ $("#"+button)?.click();
+ if(a.game_id==="equations")window.setTimeout(()=>$("#eqRandomOne")?.click(),80);
+ return true;
+}
 function startAssignment(id){
  const a=current?.allAssignments?.find(x=>x.id===id);
  if(!a){$("#status").textContent="⚠️ Uppdraget kunde inte hittas. Ladda om sidan och försök igen.";return;}
@@ -10905,7 +10930,11 @@ function startAssignment(id){
     render();return;
   }
  }
- MZ.missionBoard.launch(a.game_id,a.game_config||{});
+ const launched=launchAssignmentGame(a);
+ if(!launched){
+   $("#status").textContent="⚠️ Matteparken hittade inte spelet för den här läxan.";
+   return;
+ }
  setActiveAssignment(a.id);
  $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";
 }
@@ -10971,10 +11000,10 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   const simp=(n,d)=>{if(d<0){n=-n;d=-d;}const g=gcd(n,d);return[n/g,d/g];};
   const svNum=n=>String(Number(n.toFixed?.(6)??n)).replace(".",",");
   const fracText=(n,d)=>d===1?String(n):n+"/"+d;
-  const parseNumber=v=>{const x=Number(String(v||"").trim().replace(/s+/g,"").replace("%","").replace(",","."));return Number.isFinite(x)?x:null;};
-  const parseFraction=v=>{const m=String(v||"").trim().replace(/s+/g,"").match(/^(-?\d+)\/(-?\d+)$/);if(!m||Number(m[2])===0)return null;return simp(Number(m[1]),Number(m[2]));};
+  const parseNumber=v=>{const x=Number(String(v||"").trim().replace(/\\s+/g,"").replace("%","").replace(",","."));return Number.isFinite(x)?x:null;};
+  const parseFraction=v=>{const m=String(v||"").trim().replace(/\\s+/g,"").match(/^(-?\d+)\/(-?\d+)$/);if(!m||Number(m[2])===0)return null;return simp(Number(m[1]),Number(m[2]));};
   function parseSci(v){
-    let t=String(v||"").trim().toLowerCase().replace(/s+/g,"").replace(",",".").replace(/[×·x]/g,"*");
+    let t=String(v||"").trim().toLowerCase().replace(/\\s+/g,"").replace(",",".").replace(/[×·x]/g,"*");
     let m=t.match(/^([+-]?\d+(?:\.\d+)?)e([+-]?\d+)$/);
     if(m)return{c:Number(m[1]),e:Number(m[2])};
     m=t.match(/^([+-]?\d+(?:\.\d+)?)\*?10\^?([+-]?\d+)$/);
