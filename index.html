@@ -1079,6 +1079,11 @@ window.MATTEZOO_TEACHER_PLAN = {
 .work-bonus-icon{font-size:34px}
 .work-bonus-toast strong{display:block;font-size:17px;margin-bottom:2px}
 .work-bonus-toast div div{font-size:14px;line-height:1.35;color:#485149}
+.park-badge-toast{position:fixed;right:20px;top:96px;z-index:9998;display:flex;align-items:center;gap:12px;max-width:390px;padding:14px 16px;border-radius:15px;background:#fff3c8;border:3px solid #a68b4e;box-shadow:0 12px 34px rgba(35,50,40,.24);transform:translateY(-160%);opacity:0;pointer-events:none;transition:transform .28s ease,opacity .28s ease}
+.park-badge-toast.open{transform:translateY(0);opacity:1}
+.park-badge-toast-icon{font-size:34px}
+.park-badge-toast strong{display:block;font-size:17px;margin-bottom:2px}
+.park-badge-toast div div{font-size:14px;line-height:1.35;color:#485149}
 @media(max-width:850px){.activity-summary-grid{grid-template-columns:1fr 1fr}.activity-head{align-items:flex-start}.activity-scope-tabs{justify-content:flex-start}}
 @media(max-width:520px){.activity-summary-grid{grid-template-columns:1fr}.activity-bonus-card{align-items:flex-start;flex-direction:column}.work-bonus-toast{left:12px;right:12px;top:12px;max-width:none}}
 
@@ -2527,10 +2532,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         <section class="office-drawer hidden" id="gameShelfDrawer">
           <div class="office-drawer-head"><div><span class="shelf-eyebrow">PARKKONTORET · SPEL</span><h2>Spelhyllan</h2><p class="muted">Välj ett spel och börja spela.</p></div><button class="secondary" id="closeGameShelfDrawer">Till kontoret ↑</button></div>
           <div class="game-shelf">
-            <button class="game-card" id="openMultiplication"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">01</span><span class="shelf-symbol">×</span><span class="shelf-cover-rule"></span></span><strong>Multiplikation</strong><span class="shelf-description">Tabellerna 1–10, rekordtider och tre varv mot nästa kottbelöning.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openMultiplication"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">01</span><span class="shelf-symbol">×</span><span class="shelf-cover-rule"></span></span><strong>Multiplikation</strong><span class="shelf-description">Tabellerna 1–10 och rekordtider. Ett helt tabellvarv ger 10 kottar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openEquations"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">02</span><span class="shelf-symbol">x = ?</span><span class="shelf-cover-rule"></span></span><strong>Ekvationer</strong><span class="shelf-description">Lös ekvationer steg för steg. Tre slumpade ekvationer ger nästa kottbelöning.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openPow10"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">03</span><span class="shelf-symbol">10ⁿ</span><span class="shelf-cover-rule"></span></span><strong>× och ÷ med 10, 100, 1000</strong><span class="shelf-description">Flytta decimalen åt rätt håll. Tio rätt ger 10 kottar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
-            <button class="game-card" id="openFractionDecimal"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">04</span><span class="shelf-symbol">½ ↔ 0,5</span><span class="shelf-cover-rule"></span></span><strong>Bråk ↔ Decimal</strong><span class="shelf-description">Para ihop bråk och decimaltal. Ett felfritt bräde ger kottar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openFractionDecimal"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">04</span><span class="shelf-symbol">½ ↔ 0,5</span><span class="shelf-cover-rule"></span></span><strong>Bråk ↔ Decimal</strong><span class="shelf-description">Para ihop bråk och decimaltal. Ett färdigt bräde ger 10 kottar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openFractionArithmetic"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">05</span><span class="shelf-symbol">½ + ¼</span><span class="shelf-cover-rule"></span></span><strong>Räkna med bråk</strong><span class="shelf-description">Förläng, räkna och förkorta steg för steg.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             
             <button class="game-card" id="openPercentConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">06</span><span class="shelf-symbol">¼ = 0,25 = 25 %</span><span class="shelf-cover-rule"></span></span><strong>Bråk · Decimal · Procent</strong><span class="shelf-description">Fyll i de två former som saknas och se samma tal på tre sätt.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
@@ -2576,7 +2581,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
         <details class="office-test-tools hidden">
           <summary>🧪 Testverktyg för utveckling</summary>
-          <p class="muted">TUTORIALTEST = börja om tutorialen · PARKTEST = 100 kottar · SEEDTEST = fröpåse · CRATETEST = dekorationslåda · DAYTEST = nästa parkdag · BADGETEST = testmärke · BERGTEST = Berget · SJOTEST = Sjön · FISKTEST = testfiskar + troféer · TIDTEST = 10 testminuter · LOGGTEST = exempeldata.</p>
+          <p class="muted">TUTORIALTEST = börja om tutorialen · PARKTEST = 100 kottar · SEEDTEST = fröpåse · CRATETEST = dekorationslåda · DAYTEST = nästa parkdag · RUNDTEST = +5 matteomgångar · BADGETEST = testmärke · BERGTEST = Berget · SJOTEST = Sjön · FISKTEST = testfiskar + troféer · TIDTEST = 10 testminuter · LOGGTEST = exempeldata.</p>
           <div class="answer-row" style="justify-content:flex-start"><input class="answer" id="cheatCode" type="text" autocomplete="off" placeholder="Testkod" style="width:190px;font-size:17px" /><button class="primary" id="applyCheatCode">Använd kod</button></div>
           <div class="feedback" id="cheatFeedback" style="text-align:left;min-height:28px;margin-bottom:0"></div>
         </details>
@@ -2734,7 +2739,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           <div>
             <button class="secondary" id="backFromFractionDecimal">← Till parkkontoret</button>
             <h2 style="margin-top:16px">➗ Bråk ↔ Decimal</h2>
-            <div class="muted">Matcha varje bråk med rätt decimaltal. Ett felfritt bräde ger 10 kottar.</div>
+            <div class="muted">Matcha varje bråk med rätt decimaltal. Ett färdigt bräde ger 10 kottar.</div>
           </div>
           <div class="pill">🌰 <span id="fractionDecimalNp">0</span> kottar</div>
         </div>
@@ -2747,7 +2752,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           <div class="progress"><div id="fractionDecimalProgressFill"></div></div>
 
           <div class="match-stats-row">
-            <span id="fractionDecimalPerfectHint">✨ Perfekt varv hittills. Matcha alla 8 par utan fel för 10 kottar.</span>
+            <span id="fractionDecimalPerfectHint">Matcha alla 8 par. Ett färdigt bräde ger 10 kottar.</span>
             <span class="status-pill">Fel: <b id="fractionDecimalMistakes">0</b></span>
           </div>
 
@@ -2988,7 +2993,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       </div>
 
       <div id="unitConvertView" class="hidden">
-        <div class="trainer-head"><div><button class="secondary" id="backFromUnitConvert">← Till parkkontoret</button><h2 style="margin-top:16px">🔁 Enhetsomvandling</h2><div class="muted">Omvandla mellan vanliga längd-, massa- och volymenheter. Tio rätt ger 20 kottar.</div></div><div class="pill">🌰 <span id="unitConvertNp">0</span> kottar</div></div>
+        <div class="trainer-head"><div><button class="secondary" id="backFromUnitConvert">← Till parkkontoret</button><h2 style="margin-top:16px">🔁 Enhetsomvandling</h2><div class="muted">Omvandla mellan vanliga längd-, massa- och volymenheter. Tio rätt ger 10 kottar.</div></div><div class="pill">🌰 <span id="unitConvertNp">0</span> kottar</div></div>
         <div class="trainer-panel simple-game-panel">
           <div class="quest-progress-copy"><span>Det här varvet</span><span id="unitConvertProgressText">0 / 10 rätt</span></div><div class="progress"><div id="unitConvertProgressFill"></div></div>
           <div class="simple-prompt" id="unitConvertPrompt">Omvandla.</div><div class="question" id="unitConvertQuestion">—</div>
@@ -2999,7 +3004,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       </div>
 
       <div id="statisticsView" class="hidden">
-        <div class="trainer-head"><div><button class="secondary" id="backFromStatistics">← Till parkkontoret</button><h2 style="margin-top:16px">📊 Statistik</h2><div class="muted">Träna frekvens, relativ frekvens och lägesmått. Tio rätt ger 20 kottar.</div></div><div class="pill">🌰 <span id="statisticsNp">0</span> kottar</div></div>
+        <div class="trainer-head"><div><button class="secondary" id="backFromStatistics">← Till parkkontoret</button><h2 style="margin-top:16px">📊 Statistik</h2><div class="muted">Träna frekvens, relativ frekvens och lägesmått. Tio rätt ger 10 kottar.</div></div><div class="pill">🌰 <span id="statisticsNp">0</span> kottar</div></div>
         <div class="trainer-panel simple-game-panel">
           <div class="quest-progress-copy"><span>Det här varvet</span><span id="statisticsProgressText">0 / 10 rätt</span></div><div class="progress"><div id="statisticsProgressFill"></div></div>
           <div class="simple-prompt" id="statisticsPrompt">—</div><div class="stats-dataset" id="statisticsDataset"></div><div class="question stats-question" id="statisticsQuestion">—</div>
@@ -3048,7 +3053,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           <div>
             <button class="secondary" id="backToShelf">← Till parkkontoret</button>
             <h2 style="margin-top:16px">✖️ Multiplikationstränaren</h2>
-            <div class="muted">Klara samma tabell tre gånger för att få 10 kottar.</div>
+            <div class="muted">Ett helt tabellvarv ger 10 kottar.</div>
           </div>
           <div class="pill">🌰 <span id="trainerNp">0</span> kottar</div>
         </div>
@@ -3073,10 +3078,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
           <div class="top-reward-zone">
             <div class="reward-box">
-              <strong>🌰 Fram till nästa kottbelöning</strong>
+              <strong>🌰 Belöning per helt varv</strong>
               <div class="reward-row">
                 <div class="progress"><div id="rewardProgressFill"></div></div>
-                <b id="rewardProgressText">0 / 3 varv</b>
+                <b id="rewardProgressText">10 kottar</b>
               </div>
             </div>
 
@@ -3086,7 +3091,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
                 <button class="primary" id="againBtn">Kör samma tabell igen</button>
               </div>
               <div class="muted" style="margin-top:8px">
-                Varven sparas separat för varje tabell. Du kan byta tabell med knapparna ovan.
+                Varje färdig tabellomgång ger 10 kottar. Du kan byta tabell med knapparna ovan.
               </div>
             </div>
           </div>
@@ -3264,7 +3269,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       <div class="habitat-unlock-row">
         <div>
           <strong id="habitatUnlockStatus">Skogsdungen är fortfarande låst.</strong>
-          <div class="muted">Parkmärken används som meriter och förbrukas inte.</div>
+          <div class="muted">Parkmärken visar att du har utvecklat parken. De förbrukas inte.</div>
         </div>
         <button class="primary" id="unlockNorthwestHabitat" disabled>🔒 Lås upp Skogsdungen</button>
       </div>
@@ -3354,6 +3359,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 <div class="work-bonus-toast" id="workBonusToast" role="status" aria-live="polite">
   <div class="work-bonus-icon">🎁</div>
   <div><strong>Överraskning!</strong><div id="workBonusToastText">Något väntar bland Överraskningar.</div></div>
+</div>
+
+<div class="park-badge-toast" id="parkBadgeToast" role="status" aria-live="polite">
+  <div class="park-badge-toast-icon" id="parkBadgeToastIcon">🏅</div>
+  <div><strong>Nytt parkmärke!</strong><div id="parkBadgeToastText">Du har klarat en milstolpe.</div></div>
 </div>
 
 <script>
@@ -7440,18 +7450,33 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     }
   }
 
+  function showParkBadgeToast(event){
+    const badge=event?.detail?.badge;if(!badge)return;
+    const toast=$("#parkBadgeToast"),text=$("#parkBadgeToastText"),icon=$("#parkBadgeToastIcon");
+    if(!toast||!text||!icon)return;
+    icon.textContent=badge.icon||"🏅";
+    text.textContent=`${badge.name} – ${badge.description}`;
+    toast.classList.add("open");
+    clearTimeout(showParkBadgeToast.timer);
+    showParkBadgeToast.timer=window.setTimeout(()=>toast.classList.remove("open"),6500);
+  }
+
   function renderHabitatProgress(){
     const progress = MZ.habitats.snapshot("northwest");
     const unlocked = progress.unlocked;
     const percent = unlocked ? 100 : (progress.completed / progress.total) * 100;
     if($("#parkBadgeCount")) $("#parkBadgeCount").textContent = String(MZ.habitats.badgeCount());
     if($("#habitatProgressFill")) $("#habitatProgressFill").style.width = `${percent}%`;
-    if($("#habitatProgressText")) $("#habitatProgressText").textContent = unlocked ? "Skogsdungen är upplåst och redo att byggas i." : `${progress.completed} av ${progress.total} utvecklingskrav klara`;
+    if($("#habitatProgressText")) $("#habitatProgressText").textContent = unlocked
+      ? "Skogsdungen är upplåst och redo att byggas i."
+      : `${progress.completed} av ${progress.total} steg klara · 🏅 ${progress.requiredBadgesEarned}/3 · 🧮 ${Math.min(progress.current.mathRounds,progress.requirements.mathRounds)}/${progress.requirements.mathRounds}`;
     if($("#habitatMiniState")) $("#habitatMiniState").textContent = unlocked ? "Upplåst" : progress.ready ? "Redo!" : "Låst";
     const lock=$("#northwestHabitatLock"), label=$("#northwestZoneLabel");
     if(lock){ lock.classList.toggle("hidden",unlocked); lock.classList.toggle("ready",!unlocked && progress.ready); }
     if(label) label.classList.toggle("hidden",!unlocked);
-    if($("#northwestLockHint")) $("#northwestLockHint").textContent = progress.ready ? "✨ Redo att öppnas" : `${progress.completed}/${progress.total} krav klara`;
+    if($("#northwestLockHint")) $("#northwestLockHint").textContent = progress.ready
+      ? "✨ Redo att öppnas"
+      : `🏅 ${progress.requiredBadgesEarned}/3 · 🧮 ${Math.min(progress.current.mathRounds,progress.requirements.mathRounds)}/${progress.requirements.mathRounds}`;
     [["northeast","#northeastHabitatLock","#northeastZoneLabel"],["southeast","#southeastHabitatLock","#southeastZoneLabel"]].forEach(([id,lockSel,labelSel]) => {
       const isOpen=MZ.habitats.isUnlocked(id);
       $(lockSel)?.classList.toggle("hidden",isOpen);
@@ -7460,33 +7485,47 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function renderHabitatModal(){
+    MZ.habitats.refreshMilestones();
     const progress=MZ.habitats.snapshot("northwest");
     const list=$("#habitatRequirements"); if(!list) return; list.innerHTML="";
+    const badgeDefs=MZ.habitats.badgeDefinitions;
     const rows=[
-      {key:"uniqueItems",icon:"🌿",label:"Olika växter/dekorationer i Startgläntan"},
-      {key:"species",icon:"🐾",label:"Upptäckta arter"},
-      {key:"badges",icon:"🏅",label:"Parkmärken"}
+      {key:"firstBloom",icon:badgeDefs.firstBloom.icon,label:badgeDefs.firstBloom.name,detail:badgeDefs.firstBloom.description,value:progress.checks.firstBloom?"Parkmärke klart":"Inte klart ännu"},
+      {key:"parkBuilder",icon:badgeDefs.parkBuilder.icon,label:badgeDefs.parkBuilder.name,detail:badgeDefs.parkBuilder.description,value:`${Math.min(progress.current.uniqueItems,progress.requirements.uniqueItems)} / ${progress.requirements.uniqueItems} olika saker`},
+      {key:"natureWatcher",icon:badgeDefs.natureWatcher.icon,label:badgeDefs.natureWatcher.name,detail:badgeDefs.natureWatcher.description,value:`${Math.min(progress.current.species,progress.requirements.species)} / ${progress.requirements.species} arter`},
+      {key:"mathRounds",icon:"🧮",label:"Mattearbete",detail:"Gör 15 hela matteomgångar i Matteparken.",value:`${Math.min(progress.current.mathRounds,progress.requirements.mathRounds)} / ${progress.requirements.mathRounds} omgångar`}
     ];
     rows.forEach((row)=>{
-      const done=progress.checks[row.key], current=progress.current[row.key], required=progress.requirements[row.key];
+      const done=progress.checks[row.key];
       const node=document.createElement("div"); node.className=`habitat-requirement ${done ? "done" : "pending"}`;
-      node.innerHTML=`<span class="habitat-requirement-icon">${done ? "✅" : row.icon}</span><div><strong>${row.label}</strong><div class="muted">${Math.min(current,required)} / ${required}</div></div>`;
+      node.innerHTML=`<span class="habitat-requirement-icon">${done ? "✅" : row.icon}</span><div><strong>${row.label}</strong><div class="muted">${row.detail}</div><div style="margin-top:4px;font-weight:900">${row.value}</div></div>`;
       list.appendChild(node);
     });
     const badges=$("#badgeCollection"); badges.innerHTML="";
-    Object.values(MZ.habitats.badgeDefinitions).forEach((badge)=>{
+    Object.values(badgeDefs).forEach((badge)=>{
       const earned=Boolean(state.habitats.badges[badge.id]);
       const node=document.createElement("div"); node.className=`park-badge ${earned ? "earned" : "locked"}`;
-      node.innerHTML=`<span class="park-badge-icon">${earned ? badge.icon : "?"}</span><div><strong>${earned ? badge.name : "Ej intjänat"}</strong><div class="muted">${badge.description}</div></div>`;
+      node.innerHTML=`<span class="park-badge-icon">${earned ? badge.icon : "○"}</span><div><strong>${badge.name}</strong><div class="muted">${badge.description}</div></div>`;
       badges.appendChild(node);
     });
     const testBadgeCount=MZ.habitats.badgeIds().filter((id)=>id.startsWith("testBadge")).length;
-    if(testBadgeCount>0){ const node=document.createElement("div"); node.className="park-badge earned test-badge"; node.innerHTML=`<span class="park-badge-icon">🧪</span><div><strong>Testmärke × ${testBadgeCount}</strong><div class="muted">Tillfälligt märke för prototyptestning.</div></div>`; badges.appendChild(node); }
+    if(testBadgeCount>0){
+      const node=document.createElement("div"); node.className="park-badge earned test-badge";
+      node.innerHTML=`<span class="park-badge-icon">🧪</span><div><strong>Testmärke × ${testBadgeCount}</strong><div class="muted">Tillfälligt märke för prototyptestning.</div></div>`;
+      badges.appendChild(node);
+    }
     const button=$("#unlockNorthwestHabitat"); button.disabled=!progress.ready || progress.unlocked;
     button.textContent=progress.unlocked ? "✅ Skogsdungen är upplåst" : progress.ready ? "🌲 Lås upp Skogsdungen" : "🔒 Fortsätt utveckla parken";
-    $("#habitatUnlockStatus").textContent=progress.unlocked ? "Skogsdungen är nu en del av din park." : progress.ready ? "Alla krav är klara. Skogsdungen kan öppnas!" : "Skogsdungen är fortfarande låst.";
-    $("#habitatModalIntro").textContent=progress.unlocked ? "Du har öppnat parkens första expansion. Föremål kan nu placeras i båda habitaten." : "Utveckla Startgläntan för att göra parken redo att växa.";
+    $("#habitatUnlockStatus").textContent=progress.unlocked
+      ? "Skogsdungen är nu en del av din park."
+      : progress.ready
+        ? "Alla tre Parkmärken och mattekravet är klara. Skogsdungen kan öppnas!"
+        : `🏅 ${progress.requiredBadgesEarned}/3 Parkmärken · 🧮 ${Math.min(progress.current.mathRounds,progress.requirements.mathRounds)}/${progress.requirements.mathRounds} matteomgångar`;
+    $("#habitatModalIntro").textContent=progress.unlocked
+      ? "Du har öppnat parkens första expansion. Föremål kan nu placeras i båda habitaten."
+      : "Få tre Parkmärken i Startgläntan och gör 15 hela matteomgångar för att öppna Skogsdungen.";
   }
+
   function openHabitatModal(){ renderHabitatModal(); MZ.openModal("habitatModal"); }
   function unlockNorthwestHabitat(){
     const result=MZ.habitats.unlock("northwest");
@@ -8071,6 +8110,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       state.wildlife.dailyEvent=null; state.wildlife.lastProcessedParkDay=0; storage.saveWildlife();
       state.onboarding={tutorialVersion:2,bagOpened:false,keyTaken:false,seedBagTaken:false,selectedSeed:null,seedPlaced:false,seedGrown:false,seedQuestCorrect:0,tutorialStarterRewardGranted:false,tutorialBirdhouseOrdered:false,tutorialBirdhousePlaced:false,tutorialBirdArrivalAt:0,tutorialComplete:false};
       storage.saveOnboarding();
+      state.habitats.unlocked={southwest:true,northwest:false,northeast:false,southeast:false};
+      state.habitats.badges={}; state.habitats.mathRoundsTotal=0; state.habitats.mathBaselines={}; storage.saveHabitats();
       MZ.habitats.refreshMilestones();
       renderBoardMessage(); renderParkItems(); renderWildlifeStatus(); renderDailyMission(); updateShopUI();
       feedback.textContent = "Tutorialen är återställd. Stäng Parkkontoret och börja vid anslagstavlan.";
@@ -8087,6 +8128,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       MZ.rewards.addCrate(1);
       feedback.textContent = "Testkod godkänd: +1 dekorationslåda.";
       $("#status").textContent = "📦 En testlåda väntar i leveranslådan.";
+    }else if(code === "RUNDTEST"){
+      MZ.habitats.recordMathRound(5);
+      feedback.textContent="Testkod godkänd: +5 hela matteomgångar.";
+      $("#status").textContent="🧮 Fem testomgångar lades till i parkprogressionen.";
+      renderHabitatProgress();
     }else if(code === "BADGETEST"){
       MZ.habitats.addTestBadge();
       feedback.textContent="Testkod godkänd: +1 Parkmärke.";
@@ -8324,6 +8370,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       renderHabitatProgress();
       if($("#habitatModal").classList.contains("open")) renderHabitatModal();
     });
+    MZ.events.addEventListener("parkbadgeawarded", showParkBadgeToast);
     MZ.events.addEventListener("fishingchange", () => {
       updateFishingCatchUI();
       renderFishingTrophies();
@@ -8458,16 +8505,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   function updateSelectedTableUI(){
     if(!state.selectedTable){
       $("#bestForSelected").textContent = "—";
-      $("#rewardProgressText").textContent = `0 / ${config.roundsForReward} varv`;
-      $("#rewardProgressFill").style.width = "0%";
+      $("#rewardProgressText").textContent = "10 kottar / varv";
+      $("#rewardProgressFill").style.width = "100%";
       MZ.park.renderDailyMission();
       return;
     }
 
-    const progress = MZ.progression.getTableProgress(state.selectedTable);
     $("#bestForSelected").textContent = MZ.formatMs(getBestForTable(state.selectedTable));
-    $("#rewardProgressText").textContent = `${progress} / ${config.roundsForReward} varv`;
-    $("#rewardProgressFill").style.width = `${(progress / config.roundsForReward) * 100}%`;
+    $("#rewardProgressText").textContent = "10 kottar / varv";
+    $("#rewardProgressFill").style.width = "100%";
     $("#againBtn").textContent = `Kör ${state.selectedTable}:ans tabell igen`;
     MZ.park.renderDailyMission();
   }
@@ -8545,14 +8591,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     updateSelectedTableUI();
 
     const timeText = elapsed === null ? "—" : MZ.formatMs(elapsed);
-    let message = newRecord ? `🏆 Nytt rekord: ${timeText}! Varvet är klart.` : `🎉 Varvet är klart på ${timeText}.`;
-    message += result.rewarded ? ` Du fick ${result.rewardNP} kottar!` : " Ett varv närmare nästa kottbelöning.";
+    const message = (newRecord ? `🏆 Nytt rekord: ${timeText}! ` : `🎉 Varvet är klart på ${timeText}. `) + `Du fick ${result.rewardNP} kottar!`;
 
     $("#feedback").textContent = message;
     $("#feedback").className = "feedback good";
-    $("#roundCompleteText").textContent = result.rewarded
-      ? `Tre varv klara på ${state.selectedTable}:ans tabell. Du fick ${result.rewardNP} kottar!`
-      : `${result.progress} av ${config.roundsForReward} varv klara på ${state.selectedTable}:ans tabell.`;
+    $("#roundCompleteText").textContent = `Hela ${state.selectedTable}:ans tabell är klar. Du fick ${result.rewardNP} kottar!`;
     $("#answer").disabled = true;
     $("#okBtn").disabled = true;
     $("#afterRow").classList.add("open");
@@ -8560,7 +8603,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
     if(result.rewarded){
       $("#parkFlower").classList.add("bloomed");
-      $("#status").textContent = `🌼 Du tränade ${state.selectedTable}:ans tabell tre gånger och fick ${result.rewardNP} kottar.`;
+      $("#status").textContent = `🌰 Hela ${state.selectedTable}:ans tabell är klar. Du fick ${result.rewardNP} kottar.`;
     }
   }
 
@@ -8724,7 +8767,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   MZ.math.registerGame({
     id:"multiplication",
     title:"Multiplikation",
-    description:"Tabellerna 1–10, rekordtider och tre varv mot nästa kottbelöning."
+    description:"Tabellerna 1–10 och rekordtider. Ett helt tabellvarv ger 10 kottar."
   });
 
   MZ.games = MZ.games || {};
@@ -9349,8 +9392,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#fractionDecimalProgressFill").style.width = `${(matched.size / pairs.length) * 100}%`;
     $("#fractionDecimalMistakes").textContent = String(mistakes);
     $("#fractionDecimalPerfectHint").textContent = mistakes === 0
-      ? "✨ Perfekt varv hittills. Matcha alla 8 par utan fel för 10 kottar."
-      : "Du kan fortsätta träna klart brädet, men kottbelöningen kräver ett felfritt varv.";
+      ? "✨ Perfekt hittills! Ett färdigt bräde ger 10 kottar."
+      : "Fortsätt matcha klart brädet. Ett färdigt bräde ger fortfarande 10 kottar.";
   }
 
   function cardButton(pair, side){
@@ -9460,20 +9503,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   function finishBoard(){
     boardFinished = true;
     const perfect = mistakes === 0;
-    let rewardNP = 0;
-
-    if(perfect){
-      const result = MZ.math.completeActivity({gameId:"fractionDecimal", type:"matching-board", pairs:pairs.length, perfect:true});
-      rewardNP = result.rewardNP || 0;
-      $("#fractionDecimalFeedback").textContent = `🎉 Felfritt! Du fick ${rewardNP} kottar.`;
-      $("#fractionDecimalFeedback").className = "feedback good";
-      $("#fractionDecimalFinishText").textContent = `Alla 8 par är matchade utan fel. +${rewardNP} kottar!`;
-    }else{
-      MZ.math.completeActivity({gameId:"fractionDecimal", type:"matching-board", pairs:pairs.length, perfect:false, mistakes});
-      $("#fractionDecimalFeedback").textContent = `Brädet är klart med ${mistakes} fel. Kör igen för att försöka få 10 kottar.`;
-      $("#fractionDecimalFeedback").className = "feedback";
-      $("#fractionDecimalFinishText").textContent = `Alla 8 par är matchade. Ett felfritt varv ger 10 kottar.`;
-    }
+    const result = MZ.math.completeActivity({gameId:"fractionDecimal", type:"matching-board", pairs:pairs.length, perfect, mistakes});
+    const rewardNP=result.rewardNP||0;
+    $("#fractionDecimalFeedback").textContent = perfect
+      ? `🎉 Felfritt! Du fick ${rewardNP} kottar.`
+      : `🎉 Brädet är klart! Du fick ${rewardNP} kottar. Nästa gång kan du försöka slå ${mistakes} fel.`;
+    $("#fractionDecimalFeedback").className = "feedback good";
+    $("#fractionDecimalFinishText").textContent = perfect
+      ? `Alla 8 par är matchade utan fel. +${rewardNP} kottar!`
+      : `Alla 8 par är matchade. +${rewardNP} kottar!`;
 
     $("#fractionDecimalFinish").classList.add("open");
     $("#fractionDecimalNp").textContent = String(storage.getNaturePoints());
