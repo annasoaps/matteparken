@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.92 Tydlig parkprogression</title>
+<title>Matteparken – v0.4.93 Hur stor andel?</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2306,6 +2306,37 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
  .percent-trio-cell{min-height:140px}
 }
 </style>
+
+<style>
+/* v0.4.93 – Hur stor andel? */
+.share-part-panel{max-width:880px;margin:0 auto}
+.share-part-visual{display:flex;align-items:center;justify-content:center;min-height:250px;margin:18px 0;padding:22px;border:2px solid #c4b58f;border-radius:18px;background:#f5eedb}
+.share-part-grid{display:grid;gap:3px;width:min(100%,430px)}
+.share-part-cell{aspect-ratio:1/1;min-width:0;border:1px solid #9e987f;border-radius:2px;background:#fffdf5}
+.share-part-cell.filled{background:#dc7449;border-color:#a95031}
+.share-part-guided{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.share-part-guided label,.share-part-answer-box{display:flex;flex-direction:column;gap:6px;font-weight:800;color:#354838}
+.share-part-guided small{font-weight:600;color:#6f765e}
+.share-part-guided input,.share-part-answer-box input{min-height:48px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:8px 12px;font:inherit;font-size:18px}
+.share-part-formula{grid-column:1/-1;padding:10px 14px;border-radius:10px;background:#e9eddc;text-align:center;font-weight:950;letter-spacing:.04em}
+.share-part-answers{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:14px;align-items:end;margin-top:16px}
+.share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:6px;width:110px;margin:auto}
+.share-part-fraction .line{background:#405441;border-radius:99px}
+.share-part-fraction input{text-align:center}
+.share-part-percent-row{display:flex;align-items:center;gap:8px}
+.share-part-percent-row input{min-width:0;width:100%}
+.share-part-percent-row strong{font-size:22px}
+.share-part-answer-box.correct input,.share-part-fraction.correct input{border-color:#5e885c;background:#f1f8e8}
+.share-part-answer-box.wrong input,.share-part-fraction.wrong input{border-color:#a95a45;background:#fff1eb}
+.share-part-step-note{margin-top:8px;text-align:center;color:#69705b;font-weight:700}
+@media(max-width:700px){
+  .share-part-visual{min-height:190px;padding:14px}
+  .share-part-answers{grid-template-columns:1fr}
+  .share-part-guided{grid-template-columns:1fr}
+  .share-part-formula{grid-column:auto}
+}
+</style>
+
 </head>
 <body>
 <main class="game" aria-label="Matteparken">
@@ -2539,10 +2570,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
             <button class="game-card" id="openFractionArithmetic"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">05</span><span class="shelf-symbol">½ + ¼</span><span class="shelf-cover-rule"></span></span><strong>Räkna med bråk</strong><span class="shelf-description">Förläng, räkna och förkorta steg för steg.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             
             <button class="game-card" id="openPercentConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">06</span><span class="shelf-symbol">¼ = 0,25 = 25 %</span><span class="shelf-cover-rule"></span></span><strong>Bråk · Decimal · Procent</strong><span class="shelf-description">Fyll i de två former som saknas och se samma tal på tre sätt.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
-            <button class="game-card" id="openPrefixMatch"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">07</span><span class="shelf-symbol">k · m</span><span class="shelf-cover-rule"></span></span><strong>Prefix – para ihop</strong><span class="shelf-description">Matcha kilo, hekto, deci, centi och milli med rätt värde.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
-            <button class="game-card" id="openUnitConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">08</span><span class="shelf-symbol">cm → m</span><span class="shelf-cover-rule"></span></span><strong>Enhetsomvandling</strong><span class="shelf-description">Omvandla längd, massa och volym mellan vanliga enheter.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
-            <button class="game-card" id="openStatistics"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">09</span><span class="shelf-symbol">▂ ▅ ▃ ▇</span><span class="shelf-cover-rule"></span></span><strong>Statistik</strong><span class="shelf-description">Träna frekvens, relativ frekvens och lägesmått.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
-            <button class="game-card" id="openScientificNotation"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">10</span><span class="shelf-symbol">a × 10ⁿ</span><span class="shelf-cover-rule"></span></span><strong>Grundpotensform</strong><span class="shelf-description">Gör om stora tal till grundpotensform och tillbaka igen.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openSharePart"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">07</span><span class="shelf-symbol">3/10 = 30 %</span><span class="shelf-cover-rule"></span></span><strong>Hur stor andel?</strong><span class="shelf-description">Se delen och det hela. Skriv andelen som bråk, decimal och procent. Tio uppgifter ger 10 kottar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openPrefixMatch"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">08</span><span class="shelf-symbol">k · m</span><span class="shelf-cover-rule"></span></span><strong>Prefix – para ihop</strong><span class="shelf-description">Matcha kilo, hekto, deci, centi och milli med rätt värde.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openUnitConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">09</span><span class="shelf-symbol">cm → m</span><span class="shelf-cover-rule"></span></span><strong>Enhetsomvandling</strong><span class="shelf-description">Omvandla längd, massa och volym mellan vanliga enheter.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openStatistics"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">10</span><span class="shelf-symbol">▂ ▅ ▃ ▇</span><span class="shelf-cover-rule"></span></span><strong>Statistik</strong><span class="shelf-description">Träna frekvens, relativ frekvens och lägesmått.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openScientificNotation"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">11</span><span class="shelf-symbol">a × 10ⁿ</span><span class="shelf-cover-rule"></span></span><strong>Grundpotensform</strong><span class="shelf-description">Gör om stora tal till grundpotensform och tillbaka igen.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
           </div>
         </section>
 
@@ -2979,6 +3011,48 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           <div class="feedback" id="percentConvertFeedback"></div>
           <div class="simple-help" id="percentConvertHelp"><strong>Kom ihåg:</strong> procent betyder hundradelar. Decimaler kan skrivas med komma eller punkt. Ett likvärdigt bråk räknas som rätt även om det går att förkorta.</div>
           <div class="round-actions" id="percentConvertFinish"><strong id="percentConvertFinishText">Varvet är klart.</strong><div class="action-buttons"><button class="primary" id="percentConvertAgain">Kör 6 nya trior</button></div></div>
+        </div>
+      </div>
+
+
+      <div id="sharePartView" class="hidden">
+        <div class="trainer-head">
+          <div>
+            <button class="secondary" id="backFromSharePart">← Till parkkontoret</button>
+            <h2 style="margin-top:16px">🟧 Hur stor andel?</h2>
+            <div class="muted">Se delen av det hela och skriv andelen i bråkform, decimalform och procentform. Tio uppgifter ger 10 kottar.</div>
+          </div>
+          <div class="pill">🌰 <span id="sharePartNp">0</span> kottar</div>
+        </div>
+        <div class="trainer-panel share-part-panel">
+          <div class="quest-progress-copy"><span>Det här varvet</span><span id="sharePartProgressText">0 / 10 uppgifter klara</span></div>
+          <div class="progress"><div id="sharePartProgressFill"></div></div>
+          <div class="simple-prompt">Hur stor andel är färgad?</div>
+          <div class="share-part-visual"><div class="share-part-grid" id="sharePartGrid" role="img" aria-label=""></div></div>
+
+          <div class="share-part-guided" id="sharePartGuided">
+            <label>Det hela<small>Hur många finns sammanlagt?</small><input id="sharePartWhole" type="number" inputmode="numeric" autocomplete="off" /></label>
+            <label>Delen<small>Hur många är färgade?</small><input id="sharePartPart" type="number" inputmode="numeric" autocomplete="off" /></label>
+            <div class="share-part-formula">ANDEL = DELEN / DET HELA</div>
+          </div>
+
+          <div class="share-part-answers">
+            <div class="share-part-answer-box" id="sharePartFractionBox">
+              <span>Bråkform</span>
+              <div class="share-part-fraction" id="sharePartFraction">
+                <input id="sharePartNumerator" type="number" inputmode="numeric" autocomplete="off" aria-label="Täljare" />
+                <span class="line"></span>
+                <input id="sharePartDenominator" type="number" inputmode="numeric" autocomplete="off" aria-label="Nämnare" />
+              </div>
+            </div>
+            <label class="share-part-answer-box" id="sharePartDecimalBox">Decimalform<input id="sharePartDecimal" type="text" inputmode="decimal" autocomplete="off" placeholder="0,..." /></label>
+            <label class="share-part-answer-box" id="sharePartPercentBox">Procentform<div class="share-part-percent-row"><input id="sharePartPercent" type="text" inputmode="decimal" autocomplete="off" placeholder="..." /><strong>%</strong></div></label>
+          </div>
+          <div class="share-part-step-note" id="sharePartStepNote">Uppgift 1–2: hitta först det hela och delen.</div>
+
+          <div class="percent-trio-actions"><button class="primary" id="sharePartCheck" type="button">Kontrollera</button></div>
+          <div class="feedback" id="sharePartFeedback"></div>
+          <div class="round-actions" id="sharePartFinish"><strong id="sharePartFinishText">Varvet är klart.</strong><div class="action-buttons"><button class="primary" id="sharePartAgain" type="button">Kör 10 nya</button></div></div>
         </div>
       </div>
 
@@ -3616,7 +3690,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   state.daily.version = Math.max(0, Number(state.daily.version) || 0);
 
   if(!state.simpleGameStats || typeof state.simpleGameStats !== "object" || Array.isArray(state.simpleGameStats)) state.simpleGameStats = {};
-  ["pow10","fractionDecimal","fractionArithmetic","mgn","percentConvert","prefixMatch","unitConvert","statistics"].forEach((gameId) => {
+  ["pow10","fractionDecimal","fractionArithmetic","mgn","percentConvert","sharePart","prefixMatch","unitConvert","statistics"].forEach((gameId) => {
     const entry = state.simpleGameStats[gameId];
     state.simpleGameStats[gameId] = entry && typeof entry === "object" && !Array.isArray(entry) ? entry : {};
     state.simpleGameStats[gameId].rounds = Math.max(0, Number(state.simpleGameStats[gameId].rounds) || 0);
@@ -3892,7 +3966,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,progressionRound:true};
       }
 
-      if(["pow10","mgn","prefixMatch","unitConvert","statistics","scientificNotation"].includes(activity.gameId) && activity.type === "ten-question-round"){
+      if(["pow10","mgn","sharePart","prefixMatch","unitConvert","statistics","scientificNotation"].includes(activity.gameId) && activity.type === "ten-question-round"){
         const gameId = activity.gameId;
         const entry = state.simpleGameStats[gameId] || (state.simpleGameStats[gameId] = {rounds:0, correct:0});
         entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
@@ -10355,6 +10429,186 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   MZ.games.percentConvert={init};
 })();
 </script>
+
+<script>
+(() => {
+  "use strict";
+  const MZ=window.Mattezoo, {$,storage}=MZ;
+  const ROUND_SIZE=10;
+  let questions=[],index=0,completed=0,roundFinished=false,current=null;
+
+  const guidedPool=[
+    {rows:2,cols:5,part:1},{rows:2,cols:5,part:3},{rows:2,cols:5,part:7},{rows:2,cols:5,part:9}
+  ];
+  const independentPool=[
+    {rows:1,cols:4,part:1},{rows:1,cols:4,part:3},
+    {rows:1,cols:5,part:1},{rows:1,cols:5,part:2},{rows:1,cols:5,part:4},
+    {rows:2,cols:5,part:2},{rows:2,cols:5,part:4},{rows:2,cols:5,part:6},{rows:2,cols:5,part:8},
+    {rows:10,cols:10,part:1},{rows:10,cols:10,part:9},{rows:10,cols:10,part:17},{rows:10,cols:10,part:23},
+    {rows:10,cols:10,part:37},{rows:10,cols:10,part:42},{rows:10,cols:10,part:64},{rows:10,cols:10,part:75}
+  ];
+
+  const shuffle=items=>{const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const parse=s=>{const raw=String(s??"").trim().replace(/\s/g,"").replace(",",".").replace("%","");if(!raw)return NaN;return Number(raw);};
+  const fmt=n=>new Intl.NumberFormat("sv-SE",{maximumFractionDigits:4,useGrouping:false}).format(n);
+  const total=q=>q.rows*q.cols;
+
+  function buildRound(){
+    return shuffle(guidedPool).slice(0,2).map(q=>({...q,guided:true}))
+      .concat(shuffle(independentPool).slice(0,8).map(q=>({...q,guided:false})));
+  }
+
+  function hideOthers(){
+    ["#fieldGuideView","#activityView","#seedQuestView","#dailyQuestView","#multiplicationView","#equationsView","#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#percentConvertView","#prefixMatchView","#unitConvertView","#statisticsView","#scientificNotationView"].forEach(id=>$(id)?.classList.add("hidden"));
+  }
+
+  function showView(){
+    $("#officeHome").classList.add("hidden");
+    hideOthers();
+    $("#sharePartView").classList.remove("hidden");
+    $("#sharePartNp").textContent=storage.getNaturePoints();
+    startRound();
+  }
+
+  function back(){
+    $("#sharePartView").classList.add("hidden");
+    $("#officeHome").classList.remove("hidden");
+  }
+
+  function renderProgress(){
+    $("#sharePartProgressText").textContent=completed+" / "+ROUND_SIZE+" uppgifter klara";
+    $("#sharePartProgressFill").style.width=(completed/ROUND_SIZE*100)+"%";
+  }
+
+  function clearMarks(){
+    ["#sharePartFractionBox","#sharePartDecimalBox","#sharePartPercentBox"].forEach(id=>$(id)?.classList.remove("correct","wrong"));
+    ["#sharePartWhole","#sharePartPart"].forEach(id=>$(id)?.classList.remove("correct","wrong"));
+  }
+
+  function renderGrid(q){
+    const grid=$("#sharePartGrid"),n=total(q);
+    grid.replaceChildren();
+    grid.style.gridTemplateColumns="repeat("+q.cols+",minmax(0,1fr))";
+    grid.style.maxWidth=q.cols>=10?"360px":"420px";
+    grid.setAttribute("aria-label",q.part+" av "+n+" rutor är färgade");
+    for(let i=0;i<n;i++){
+      const cell=document.createElement("span");
+      cell.className="share-part-cell"+(i<q.part?" filled":"");
+      grid.appendChild(cell);
+    }
+  }
+
+  function resetInputs(){
+    ["#sharePartWhole","#sharePartPart","#sharePartNumerator","#sharePartDenominator","#sharePartDecimal","#sharePartPercent"].forEach(id=>{
+      const el=$(id);if(!el)return;el.value="";el.disabled=false;
+    });
+    clearMarks();
+  }
+
+  function next(){
+    if(index>=questions.length)return;
+    current=questions[index];
+    resetInputs();
+    renderGrid(current);
+    $("#sharePartGuided").classList.toggle("hidden",!current.guided);
+    $("#sharePartStepNote").textContent=current.guided
+      ?"Uppgift "+(index+1)+": hitta först det hela och delen."
+      :"Uppgift "+(index+1)+": skriv andelen som bråk, decimal och procent.";
+    $("#sharePartFeedback").textContent="";
+    $("#sharePartFeedback").className="feedback";
+    $("#sharePartCheck").disabled=false;
+    window.setTimeout(()=>$(current.guided?"#sharePartWhole":"#sharePartNumerator")?.focus(),30);
+  }
+
+  function mark(selector,ok){
+    const el=$(selector);if(!el)return;
+    el.classList.toggle("correct",ok);el.classList.toggle("wrong",!ok);
+  }
+
+  function check(){
+    if(!current||roundFinished)return;
+    const n=total(current),target=current.part/n;
+    const num=Number($("#sharePartNumerator").value),den=Number($("#sharePartDenominator").value);
+    const fractionExact=Number.isInteger(num)&&Number.isInteger(den)&&num===current.part&&den===n;
+    const equivalent=Number.isFinite(num)&&Number.isFinite(den)&&den>0&&Math.abs(num/den-target)<1e-9;
+    const dec=parse($("#sharePartDecimal").value),pct=parse($("#sharePartPercent").value);
+    const decimalOK=Number.isFinite(dec)&&Math.abs(dec-target)<1e-9;
+    const percentOK=Number.isFinite(pct)&&Math.abs(pct-target*100)<1e-9;
+    let wholeOK=true,partOK=true;
+
+    if(current.guided){
+      wholeOK=Number($("#sharePartWhole").value)===n;
+      partOK=Number($("#sharePartPart").value)===current.part;
+      mark("#sharePartWhole",wholeOK);
+      mark("#sharePartPart",partOK);
+    }
+
+    mark("#sharePartFractionBox",fractionExact);
+    mark("#sharePartDecimalBox",decimalOK);
+    mark("#sharePartPercentBox",percentOK);
+
+    if(!(wholeOK&&partOK&&fractionExact&&decimalOK&&percentOK)){
+      const messages=[];
+      if(current.guided&&!wholeOK)messages.push("Det hela är "+n+".");
+      if(current.guided&&!partOK)messages.push("Delen är "+current.part+".");
+      if(!fractionExact)messages.push(equivalent
+        ?"Bråket är lika mycket, men här tränar vi delen/det hela. Skriv "+current.part+"/"+n+"."
+        :"Bråket ska vara delen över det hela.");
+      if(!decimalOK)messages.push("Kontrollera decimalformen.");
+      if(!percentOK)messages.push("Kontrollera procentformen.");
+      $("#sharePartFeedback").textContent=messages.join(" ");
+      $("#sharePartFeedback").className="feedback bad";
+      return;
+    }
+
+    MZ.math.recordQuestion({gameId:"sharePart"});
+    completed++;
+    index++;
+    renderProgress();
+    $("#sharePartFeedback").textContent="Rätt! "+current.part+"/"+n+" = "+fmt(target)+" = "+fmt(target*100)+" % 🌿";
+    $("#sharePartFeedback").className="feedback good";
+    $("#sharePartCheck").disabled=true;
+    if(completed>=ROUND_SIZE)window.setTimeout(finish,600);
+    else window.setTimeout(next,550);
+  }
+
+  function startRound(){
+    questions=buildRound();
+    index=0;
+    completed=0;
+    roundFinished=false;
+    current=null;
+    $("#sharePartFinish").classList.remove("open");
+    renderProgress();
+    next();
+  }
+
+  function finish(){
+    roundFinished=true;
+    const r=MZ.math.completeActivity({gameId:"sharePart",type:"ten-question-round"});
+    $("#sharePartCheck").disabled=true;
+    $("#sharePartFeedback").textContent="🎉 Tio uppgifter klara! Du fick "+r.rewardNP+" kottar.";
+    $("#sharePartFeedback").className="feedback good";
+    $("#sharePartFinishText").textContent="Varvet är klart. Du fick "+r.rewardNP+" kottar.";
+    $("#sharePartFinish").classList.add("open");
+    $("#sharePartNp").textContent=storage.getNaturePoints();
+  }
+
+  function init(){
+    $("#openSharePart").addEventListener("click",showView);
+    $("#backFromSharePart").addEventListener("click",back);
+    $("#sharePartCheck").addEventListener("click",check);
+    ["#sharePartWhole","#sharePartPart","#sharePartNumerator","#sharePartDenominator","#sharePartDecimal","#sharePartPercent"].forEach(id=>$(id)?.addEventListener("keydown",e=>{if(e.key==="Enter")check();}));
+    $("#sharePartAgain").addEventListener("click",startRound);
+    MZ.events.addEventListener("npchange",()=>{$("#sharePartNp").textContent=storage.getNaturePoints();});
+  }
+
+  MZ.math.registerGame({id:"sharePart",title:"Hur stor andel?",description:"Se delen och det hela och skriv andelen som bråk, decimal och procent."});
+  MZ.games=MZ.games||{};
+  MZ.games.sharePart={init};
+})();
+</script>
+
 <script>
 (() => {
   "use strict";
@@ -10729,6 +10983,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     fractionArithmetic:"#fractionArithmeticView",
     mgn:"#mgnView",
     percentConvert:"#percentConvertView",
+    sharePart:"#sharePartView",
     prefixMatch:"#prefixMatchView",
     unitConvert:"#unitConvertView",
     statistics:"#statisticsView",
@@ -10743,6 +10998,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     fractionArithmetic:"Räkna med bråk",
     mgn:"Minsta gemensamma nämnaren",
     percentConvert:"Bråk • Decimal • Procent",
+    sharePart:"Hur stor andel?",
     prefixMatch:"Prefix",
     unitConvert:"Enhetsomvandling",
     statistics:"Statistik",
@@ -11104,10 +11360,10 @@ let sb=null,current=null,busy=false,reconnectPromise=null,writeQueue=Promise.res
 const expectedRoundTypes={
  multiplication:"table-round",equations:"solved-random-equation",pow10:"ten-question-round",
  fractionDecimal:"matching-board",fractionArithmetic:"three-calculation-round",
- percentConvert:"six-trio-round",prefixMatch:"ten-question-round",
+ percentConvert:"six-trio-round",sharePart:"ten-question-round",prefixMatch:"ten-question-round",
  unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round"
 };
-const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform"};
+const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform"};
 
 const norm=v=>String(v||"").trim().toUpperCase().replace(/\s+/g,"");
 const cleanDisplayName=v=>String(v||"").trim().replace(/\s+/g," ").slice(0,24);
@@ -11136,7 +11392,7 @@ function homeworkStatus(hw){
 }
 function gameTitle(id){return MZ.math.listGames().find(g=>g.id===id)?.title||fallbackTitles[id]||id;}
 function activityDescriptor(d){if(d.gameId==="multiplication"&&Number.isFinite(Number(d.table))){const t=Number(d.table);return{key:"multiplication:"+t,label:t+":ans tabell"};}return{key:d.gameId,label:gameTitle(d.gameId)};}
-function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt."};return x[a?.game_id]||"En hel omgång.";}
+function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 10 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt."};return x[a?.game_id]||"En hel omgång.";}
 
 function getSelection(){try{return JSON.parse(localStorage.getItem(SELECTION_KEY)||"null");}catch{return null;}}
 function setSelection(v){v?localStorage.setItem(SELECTION_KEY,JSON.stringify(v)):localStorage.removeItem(SELECTION_KEY);}
@@ -11617,6 +11873,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.Mattezoo.games.fractionDecimal.init();
   window.Mattezoo.games.fractionArithmetic.init();
   window.Mattezoo.games.percentConvert.init();
+  window.Mattezoo.games.sharePart.init();
   window.Mattezoo.games.prefixMatch.init();
   window.Mattezoo.games.unitConvert.init();
   window.Mattezoo.games.statistics.init();
