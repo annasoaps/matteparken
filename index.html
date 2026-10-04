@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.82 Lärartestläge</title>
+<title>Matteparken – v0.4.83 Bråk decimal procent-trior</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2276,6 +2276,35 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   #studentHomeworkPaper .student-homework-card .primary{width:auto}
 }
 </style>
+
+<style id="percentTrioV1">
+.percent-trio-panel{max-width:900px}
+.percent-trio-grid{display:grid;grid-template-columns:minmax(160px,1fr) auto minmax(160px,1fr) auto minmax(160px,1fr);gap:12px;align-items:stretch;margin:22px 0 14px}
+.percent-trio-cell{min-height:172px;border:3px solid #b8aa87;border-radius:14px;background:#fffaf0;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:.16s ease}
+.percent-trio-cell.given{border-color:#7c966d;background:#edf4e6;box-shadow:inset 0 0 0 2px #d7e6cc}
+.percent-trio-cell.solved{border-color:#6d9665;background:#eff7e8}
+.percent-trio-cell.has-error{border-color:#b66f62;background:#fff1eb}
+.percent-trio-label{font-size:12px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#67705f}
+.percent-given{font-size:34px;font-weight:950;color:#304b35;min-height:58px;display:grid;place-items:center}
+.percent-equals{display:grid;place-items:center;font-family:Georgia,serif;font-size:34px;font-weight:900;color:#67705f}
+.percent-fraction-input{display:grid;grid-template-rows:48px 3px 48px;gap:6px;width:96px;align-items:center}
+.percent-fraction-input input{width:96px;height:48px;border:2px solid #8f9b78;border-radius:9px;background:#fff;font:900 24px/1 ui-rounded,"Trebuchet MS",system-ui,sans-serif;text-align:center;color:#304238}
+.percent-fraction-line{display:block;height:3px;background:#354a35;border-radius:999px}
+.percent-fraction-input.correct input,.percent-single-input.correct{border-color:#5d8b58!important;background:#eef8e9!important}
+.percent-fraction-input.wrong input,.percent-single-input.wrong{border-color:#b55f54!important;background:#fff0eb!important}
+.percent-single-input{width:min(150px,100%);font-size:27px!important;text-align:center}
+.percent-percent-input{display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.percent-percent-input strong{font-size:28px;color:#354a35}
+.percent-trio-actions{display:flex;justify-content:center;margin:10px 0 2px}
+.percent-trio-actions .primary{min-width:180px}
+.percent-stacked-fraction{display:inline-grid;grid-template-rows:auto 2px auto;gap:3px;min-width:52px;align-items:center;text-align:center;font-size:28px;line-height:1}
+.percent-stacked-fraction .bar{height:2px;background:currentColor;display:block}
+@media(max-width:760px){
+ .percent-trio-grid{grid-template-columns:1fr;gap:7px}
+ .percent-equals{height:24px;font-size:26px}
+ .percent-trio-cell{min-height:140px}
+}
+</style>
 </head>
 <body>
 <main class="game" aria-label="Matteparken">
@@ -2510,7 +2539,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
             <button class="game-card" id="openFractionDecimal"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">04</span><span class="shelf-symbol">½ ↔ 0,5</span><span class="shelf-cover-rule"></span></span><strong>Bråk ↔ Decimal</strong><span class="shelf-description">Para ihop bråk och decimaltal. Ett felfritt bräde ger kottar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openFractionArithmetic"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">05</span><span class="shelf-symbol">½ + ¼</span><span class="shelf-cover-rule"></span></span><strong>Räkna med bråk</strong><span class="shelf-description">Förläng, räkna och förkorta steg för steg.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             
-            <button class="game-card" id="openPercentConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">06</span><span class="shelf-symbol">25 %</span><span class="shelf-cover-rule"></span></span><strong>Bråk · Decimal · Procent</strong><span class="shelf-description">Träna vanliga samband och omvandlingar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openPercentConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">06</span><span class="shelf-symbol">¼ = 0,25 = 25 %</span><span class="shelf-cover-rule"></span></span><strong>Bråk · Decimal · Procent</strong><span class="shelf-description">Fyll i de två former som saknas och se samma tal på tre sätt.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openPrefixMatch"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">07</span><span class="shelf-symbol">k · m</span><span class="shelf-cover-rule"></span></span><strong>Prefix – para ihop</strong><span class="shelf-description">Matcha kilo, hekto, deci, centi och milli med rätt värde.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openUnitConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">08</span><span class="shelf-symbol">cm → m</span><span class="shelf-cover-rule"></span></span><strong>Enhetsomvandling</strong><span class="shelf-description">Omvandla längd, massa och volym mellan vanliga enheter.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openStatistics"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">09</span><span class="shelf-symbol">▂ ▅ ▃ ▇</span><span class="shelf-cover-rule"></span></span><strong>Statistik</strong><span class="shelf-description">Träna frekvens, relativ frekvens och lägesmått.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
@@ -2906,13 +2935,51 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
 
       <div id="percentConvertView" class="hidden">
-        <div class="trainer-head"><div><button class="secondary" id="backFromPercentConvert">← Till spelhyllan</button><h2 style="margin-top:16px">📈 Bråk • Decimal • Procent</h2><div class="muted">Träna på vanliga samband mellan bråk, decimaltal och procent. Tio rätt ger 10 kottar.</div></div><div class="pill">🌰 <span id="percentConvertNp">0</span> kottar</div></div>
-        <div class="trainer-panel simple-game-panel">
-          <div class="quest-progress-copy"><span>Det här varvet</span><span id="percentConvertProgressText">0 / 10 rätt</span></div><div class="progress"><div id="percentConvertProgressFill"></div></div>
-          <div class="simple-prompt" id="percentConvertPrompt">Skriv som procent.</div><div class="question" id="percentConvertQuestion">—</div>
-          <div class="answer-row"><input class="answer fraction-answer" id="percentConvertAnswer" type="text" inputmode="text" placeholder="Svar" /><button class="primary" id="percentConvertCheck">Svara</button></div>
-          <div class="feedback" id="percentConvertFeedback"></div><div class="simple-help" id="percentConvertHelp">Du får främst vanliga bråk som 1/2, 1/4, femtedelar och tiondelar. Procent kan skrivas med eller utan %-tecken och decimaler med komma eller punkt.</div>
-          <div class="round-actions" id="percentConvertFinish"><strong id="percentConvertFinishText">Varvet är klart.</strong><div class="action-buttons"><button class="primary" id="percentConvertAgain">Kör 10 nya</button></div></div>
+        <div class="trainer-head">
+          <div>
+            <button class="secondary" id="backFromPercentConvert">← Till spelhyllan</button>
+            <h2 style="margin-top:16px">📈 Bråk • Decimal • Procent</h2>
+            <div class="muted">Samma tal kan skrivas på tre sätt. Fyll i de två former som saknas. Sex kompletta trior ger 10 kottar.</div>
+          </div>
+          <div class="pill">🌰 <span id="percentConvertNp">0</span> kottar</div>
+        </div>
+        <div class="trainer-panel percent-trio-panel">
+          <div class="quest-progress-copy"><span>Det här varvet</span><span id="percentConvertProgressText">0 / 6 trior klara</span></div>
+          <div class="progress"><div id="percentConvertProgressFill"></div></div>
+          <div class="simple-prompt" id="percentConvertPrompt">Fyll i de två former som saknas.</div>
+
+          <div class="percent-trio-grid" id="percentConvertTrio">
+            <section class="percent-trio-cell" id="percentFractionCell">
+              <span class="percent-trio-label">Bråkform</span>
+              <div class="percent-given hidden" id="percentFractionGiven"></div>
+              <div class="percent-fraction-input" id="percentFractionInput">
+                <input id="percentFractionNumerator" type="number" inputmode="numeric" autocomplete="off" aria-label="Täljare" />
+                <span class="percent-fraction-line"></span>
+                <input id="percentFractionDenominator" type="number" inputmode="numeric" autocomplete="off" aria-label="Nämnare" />
+              </div>
+            </section>
+
+            <div class="percent-equals" aria-hidden="true">=</div>
+
+            <section class="percent-trio-cell" id="percentDecimalCell">
+              <span class="percent-trio-label">Decimalform</span>
+              <div class="percent-given hidden" id="percentDecimalGiven"></div>
+              <input class="answer percent-single-input" id="percentDecimalAnswer" type="text" inputmode="decimal" autocomplete="off" placeholder="0,..." aria-label="Decimalform" />
+            </section>
+
+            <div class="percent-equals" aria-hidden="true">=</div>
+
+            <section class="percent-trio-cell" id="percentPercentCell">
+              <span class="percent-trio-label">Procentform</span>
+              <div class="percent-given hidden" id="percentPercentGiven"></div>
+              <div class="percent-percent-input" id="percentPercentInput"><input class="answer percent-single-input" id="percentPercentAnswer" type="text" inputmode="decimal" autocomplete="off" placeholder="..." aria-label="Procenttal" /><strong>%</strong></div>
+            </section>
+          </div>
+
+          <div class="percent-trio-actions"><button class="primary" id="percentConvertCheck" type="button">Kontrollera</button></div>
+          <div class="feedback" id="percentConvertFeedback"></div>
+          <div class="simple-help" id="percentConvertHelp"><strong>Kom ihåg:</strong> procent betyder hundradelar. Decimaler kan skrivas med komma eller punkt. Ett likvärdigt bråk räknas som rätt även om det går att förkorta.</div>
+          <div class="round-actions" id="percentConvertFinish"><strong id="percentConvertFinishText">Varvet är klart.</strong><div class="action-buttons"><button class="primary" id="percentConvertAgain">Kör 6 nya trior</button></div></div>
         </div>
       </div>
 
@@ -3821,7 +3888,18 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         return {progress:0, rewarded, rewardNP, rounds:entry.rounds, correct:entry.correct};
       }
 
-      if(["pow10","mgn","percentConvert","prefixMatch","unitConvert","statistics","scientificNotation"].includes(activity.gameId) && activity.type === "ten-question-round"){
+      if(activity.gameId === "percentConvert" && activity.type === "six-trio-round"){
+        const entry = state.simpleGameStats.percentConvert || (state.simpleGameStats.percentConvert = {rounds:0, correct:0});
+        const trios=Math.max(0,Number(activity.trios)||6);
+        entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
+        entry.correct = Math.max(0, Number(entry.correct) || 0) + trios;
+        storage.saveSimpleGameStats();
+        const rewardNP = config.standardRoundRewardNP;
+        storage.addNaturePoints(rewardNP);
+        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct};
+      }
+
+      if(["pow10","mgn","prefixMatch","unitConvert","statistics","scientificNotation"].includes(activity.gameId) && activity.type === "ten-question-round"){
         const gameId = activity.gameId;
         const entry = state.simpleGameStats[gameId] || (state.simpleGameStats[gameId] = {rounds:0, correct:0});
         entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
@@ -4433,7 +4511,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     {gameId:"fractionArithmetic", icon:"½", target:1,
       make(){return {label:"Räkna med bråk",description:"Gör ett helt slumpat bråkvarv",detailText:"3 uppgifter · välj valfri del"};}},
     {gameId:"percentConvert", icon:"📈", target:1,
-      make(){return {label:"Bråk • Decimal • Procent",description:"Gör ett helt omvandlingsvarv",detailText:"10 uppgifter"};}},
+      make(){return {label:"Bråk • Decimal • Procent",description:"Gör ett helt omvandlingsvarv",detailText:"6 kompletta trior"};}},
     {gameId:"prefixMatch", icon:"📏", target:1,
       make(){return {label:"Prefix",description:"Gör ett helt prefix-varv",detailText:"10 uppgifter"};}},
     {gameId:"unitConvert", icon:"🔁", target:1,
@@ -10035,54 +10113,198 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 <script>
 (() => {
   "use strict";
-  const MZ = window.Mattezoo;
-  const {$, storage, config} = MZ;
-  let current = null, completed = 0, roundFinished = false;
-  // Vanliga referensvärden som elever ofta möter i högstadiet.
-  // Vi undviker ovanliga kombinationer som 7/20, 3/25 och 3/50
-  // eftersom decimal -> bråk då blir onödigt tungt för den här träningsnivån.
-  const values = [
+  const MZ=window.Mattezoo;
+  const {$,storage}=MZ;
+  const ROUND_SIZE=6;
+  let current=null,completed=0,roundFinished=false,roundPlan=[],planIndex=0;
+
+  const coreValues=[
     [1,2],[1,4],[3,4],
     [1,5],[2,5],[3,5],[4,5],
     [1,10],[3,10],[7,10],[9,10],
-    [1,20],[3,20]
+    [1,100],[9,100],[1,1]
   ];
-  const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
-  const fmtNum=(n)=>new Intl.NumberFormat("sv-SE",{maximumFractionDigits:6}).format(n);
-  const parseNum=(s)=>Number(String(s).trim().replace(/\s/g,"").replace(",",".").replace("%",""));
-  const parseFrac=(s)=>{ const m=String(s).trim().match(/^(-?\d+)\s*\/\s*(-?\d+)$/); return m&&+m[2]!==0 ? [+m[1],+m[2]] : null; };
-  const repr=(kind,n,d)=> kind==="fraction"?`${n}/${d}`:kind==="decimal"?fmtNum(n/d):`${fmtNum((n/d)*100)} %`;
-  function makeQuestion(){
-    const [n,d]=values[Math.floor(Math.random()*values.length)];
-    const kinds=["fraction","decimal","percent"];
-    const from=kinds[Math.floor(Math.random()*3)];
-    let to=kinds[Math.floor(Math.random()*3)]; while(to===from) to=kinds[Math.floor(Math.random()*3)];
-    const labels={fraction:"bråk i enklaste form",decimal:"decimaltal",percent:"procent"};
-    return {n,d,from,to,prompt:`Skriv ${repr(from,n,d)} som ${labels[to]}.`};
-  }
-  function isCorrect(raw,q){
-    if(q.to==="fraction"){
-      const f=parseFrac(raw); if(!f) return false;
-      return f[0]*q.d===q.n*f[1] && gcd(f[0],f[1])===1;
-    }
-    const v=parseNum(raw); if(!Number.isFinite(v)) return false;
-    const target=q.to==="decimal"?q.n/q.d:(q.n/q.d)*100;
-    return Math.abs(v-target)<1e-9;
-  }
-  function answerText(q){ return repr(q.to,q.n,q.d); }
-  function hideOthers(){ ["#fieldGuideView","#seedQuestView","#dailyQuestView","#multiplicationView","#equationsView","#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#prefixMatchView","#unitConvertView","#statisticsView","#scientificNotationView"].forEach(id=>$(id)?.classList.add("hidden")); }
-  function showView(){ $("#officeHome").classList.add("hidden"); hideOthers(); $("#percentConvertView").classList.remove("hidden"); $("#percentConvertNp").textContent=storage.getNaturePoints(); startRound(); }
-  function back(){ $("#percentConvertView").classList.add("hidden"); $("#officeHome").classList.remove("hidden"); }
-  function renderProgress(){ $("#percentConvertProgressText").textContent=`${completed} / ${config.standardRoundQuestions} rätt`; $("#percentConvertProgressFill").style.width=`${completed/config.standardRoundQuestions*100}%`; }
-  function next(){ current=makeQuestion(); $("#percentConvertPrompt").textContent=current.prompt; $("#percentConvertQuestion").textContent=repr(current.from,current.n,current.d); $("#percentConvertAnswer").value=""; $("#percentConvertAnswer").disabled=false; $("#percentConvertCheck").disabled=false; $("#percentConvertFeedback").textContent=""; $("#percentConvertFeedback").className="feedback"; $("#percentConvertAnswer").focus(); }
-  function startRound(){ completed=0; roundFinished=false; $("#percentConvertFinish").classList.remove("open"); renderProgress(); next(); }
-  function finish(){ roundFinished=true; const r=MZ.math.completeActivity({gameId:"percentConvert",type:"ten-question-round"}); $("#percentConvertAnswer").disabled=true; $("#percentConvertCheck").disabled=true; $("#percentConvertFeedback").textContent=`🎉 Tio rätt! Du fick ${r.rewardNP} kottar.`; $("#percentConvertFeedback").className="feedback good"; $("#percentConvertFinishText").textContent=`Varvet är klart. Du fick ${r.rewardNP} kottar.`; $("#percentConvertFinish").classList.add("open"); $("#percentConvertNp").textContent=storage.getNaturePoints(); }
-  function check(){ if(!current||roundFinished)return; const raw=$("#percentConvertAnswer").value; if(!String(raw).trim()){ $("#percentConvertFeedback").textContent="Skriv ett svar först."; $("#percentConvertFeedback").className="feedback bad"; return; } if(isCorrect(raw,current)){ MZ.math.recordQuestion({gameId:"percentConvert"}); completed++; renderProgress(); $("#percentConvertFeedback").textContent="Rätt! 🌿"; $("#percentConvertFeedback").className="feedback good"; completed>=config.standardRoundQuestions?setTimeout(finish,350):setTimeout(next,320); } else { $("#percentConvertFeedback").textContent=`Rätt svar är ${answerText(current)}.`; $("#percentConvertFeedback").className="feedback bad"; setTimeout(next,1200); } }
-  function init(){ $("#openPercentConvert").addEventListener("click",showView); $("#backFromPercentConvert").addEventListener("click",back); $("#percentConvertCheck").addEventListener("click",check); $("#percentConvertAnswer").addEventListener("keydown",e=>{if(e.key==="Enter")check();}); $("#percentConvertAgain").addEventListener("click",startRound); MZ.events.addEventListener("npchange",()=>{$("#percentConvertNp").textContent=storage.getNaturePoints();}); }
-  MZ.math.registerGame({id:"percentConvert",title:"Bråk • Decimal • Procent",description:"Omvandla mellan bråk, decimalform och procentform."});
-  MZ.games=MZ.games||{}; MZ.games.percentConvert={init};
-})();
+  const challengeValues=[[1,20],[3,20]];
+  const kinds=["fraction","decimal","percent"];
 
+  const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+  const shuffle=(items)=>{const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const fmtNum=(n)=>new Intl.NumberFormat("sv-SE",{maximumFractionDigits:6}).format(n);
+  const parseNum=(s)=>Number(String(s??"").trim().replace(/\s/g,"").replace(",",".").replace("%",""));
+  const fracMarkup=(n,d)=>'<span class="percent-stacked-fraction"><span>'+n+'</span><span class="bar"></span><span>'+d+'</span></span>';
+
+  function buildRound(){
+    const values=shuffle(coreValues).slice(0,5).concat(shuffle(challengeValues).slice(0,1));
+    const sources=shuffle(kinds).concat(shuffle(kinds));
+    return values.map(([n,d],index)=>({n,d,from:sources[index]}));
+  }
+
+  function hideOthers(){
+    ["#fieldGuideView","#seedQuestView","#dailyQuestView","#multiplicationView","#equationsView","#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#prefixMatchView","#unitConvertView","#statisticsView","#scientificNotationView"].forEach(id=>$(id)?.classList.add("hidden"));
+  }
+  function showView(){
+    $("#officeHome").classList.add("hidden");
+    hideOthers();
+    $("#percentConvertView").classList.remove("hidden");
+    $("#percentConvertNp").textContent=storage.getNaturePoints();
+    startRound();
+  }
+  function back(){
+    $("#percentConvertView").classList.add("hidden");
+    $("#officeHome").classList.remove("hidden");
+  }
+  function renderProgress(){
+    $("#percentConvertProgressText").textContent=completed+" / "+ROUND_SIZE+" trior klara";
+    $("#percentConvertProgressFill").style.width=(completed/ROUND_SIZE*100)+"%";
+  }
+
+  function resetFieldState(){
+    ["#percentFractionCell","#percentDecimalCell","#percentPercentCell"].forEach(id=>$(id)?.classList.remove("given","solved","has-error"));
+    ["#percentFractionNumerator","#percentFractionDenominator","#percentDecimalAnswer","#percentPercentAnswer"].forEach(id=>{
+      const el=$(id);if(!el)return;el.classList.remove("correct","wrong");el.disabled=false;
+    });
+    $("#percentFractionInput")?.classList.remove("correct","wrong");
+  }
+
+  function showGiven(kind,q){
+    const fractionGiven=$("#percentFractionGiven"),fractionInput=$("#percentFractionInput");
+    const decimalGiven=$("#percentDecimalGiven"),decimalInput=$("#percentDecimalAnswer");
+    const percentGiven=$("#percentPercentGiven"),percentInput=$("#percentPercentInput");
+
+    fractionGiven.classList.toggle("hidden",kind!=="fraction");
+    fractionInput.classList.toggle("hidden",kind==="fraction");
+    decimalGiven.classList.toggle("hidden",kind!=="decimal");
+    decimalInput.classList.toggle("hidden",kind==="decimal");
+    percentGiven.classList.toggle("hidden",kind!=="percent");
+    percentInput.classList.toggle("hidden",kind==="percent");
+
+    if(kind==="fraction"){fractionGiven.innerHTML=fracMarkup(q.n,q.d);$("#percentFractionCell").classList.add("given");}
+    if(kind==="decimal"){decimalGiven.textContent=fmtNum(q.n/q.d);$("#percentDecimalCell").classList.add("given");}
+    if(kind==="percent"){percentGiven.textContent=fmtNum(q.n/q.d*100)+" %";$("#percentPercentCell").classList.add("given");}
+  }
+
+  function clearAnswers(){
+    $("#percentFractionNumerator").value="";
+    $("#percentFractionDenominator").value="";
+    $("#percentDecimalAnswer").value="";
+    $("#percentPercentAnswer").value="";
+  }
+
+  function focusFirstMissing(){
+    if(current.from!=="fraction"){$("#percentFractionNumerator").focus();return;}
+    if(current.from!=="decimal"){$("#percentDecimalAnswer").focus();return;}
+    $("#percentPercentAnswer").focus();
+  }
+
+  function next(){
+    if(planIndex>=roundPlan.length) roundPlan.push(...buildRound());
+    current=roundPlan[planIndex++];
+    resetFieldState();
+    clearAnswers();
+    showGiven(current.from,current);
+    $("#percentConvertPrompt").textContent="Fyll i de två former som saknas.";
+    $("#percentConvertFeedback").textContent="";
+    $("#percentConvertFeedback").className="feedback";
+    $("#percentConvertCheck").disabled=false;
+    window.setTimeout(focusFirstMissing,30);
+  }
+
+  function fractionCheck(q){
+    const n=Number($("#percentFractionNumerator").value),d=Number($("#percentFractionDenominator").value);
+    const valid=Number.isInteger(n)&&Number.isInteger(d)&&d>0&&n>=0;
+    const correct=valid&&n*q.d===q.n*d;
+    const simplest=correct&&gcd(n,d)===1;
+    return{correct,simplest,n,d};
+  }
+  function decimalCheck(q){
+    const value=parseNum($("#percentDecimalAnswer").value);
+    return{correct:Number.isFinite(value)&&Math.abs(value-q.n/q.d)<1e-9,value};
+  }
+  function percentCheck(q){
+    const value=parseNum($("#percentPercentAnswer").value);
+    return{correct:Number.isFinite(value)&&Math.abs(value-q.n/q.d*100)<1e-9,value};
+  }
+
+  function markResult(kind,result){
+    const cell=$("#percent"+(kind==="fraction"?"Fraction":kind==="decimal"?"Decimal":"Percent")+"Cell");
+    if(kind==="fraction"){
+      const wrap=$("#percentFractionInput");wrap.classList.toggle("correct",result.correct);wrap.classList.toggle("wrong",!result.correct);
+    }else{
+      const input=$(kind==="decimal"?"percentDecimalAnswer":"percentPercentAnswer");
+      input.classList.toggle("correct",result.correct);input.classList.toggle("wrong",!result.correct);
+    }
+    cell.classList.toggle("has-error",!result.correct);
+    cell.classList.toggle("solved",result.correct);
+  }
+
+  function hintFor(q){
+    if(q.from==="percent")return "Tips: procent betyder av hundra. Börja gärna med ett bråk med 100 i nämnaren.";
+    if(q.from==="decimal")return "Tips: tänk hur många hundradelar decimalen motsvarar. Samma värde ska sedan synas i bråket.";
+    return "Tips: gör bråket till ett decimaltal. Procentformen är samma tal uttryckt i hundradelar.";
+  }
+
+  function startRound(){
+    completed=0;roundFinished=false;roundPlan=buildRound();planIndex=0;
+    $("#percentConvertFinish").classList.remove("open");
+    renderProgress();next();
+  }
+
+  function finish(){
+    roundFinished=true;
+    const r=MZ.math.completeActivity({gameId:"percentConvert",type:"six-trio-round",trios:ROUND_SIZE});
+    ["#percentFractionNumerator","#percentFractionDenominator","#percentDecimalAnswer","#percentPercentAnswer"].forEach(id=>{if($(id))$(id).disabled=true;});
+    $("#percentConvertCheck").disabled=true;
+    $("#percentConvertFeedback").textContent="🎉 Sex trior klara! Du fick "+r.rewardNP+" kottar.";
+    $("#percentConvertFeedback").className="feedback good";
+    $("#percentConvertFinishText").textContent="Varvet är klart. Du fick "+r.rewardNP+" kottar.";
+    $("#percentConvertFinish").classList.add("open");
+    $("#percentConvertNp").textContent=storage.getNaturePoints();
+  }
+
+  function check(){
+    if(!current||roundFinished)return;
+    const results={};
+    if(current.from!=="fraction")results.fraction=fractionCheck(current);
+    if(current.from!=="decimal")results.decimal=decimalCheck(current);
+    if(current.from!=="percent")results.percent=percentCheck(current);
+
+    Object.entries(results).forEach(([kind,result])=>markResult(kind,result));
+    const allCorrect=Object.values(results).every(result=>result.correct);
+
+    if(!allCorrect){
+      const correctCount=Object.values(results).filter(result=>result.correct).length;
+      $("#percentConvertFeedback").textContent=(correctCount===1?"En form stämmer. Kontrollera den markerade rutan. ":"Inte riktigt än. ")+hintFor(current);
+      $("#percentConvertFeedback").className="feedback bad";
+      return;
+    }
+
+    MZ.math.recordQuestion({gameId:"percentConvert"});
+    completed++;renderProgress();
+    const fractionResult=results.fraction;
+    const reduceNote=fractionResult&&fractionResult.correct&&!fractionResult.simplest
+      ?" Rätt! "+fractionResult.n+"/"+fractionResult.d+" är likvärdigt med "+current.n+"/"+current.d+"."
+      :" Rätt! Samma tal på tre sätt. 🌿";
+    $("#percentConvertFeedback").textContent=reduceNote;
+    $("#percentConvertFeedback").className="feedback good";
+    $("#percentConvertCheck").disabled=true;
+
+    if(completed>=ROUND_SIZE)window.setTimeout(finish,650);
+    else window.setTimeout(next,650);
+  }
+
+  function init(){
+    $("#openPercentConvert").addEventListener("click",showView);
+    $("#backFromPercentConvert").addEventListener("click",back);
+    $("#percentConvertCheck").addEventListener("click",check);
+    ["#percentFractionNumerator","#percentFractionDenominator","#percentDecimalAnswer","#percentPercentAnswer"].forEach(id=>$(id)?.addEventListener("keydown",event=>{if(event.key==="Enter")check();}));
+    $("#percentConvertAgain").addEventListener("click",startRound);
+    MZ.events.addEventListener("npchange",()=>{$("#percentConvertNp").textContent=storage.getNaturePoints();});
+  }
+
+  MZ.math.registerGame({id:"percentConvert",title:"Bråk • Decimal • Procent",description:"Fyll i bråkform, decimalform och procentform för samma tal."});
+  MZ.games=MZ.games||{};
+  MZ.games.percentConvert={init};
+})();
 </script>
 <script>
 (() => {
@@ -10833,7 +11055,7 @@ let sb=null,current=null,busy=false,reconnectPromise=null,writeQueue=Promise.res
 const expectedRoundTypes={
  multiplication:"table-round",equations:"solved-random-equation",pow10:"ten-question-round",
  fractionDecimal:"matching-board",fractionArithmetic:"three-calculation-round",
- percentConvert:"ten-question-round",prefixMatch:"ten-question-round",
+ percentConvert:"six-trio-round",prefixMatch:"ten-question-round",
  unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round"
 };
 const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform"};
