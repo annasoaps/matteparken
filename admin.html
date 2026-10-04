@@ -3,82 +3,51 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matteparken · Läraradmin</title>
+<title>Matteparken · Läraradmin v3</title>
 <style>
-  :root{
-    color-scheme:light;
-    --bg:#eef3e8; --paper:#fffdf7; --ink:#294234; --muted:#6d7d70;
-    --line:#cfd9ca; --accent:#557a5b; --accent2:#dce9d7; --warn:#8a5a2b;
-    --good:#2f6c45; --bad:#9b3d3d; --shadow:0 16px 42px rgba(45,65,45,.12);
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(#eef4ea,#f7f3e8);color:var(--ink)}
-  button,input,select{font:inherit}
-  button{cursor:pointer}
-  .hidden{display:none!important}
-  .wrap{max-width:1180px;margin:0 auto;padding:28px 18px 50px}
-  .brand{display:flex;align-items:center;gap:14px;margin-bottom:22px}
-  .brand-mark{width:54px;height:54px;border-radius:18px;background:#526f4d;color:white;display:grid;place-items:center;font-size:29px;box-shadow:var(--shadow)}
-  h1,h2,h3,p{margin-top:0}
-  h1{margin-bottom:4px;font-size:clamp(25px,4vw,38px)}
-  .muted{color:var(--muted)}
-  .card{background:var(--paper);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}
-  .login-card{max-width:520px;margin:70px auto 0}
-  label{display:grid;gap:7px;font-weight:700}
-  input,select{width:100%;padding:12px 13px;border:1px solid #bac8b7;border-radius:12px;background:white;color:var(--ink)}
-  input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(--accent)}
-  .stack{display:grid;gap:14px}
-  .btn{border:0;border-radius:12px;padding:11px 16px;font-weight:800}
-  .primary{background:var(--accent);color:white}
-  .secondary{background:#edf2e8;color:var(--ink);border:1px solid #cbd6c7}
-  .danger{background:#f6e8e5;color:#7f3535;border:1px solid #e6c6c0}
-  .feedback{min-height:24px;font-weight:700;margin-top:10px}
-  .feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
-  .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-  .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .pill{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;background:#e6eee2;font-weight:800}
-  .grid{display:grid;grid-template-columns:1fr 1.25fr;gap:18px}
-  .assignment-controls{display:grid;grid-template-columns:1.2fr .65fr;gap:12px}
-  .assignment-controls .wide{grid-column:1/-1}
-  .toggle{display:flex;align-items:center;gap:9px;font-weight:800}
-  .toggle input{width:auto}
-  .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}
-  .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}
-  table{width:100%;border-collapse:collapse;min-width:630px;background:white}
-  th,td{padding:12px 13px;border-bottom:1px solid #e6ece2;text-align:left}
-  th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#637467;background:#f4f7f0}
-  tbody tr{cursor:pointer}
-  tbody tr:hover{background:#f7faf4}
-  tbody tr.selected{background:#eaf3e5}
-  .progressbar{height:8px;border-radius:999px;background:#e6ebe2;overflow:hidden;margin-top:5px}
-  .progressbar span{display:block;height:100%;background:var(--accent)}
-  .status{font-weight:800}.status.done{color:var(--good)}
-  .detail{margin-top:18px}
-  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  .activity-list{display:grid;gap:9px}
-  .activity-row{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;border-radius:12px;background:#f3f7ef}
-  .activity-row span{font-weight:800}
-  .empty{padding:14px;border-radius:12px;background:#f5f5f1;color:var(--muted)}
-  .small{font-size:13px}
-  .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
-  .inline-grid{display:grid;grid-template-columns:1fr 1.3fr auto;gap:10px;align-items:end}
-  .code-tools{display:grid;grid-template-columns:150px auto auto;gap:10px;align-items:end}
-  .generated-codes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .code-chip{padding:7px 10px;border-radius:999px;background:#edf3e9;border:1px solid #cfdbca;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:900;letter-spacing:.05em}
-  .section-note{padding:11px 13px;border-radius:13px;background:#f4f7f0;color:var(--muted);font-size:13px;margin-top:12px}
-  @media(max-width:850px){.grid,.detail-grid,.manage-grid{grid-template-columns:1fr}.assignment-controls,.inline-grid,.code-tools{grid-template-columns:1fr}}
+:root{
+  color-scheme:light;
+  --bg:#eef3e8;--paper:#fffdf7;--ink:#294234;--muted:#6d7d70;--line:#cfd9ca;
+  --accent:#557a5b;--accent2:#e5efe0;--warn:#8a5a2b;--good:#2f6c45;--bad:#9b3d3d;
+  --shadow:0 16px 42px rgba(45,65,45,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(#eef4ea,#f7f3e8);color:var(--ink)}
+button,input,select{font:inherit} button{cursor:pointer}.hidden{display:none!important}
+.wrap{max-width:1220px;margin:0 auto;padding:28px 18px 60px}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:22px}.brand-mark{width:54px;height:54px;border-radius:18px;background:#526f4d;color:white;display:grid;place-items:center;font-size:29px;box-shadow:var(--shadow)}
+h1,h2,h3,h4,p{margin-top:0}h1{margin-bottom:4px;font-size:clamp(25px,4vw,38px)}h2{margin-bottom:7px}.muted{color:var(--muted)}.small{font-size:13px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}
+.login-card{max-width:520px;margin:70px auto 0}
+label{display:grid;gap:7px;font-weight:750}input,select{width:100%;padding:11px 12px;border:1px solid #bac8b7;border-radius:12px;background:white;color:var(--ink)}
+input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(--accent)}
+.stack{display:grid;gap:14px}.btn{border:0;border-radius:12px;padding:10px 15px;font-weight:850}.primary{background:var(--accent);color:white}.secondary{background:#edf2e8;color:var(--ink);border:1px solid #cbd6c7}.danger{background:#f6e8e5;color:#7f3535;border:1px solid #e6c6c0}
+.feedback{min-height:22px;font-weight:750;margin-top:9px}.feedback.good{color:var(--good)}.feedback.bad{color:var(--bad)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}.top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.top-actions select{min-width:180px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;background:#e6eee2;font-weight:850}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}.wide-grid{display:grid;grid-template-columns:.85fr 1.4fr;gap:18px;margin-bottom:18px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}.section-head h2{margin-bottom:4px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .wide{grid-column:1/-1}.form-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.toggle{display:flex;align-items:center;gap:8px;font-weight:800}.toggle input{width:auto}
+.assignment-list{display:grid;gap:12px}.assignment-item{border:1px solid #d4dece;border-radius:16px;background:white;padding:15px}.assignment-item.paused{opacity:.7;background:#f5f5f1}
+.assignment-item-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.assignment-item h3{margin:0 0 5px;font-size:17px}.assignment-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.mini-pill{display:inline-flex;padding:5px 8px;border-radius:999px;background:#eef3e9;font-size:12px;font-weight:800}.assignment-buttons{display:flex;gap:7px;flex-wrap:wrap}
+.code-controls{display:grid;grid-template-columns:140px auto;gap:10px;align-items:end}.generated-codes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.code-chip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:900;letter-spacing:.08em;background:#eef3e8;border:1px solid #cbd7c6;border-radius:9px;padding:8px 10px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:660px;background:white}th,td{padding:12px 13px;border-bottom:1px solid #e6ece2;text-align:left}th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#637467;background:#f4f7f0}tbody tr{cursor:pointer}tbody tr:hover{background:#f7faf4}tbody tr.selected{background:#eaf3e5}
+.progressbar{height:8px;border-radius:999px;background:#e6ebe2;overflow:hidden;margin-top:5px}.progressbar span{display:block;height:100%;background:var(--accent)}
+.status{font-weight:850}.status.done{color:var(--good)}
+.detail{margin-top:18px}.detail-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:18px}.activity-list,.student-assignment-detail{display:grid;gap:9px}.activity-row{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;border-radius:12px;background:#f3f7ef}.activity-row span{font-weight:850}
+.student-task{padding:11px 12px;border-radius:12px;background:#f3f7ef}.student-task strong{display:block;margin-bottom:4px}.empty{padding:14px;border-radius:12px;background:#f5f5f1;color:var(--muted)}
+.callout{padding:12px 14px;border-radius:14px;background:#f0f5eb;border:1px solid #d7e1d1;color:#526257;font-size:13px;margin-bottom:13px}
+@media(max-width:900px){.grid,.wide-grid,.detail-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.code-controls{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand">
-    <div class="brand-mark">🌲</div>
-    <div><h1>Matteparken</h1><div class="muted">Läraradmin · klasser, elevkoder och uppdrag</div></div>
-  </div>
+  <div class="brand"><div class="brand-mark">🌲</div><div><h1>Matteparken</h1><div class="muted">Läraradmin · flera uppdrag · hela omgångar</div></div></div>
 
   <section id="loginView" class="card login-card">
     <h2>👩‍🏫 Logga in som lärare</h2>
-    <p class="muted">Använd lärarkontot du skapade i Supabase. Inloggningen ligger separat från elevernas anonyma Matteparken-sessioner.</p>
+    <p class="muted">Använd ditt lärarkonto. Elevkoderna är anonyma och ligger separat från lärarinloggningen.</p>
     <div class="stack">
       <label>E-post<input id="email" type="email" autocomplete="username"></label>
       <label>Lösenord<input id="password" type="password" autocomplete="current-password"></label>
@@ -89,10 +58,7 @@
 
   <main id="adminView" class="hidden">
     <div class="topbar">
-      <div>
-        <span class="pill" id="classPill">Klass</span>
-        <div class="muted small" id="refreshText">Inte uppdaterad ännu</div>
-      </div>
+      <div><span class="pill" id="classPill">Klass</span><div class="muted small" id="refreshText">Inte uppdaterad ännu</div></div>
       <div class="top-actions">
         <select id="classSelect" aria-label="Välj klass"></select>
         <button class="btn secondary" id="refreshBtn" type="button">↻ Uppdatera</button>
@@ -102,24 +68,41 @@
 
     <div class="grid">
       <section class="card">
-        <div class="section-head">
-          <div><h2>📌 Aktuellt läraruppdrag</h2><p class="muted">Det här visas för eleverna under Dagens uppdrag.</p></div>
+        <div class="section-head"><div><h2>🏫 Klasser</h2><p class="muted">Skapa en ny klass och byt sedan klass högst upp.</p></div></div>
+        <div class="form-grid">
+          <label>Klasskod<input id="newClassCode" maxlength="20" placeholder="t.ex. 7A"></label>
+          <label>Namn, valfritt<input id="newClassName" maxlength="80" placeholder="t.ex. Matematik 7A"></label>
+          <div class="wide"><button class="btn primary" id="createClassBtn" type="button">+ Skapa klass</button></div>
         </div>
-        <div class="assignment-controls">
+        <div class="feedback" id="classFeedback"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head"><div><h2>🔑 Elevkoder</h2><p class="muted">Skapa anonyma koder till vald klass.</p></div></div>
+        <div class="code-controls">
+          <label>Antal<select id="codeCount"><option>1</option><option>5</option><option selected>10</option><option>20</option><option>30</option></select></label>
+          <button class="btn primary" id="generateCodesBtn" type="button">Generera koder</button>
+        </div>
+        <div class="generated-codes" id="generatedCodes"></div>
+        <button class="btn secondary hidden" id="copyCodesBtn" type="button" style="margin-top:10px">Kopiera nya koder</button>
+        <div class="feedback" id="codesFeedback"></div>
+      </section>
+    </div>
+
+    <div class="wide-grid">
+      <section class="card">
+        <div class="section-head"><div><h2 id="assignmentFormTitle">➕ Lägg till uppdrag</h2><p class="muted">Målet anges i hela omgångar, inte enskilda frågor.</p></div></div>
+        <div class="callout">Exempel: <strong>6:ans tabell × 5 omgångar</strong> betyder att eleven gör hela 6×1–6×10 fem gånger.</div>
+        <div class="form-grid">
           <label class="wide">Matteområde
             <select id="gameId">
               <optgroup label="Multiplikation">
-                <option value="multiplication">Multiplikation · valfri tabell 1–10</option>
-                <option value="multiplication:1">1:ans tabell</option>
-                <option value="multiplication:2">2:ans tabell</option>
-                <option value="multiplication:3">3:ans tabell</option>
-                <option value="multiplication:4">4:ans tabell</option>
-                <option value="multiplication:5">5:ans tabell</option>
-                <option value="multiplication:6">6:ans tabell</option>
-                <option value="multiplication:7">7:ans tabell</option>
-                <option value="multiplication:8">8:ans tabell</option>
-                <option value="multiplication:9">9:ans tabell</option>
-                <option value="multiplication:10">10:ans tabell</option>
+                <option value="multiplication">Multiplikation · valfri tabell</option>
+                <option value="multiplication:1">1:ans tabell</option><option value="multiplication:2">2:ans tabell</option>
+                <option value="multiplication:3">3:ans tabell</option><option value="multiplication:4">4:ans tabell</option>
+                <option value="multiplication:5">5:ans tabell</option><option value="multiplication:6">6:ans tabell</option>
+                <option value="multiplication:7">7:ans tabell</option><option value="multiplication:8">8:ans tabell</option>
+                <option value="multiplication:9">9:ans tabell</option><option value="multiplication:10">10:ans tabell</option>
               </optgroup>
               <optgroup label="Övriga spel">
                 <option value="equations">Ekvationer</option>
@@ -134,61 +117,28 @@
               </optgroup>
             </select>
           </label>
-          <label>Antal uppgifter<input id="target" type="number" min="1" max="500" value="20"></label>
+          <label>Antal omgångar<input id="target" type="number" min="1" max="500" value="3"></label>
           <label class="toggle"><input id="enabled" type="checkbox" checked> Aktivt uppdrag</label>
-          <div class="wide"><button class="btn primary" id="saveAssignmentBtn" type="button">Spara uppdrag</button></div>
+          <div class="wide form-actions">
+            <button class="btn primary" id="saveAssignmentBtn" type="button">+ Lägg till uppdrag</button>
+            <button class="btn secondary hidden" id="cancelEditBtn" type="button">Avbryt ändring</button>
+          </div>
         </div>
         <div class="feedback" id="assignmentFeedback"></div>
       </section>
 
       <section class="card">
-        <div class="section-head">
-          <div><h2>🌱 Elevöversikt</h2><p class="muted">Klicka på en elevkod för dagens och veckans träning.</p></div>
-          <strong id="studentCount">0 elever</strong>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Elevkod</th><th>Framsteg</th><th>Status</th><th>Senast aktiv</th></tr></thead>
-            <tbody id="studentRows"></tbody>
-          </table>
-        </div>
+        <div class="section-head"><div><h2>📌 Klassens uppdrag</h2><p class="muted">Eleven ser alla aktiva uppdrag och väljer vilket som ska tränas.</p></div><strong id="assignmentCount">0 uppdrag</strong></div>
+        <div class="assignment-list" id="assignmentList"></div>
       </section>
     </div>
 
-    <section class="manage-grid">
-      <section class="card">
-        <div class="section-head">
-          <div><h2>🏫 Lägg till klass</h2><p class="muted">Skapa en ny klass och koppla den direkt till ditt lärarkonto.</p></div>
-        </div>
-        <div class="inline-grid">
-          <label>Klasskod<input id="newClassCode" maxlength="20" placeholder="t.ex. 7A"></label>
-          <label>Namn, valfritt<input id="newClassName" maxlength="60" placeholder="t.ex. Matematik 7A"></label>
-          <button class="btn primary" id="createClassBtn" type="button">Skapa klass</button>
-        </div>
-        <div class="feedback" id="classFeedback"></div>
-      </section>
-
-      <section class="card">
-        <div class="section-head">
-          <div><h2>🔑 Elevkoder</h2><p class="muted">Generera anonyma sexteckenskoder till den valda klassen.</p></div>
-        </div>
-        <div class="code-tools">
-          <label>Antal
-            <select id="codeCount">
-              <option value="1">1 kod</option>
-              <option value="5" selected>5 koder</option>
-              <option value="10">10 koder</option>
-              <option value="20">20 koder</option>
-              <option value="30">30 koder</option>
-            </select>
-          </label>
-          <button class="btn primary" id="generateCodesBtn" type="button">Generera elevkoder</button>
-          <button class="btn secondary hidden" id="copyCodesBtn" type="button">Kopiera koder</button>
-        </div>
-        <div class="generated-codes" id="generatedCodes"></div>
-        <div class="feedback" id="codesFeedback"></div>
-        <div class="section-note">Koderna innehåller inte namn eller mejladresser. De nya eleverna dyker direkt upp i Elevöversikt.</div>
-      </section>
+    <section class="card">
+      <div class="section-head"><div><h2>🌱 Elevöversikt</h2><p class="muted">Klicka på en elevkod för uppdrag och aktivitet.</p></div><strong id="studentCount">0 elever</strong></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Elevkod</th><th>Läraruppdrag</th><th>Status</th><th>Senast aktiv</th></tr></thead>
+        <tbody id="studentRows"></tbody>
+      </table></div>
     </section>
 
     <section class="card detail hidden" id="studentDetail">
@@ -197,14 +147,9 @@
         <button class="btn secondary" id="closeDetailBtn" type="button">Stäng</button>
       </div>
       <div class="detail-grid">
-        <div>
-          <h3>Idag</h3>
-          <div class="activity-list" id="todayList"></div>
-        </div>
-        <div>
-          <h3>Den här veckan</h3>
-          <div class="activity-list" id="weekList"></div>
-        </div>
+        <div><h3>Läraruppdrag</h3><div class="student-assignment-detail" id="detailAssignments"></div></div>
+        <div><h3>Idag · enskilda rätta svar</h3><div class="activity-list" id="todayList"></div></div>
+        <div><h3>Den här veckan · enskilda rätta svar</h3><div class="activity-list" id="weekList"></div></div>
       </div>
     </section>
 
@@ -216,360 +161,218 @@
 <script>
 (() => {
   "use strict";
-
   const SUPABASE_URL="https://mjgkkwdgowvxuehiudvj.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
   const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
     auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"matteparken-admin-auth-v1"}
   });
-
   const $=id=>document.getElementById(id);
+
   const gameMeta={
-    multiplication:{title:"Multiplikation",description:"Träna multiplikationstabellerna 1–10."},
-    equations:{title:"Ekvationer",description:"Lös linjära ekvationer steg för steg."},
-    pow10:{title:"× och ÷ med 10, 100, 1000",description:"Träna platsvärde genom att multiplicera och dividera med 10, 100 och 1000."},
-    fractionDecimal:{title:"Bråk ↔ Decimal",description:"Matcha bråk med motsvarande decimaltal."},
-    fractionArithmetic:{title:"Räkna med bråk",description:"Addera, subtrahera, multiplicera och dividera bråk."},
-    percentConvert:{title:"Bråk · Decimal · Procent",description:"Träna sambandet mellan bråk, decimal och procent."},
-    prefixMatch:{title:"Prefix – para ihop",description:"Matcha kilo, hekto, deci, centi och milli med rätt värde."},
-    unitConvert:{title:"Enhetsomvandling",description:"Omvandla längd, massa och volym mellan vanliga metriska enheter."},
-    statistics:{title:"Statistik",description:"Träna frekvens, relativ frekvens och lägesmått."},
-    scientificNotation:{title:"Grundpotensform",description:"Gör om stora tal till grundpotensform och tillbaka igen."}
+    multiplication:{title:"Multiplikation",round:"En omgång = en hel multiplikationstabell (×1–×10)."},
+    equations:{title:"Ekvationer",round:"En omgång = en färdig slumpad ekvation."},
+    pow10:{title:"× och ÷ med 10, 100, 1000",round:"En omgång = 10 rätt."},
+    fractionDecimal:{title:"Bråk ↔ Decimal",round:"En omgång = hela brädet med 8 par. Brädet räknas även om eleven gjort fel på vägen."},
+    fractionArithmetic:{title:"Räkna med bråk",round:"En omgång = 3 färdiga bråkberäkningar."},
+    percentConvert:{title:"Bråk · Decimal · Procent",round:"En omgång = 10 rätt."},
+    prefixMatch:{title:"Prefix – para ihop",round:"En omgång = 10 rätt."},
+    unitConvert:{title:"Enhetsomvandling",round:"En omgång = 10 rätt."},
+    statistics:{title:"Statistik",round:"En omgång = 10 rätt."},
+    scientificNotation:{title:"Grundpotensform",round:"En omgång = 10 rätt."}
   };
 
-  function parseGameSelection(value){
-    const parts=String(value||"").split(":");
-    const gameId=parts[0];
-    const table=gameId==="multiplication" && parts[1] ? Number(parts[1]) : null;
-    const meta=gameMeta[gameId]||{title:gameId,description:"Träna valt matteområde."};
-    if(table && table>=1 && table<=10){
-      return {
-        gameId,
-        gameConfig:{table},
-        title:`Multiplikation · ${table}:ans tabell`,
-        description:`Träna ${table}:ans multiplikationstabell och lös uppgifterna.`
-      };
-    }
-    return {gameId,gameConfig:{},title:meta.title,description:meta.description};
-  }
+  let user=null,classes=[],classId=null,assignments=[],students=[],progressMap=new Map(),activity=[],selectedStudentId=null,editingAssignmentId=null;
+  let refreshTimer=null,lastGeneratedCodes=[];
 
+  function setFeedback(id,msg="",kind=""){const el=$(id);if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
+  function localDateKey(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");return y+"-"+m+"-"+d;}
+  function weekStartKey(){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return localDateKey(d);}
+  function formatLast(value){if(!value)return "–";const d=new Date(value);if(Number.isNaN(d.getTime()))return "–";const now=new Date();return d.toDateString()===now.toDateString()?"idag "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});}
+  function progressKey(studentId,assignmentId){return studentId+":"+assignmentId;}
+  function getProgress(studentId,assignmentId){return progressMap.get(progressKey(studentId,assignmentId))||{completed:0,last_active:null};}
+
+  function parseGameSelection(value){
+    const [gameId,part]=String(value||"").split(":");
+    const table=gameId==="multiplication"&&part?Number(part):null;
+    const meta=gameMeta[gameId]||{title:gameId,round:"En hel omgång."};
+    if(table>=1&&table<=10){
+      return {gameId,gameConfig:{table},title:"Multiplikation · "+table+":ans tabell",description:"Träna "+table+":ans tabell. En omgång = "+table+"×1 till "+table+"×10."};
+    }
+    return {gameId,gameConfig:{},title:meta.title,description:meta.round};
+  }
   function assignmentSelection(a){
     const table=Number(a?.game_config?.table);
-    return a?.game_id==="multiplication" && table>=1 && table<=10
-      ? `multiplication:${table}`
-      : (a?.game_id||"scientificNotation");
+    return a?.game_id==="multiplication"&&table>=1&&table<=10?"multiplication:"+table:(a?.game_id||"scientificNotation");
   }
-
-  let user=null, classes=[], classId=null, assignment=null, students=[], progressMap=new Map(), activity=[], selectedStudentId=null;
-  let refreshTimer=null;
-
-  function setFeedback(id,msg="",kind=""){
-    const el=$(id); if(!el)return;
-    el.textContent=msg; el.className="feedback"+(kind?" "+kind:"");
-  }
-
-  function localDateKey(date=new Date()){
-    const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");
-    return y+"-"+m+"-"+d;
-  }
-
-  function weekStartKey(){
-    const d=new Date(); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day);
-    return localDateKey(d);
-  }
-
-  function formatLast(value){
-    if(!value)return "–";
-    const d=new Date(value); if(Number.isNaN(d.getTime()))return "–";
-    const now=new Date();
-    if(d.toDateString()===now.toDateString()) return "idag "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});
-    return d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});
+  function roundDescription(a){
+    const table=Number(a?.game_config?.table);
+    if(a?.game_id==="multiplication"&&table>=1&&table<=10)return "En omgång = hela "+table+":ans tabell, ×1–×10.";
+    return gameMeta[a?.game_id]?.round||a?.description||"En hel omgång.";
   }
 
   async function login(){
-    setFeedback("loginFeedback","Loggar in …");
-    $("loginBtn").disabled=true;
-    try{
-      const {data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
-      if(error)throw error;
-      user=data.user;
-      await enterAdmin();
-    }catch(error){
-      console.error(error);
-      setFeedback("loginFeedback","Kunde inte logga in. Kontrollera e-post och lösenord.","bad");
-    }finally{$("loginBtn").disabled=false;}
+    setFeedback("loginFeedback","Loggar in …");$("loginBtn").disabled=true;
+    try{const {data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;user=data.user;await enterAdmin();}
+    catch(error){console.error(error);setFeedback("loginFeedback","Kunde inte logga in. Kontrollera e-post och lösenord.","bad");}
+    finally{$("loginBtn").disabled=false;}
   }
+  async function logout(){await sb.auth.signOut();user=null;classes=[];classId=null;assignments=[];students=[];selectedStudentId=null;if(refreshTimer)clearInterval(refreshTimer);$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden");setFeedback("loginFeedback","Utloggad.","good");}
 
-  async function logout(){
-    await sb.auth.signOut();
-    user=null; classes=[]; classId=null; assignment=null; students=[]; selectedStudentId=null;
-    if(refreshTimer)clearInterval(refreshTimer);
-    $("adminView").classList.add("hidden");
-    $("loginView").classList.remove("hidden");
-    setFeedback("loginFeedback","Utloggad.","good");
+  async function loadClasses(){
+    const tc=await sb.from("teacher_classes").select("class_id");if(tc.error)throw tc.error;
+    const ids=(tc.data||[]).map(x=>x.class_id);if(!ids.length){classes=[];return;}
+    const cr=await sb.from("classes").select("id,code,name").in("id",ids).order("code");if(cr.error)throw cr.error;classes=cr.data||[];
+  }
+  function renderClassSelect(){
+    $("classSelect").innerHTML="";
+    classes.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.code+(c.name&&c.name!==c.code?" · "+c.name:"");$("classSelect").appendChild(o);});
+    $("classSelect").value=classId||"";
   }
 
   async function enterAdmin(){
-    $("loginView").classList.add("hidden");
-    $("adminView").classList.remove("hidden");
-    setFeedback("loginFeedback","");
+    $("loginView").classList.add("hidden");$("adminView").classList.remove("hidden");setFeedback("loginFeedback","");
     await loadClasses();
-    if(!classes.length){
-      setFeedback("globalFeedback","Lärarkontot är inte kopplat till någon klass ännu.","bad");
-      return;
-    }
-    classId=classes[0].id;
-    renderClassSelect();
-    await loadClassData();
+    if(!classes.length){setFeedback("globalFeedback","Lärarkontot är inte kopplat till någon klass ännu.","bad");return;}
+    if(!classId||!classes.some(c=>c.id===classId))classId=classes[0].id;
+    renderClassSelect();await loadClassData();
     if(refreshTimer)clearInterval(refreshTimer);
     refreshTimer=setInterval(()=>{if(!document.hidden)loadClassData({silent:true});},20000);
   }
 
-  async function loadClasses(){
-    const tc=await sb.from("teacher_classes").select("class_id");
-    if(tc.error)throw tc.error;
-    const ids=(tc.data||[]).map(x=>x.class_id);
-    if(!ids.length){classes=[];return;}
-    const cr=await sb.from("classes").select("id,code,name").in("id",ids).order("code");
-    if(cr.error)throw cr.error;
-    classes=cr.data||[];
-  }
-
-  function renderClassSelect(){
-    $("classSelect").innerHTML="";
-    classes.forEach(c=>{
-      const o=document.createElement("option");o.value=c.id;o.textContent=c.code+(c.name&&c.name!==c.code?" · "+c.name:"");
-      $("classSelect").appendChild(o);
-    });
-    $("classSelect").value=classId||"";
-  }
-
   async function loadClassData({silent=false}={}){
-    if(!classId)return;
-    if(!silent)setFeedback("globalFeedback","Hämtar data …");
+    if(!classId)return;if(!silent)setFeedback("globalFeedback","Hämtar data …");
     try{
       const [aRes,sRes]=await Promise.all([
-        sb.from("assignments").select("*").eq("class_id",classId).maybeSingle(),
+        sb.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,created_at,updated_at").eq("class_id",classId).order("created_at",{ascending:true}),
         sb.from("students").select("id,code,last_active,class_id").eq("class_id",classId).eq("active",true).order("code")
       ]);
-      if(aRes.error)throw aRes.error;
-      if(sRes.error)throw sRes.error;
-      assignment=aRes.data;
-      students=sRes.data||[];
+      if(aRes.error)throw aRes.error;if(sRes.error)throw sRes.error;
+      assignments=aRes.data||[];students=sRes.data||[];progressMap=new Map();
 
-      progressMap=new Map();
-      if(assignment){
-        const pRes=await sb.from("student_assignment_progress").select("student_id,completed,last_active,updated_at").eq("assignment_id",assignment.id);
+      const assignmentIds=assignments.map(a=>a.id);
+      if(assignmentIds.length){
+        const pRes=await sb.from("student_assignment_progress").select("student_id,assignment_id,completed,last_active,updated_at").in("assignment_id",assignmentIds);
         if(pRes.error)throw pRes.error;
-        (pRes.data||[]).forEach(p=>progressMap.set(p.student_id,p));
+        (pRes.data||[]).forEach(p=>progressMap.set(progressKey(p.student_id,p.assignment_id),p));
       }
 
-      activity=[];
-      const ids=students.map(s=>s.id);
-      if(ids.length){
-        const actRes=await sb.from("student_daily_activity")
-          .select("student_id,activity_date,activity_key,game_id,label,count,updated_at")
-          .in("student_id",ids)
-          .gte("activity_date",weekStartKey())
-          .lte("activity_date",localDateKey())
-          .order("activity_date",{ascending:false});
-        if(actRes.error)throw actRes.error;
-        activity=actRes.data||[];
+      activity=[];const studentIds=students.map(s=>s.id);
+      if(studentIds.length){
+        const act=await sb.from("student_daily_activity").select("student_id,activity_date,activity_key,game_id,label,count,updated_at").in("student_id",studentIds).gte("activity_date",weekStartKey()).lte("activity_date",localDateKey()).order("activity_date",{ascending:false});
+        if(act.error)throw act.error;activity=act.data||[];
       }
-
-      render();
-      setFeedback("globalFeedback","");
-      $("refreshText").textContent="Senast uppdaterad "+new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});
-    }catch(error){
-      console.error(error);
-      setFeedback("globalFeedback","Kunde inte hämta lärardata från Supabase.","bad");
-    }
+      render();setFeedback("globalFeedback","");$("refreshText").textContent="Senast uppdaterad "+new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});
+    }catch(error){console.error(error);setFeedback("globalFeedback","Kunde inte hämta lärardata. Om du nyss uppgraderat, kör Admin v3-SQL i Supabase.","bad");}
   }
 
   function render(){
-    const cls=classes.find(c=>c.id===classId);
-    $("classPill").textContent=cls?"Klass "+cls.code:"Klass";
+    const cls=classes.find(c=>c.id===classId);$("classPill").textContent=cls?"Klass "+cls.code:"Klass";
+    renderAssignments();renderStudents();if(selectedStudentId)renderDetail();
+  }
 
-    if(assignment){
-      $("gameId").value=assignmentSelection(assignment);
-      $("target").value=assignment.target;
-      $("enabled").checked=assignment.enabled!==false;
-    }
+  function renderAssignments(){
+    $("assignmentCount").textContent=assignments.length+" "+(assignments.length===1?"uppdrag":"uppdrag");
+    const box=$("assignmentList");box.innerHTML="";
+    if(!assignments.length){box.innerHTML='<div class="empty">Inga läraruppdrag ännu. Lägg till det första till vänster.</div>';return;}
+    assignments.forEach(a=>{
+      const doneStudents=students.filter(s=>Number(getProgress(s.id,a.id).completed)>=Number(a.target)).length;
+      const item=document.createElement("div");item.className="assignment-item"+(a.enabled?"":" paused");
+      item.innerHTML='<div class="assignment-item-head"><div><h3>'+escapeHtml(a.title)+'</h3><div class="muted small">'+escapeHtml(roundDescription(a))+'</div></div><span class="mini-pill">'+(a.enabled?"Aktivt":"Pausat")+'</span></div>'+
+        '<div class="assignment-meta"><span class="mini-pill">🎯 '+Number(a.target)+' omgångar</span><span class="mini-pill">✓ '+doneStudents+' / '+students.length+' elever klara</span></div>'+
+        '<div class="assignment-buttons"><button class="btn secondary edit-assignment" type="button">Ändra</button><button class="btn secondary toggle-assignment" type="button">'+(a.enabled?"Pausa":"Aktivera")+'</button><button class="btn danger delete-assignment" type="button">Ta bort</button></div>';
+      item.querySelector(".edit-assignment").addEventListener("click",()=>beginEdit(a.id));
+      item.querySelector(".toggle-assignment").addEventListener("click",()=>toggleAssignment(a.id));
+      item.querySelector(".delete-assignment").addEventListener("click",()=>deleteAssignment(a.id));
+      box.appendChild(item);
+    });
+  }
 
+  function renderStudents(){
     $("studentCount").textContent=students.length+" "+(students.length===1?"elev":"elever");
-    const tbody=$("studentRows");tbody.innerHTML="";
-    const target=Math.max(1,Number(assignment?.target)||20);
-
+    const tbody=$("studentRows");tbody.innerHTML="";const active=assignments.filter(a=>a.enabled);
     students.forEach(student=>{
-      const p=progressMap.get(student.id);
-      const completed=Math.min(Math.max(0,Number(p?.completed)||0),target);
-      const pct=assignment?Math.round(completed/target*100):0;
-      const done=assignment&&completed>=target;
-      const tr=document.createElement("tr");
-      if(student.id===selectedStudentId)tr.classList.add("selected");
-      tr.innerHTML=
-        "<td><strong>"+student.code+"</strong></td>"+
-        "<td><strong>"+completed+" / "+target+"</strong><div class='progressbar'><span style='width:"+pct+"%'></span></div></td>"+
-        "<td><span class='status "+(done?"done":"")+"'>"+(done?"✓ Klar":completed?"Pågår":"Ej startad")+"</span></td>"+
-        "<td>"+formatLast(p?.last_active||student.last_active)+"</td>";
-      tr.addEventListener("click",()=>{selectedStudentId=student.id;render();renderDetail();});
+      const done=active.filter(a=>Number(getProgress(student.id,a.id).completed)>=Number(a.target)).length;
+      const total=active.length;const pct=total?Math.round(done/total*100):0;
+      const anyProgress=active.some(a=>Number(getProgress(student.id,a.id).completed)>0);
+      const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
+      tr.innerHTML="<td><strong>"+escapeHtml(student.code)+"</strong></td>"+
+        "<td><strong>"+done+" / "+total+" klara</strong><div class='progressbar'><span style='width:"+pct+"%'></span></div></td>"+
+        "<td><span class='status "+(total&&done===total?"done":"")+"'>"+(!total?"Inga aktiva":done===total?"✓ Alla klara":anyProgress?"Pågår":"Ej startad")+"</span></td>"+
+        "<td>"+formatLast(student.last_active)+"</td>";
+      tr.addEventListener("click",()=>{selectedStudentId=student.id;renderStudents();renderDetail();});
       tbody.appendChild(tr);
     });
-
-    if(selectedStudentId)renderDetail();
   }
 
   function aggregateFor(studentId,scope){
-    const today=localDateKey();
-    const rows=activity.filter(r=>r.student_id===studentId && (scope==="today"?r.activity_date===today:true));
-    const map=new Map();
-    rows.forEach(r=>{
-      const old=map.get(r.activity_key)||{label:r.label,count:0};
-      old.count+=Number(r.count)||0; old.label=r.label||old.label; map.set(r.activity_key,old);
-    });
-    return [...map.values()].sort((a,b)=>b.count-a.count||a.label.localeCompare(b.label,"sv"));
+    const today=localDateKey();const rows=activity.filter(r=>r.student_id===studentId&&(scope==="today"?r.activity_date===today:true));const map=new Map();
+    rows.forEach(r=>{const old=map.get(r.activity_key)||{label:r.label,count:0};old.count+=Number(r.count)||0;old.label=r.label||old.label;map.set(r.activity_key,old);});
+    return [...map.values()].sort((a,b)=>b.count-a.count||String(a.label).localeCompare(String(b.label),"sv"));
   }
-
-  function fillList(id,items){
-    const el=$(id);el.innerHTML="";
-    if(!items.length){el.innerHTML="<div class='empty'>Ingen registrerad träning ännu.</div>";return;}
-    items.forEach(item=>{
-      const row=document.createElement("div");row.className="activity-row";
-      row.innerHTML="<strong>"+item.label+"</strong><span>"+item.count+"</span>";
-      el.appendChild(row);
-    });
-  }
-
+  function fillList(id,items){const el=$(id);el.innerHTML="";if(!items.length){el.innerHTML='<div class="empty">Ingen registrerad träning ännu.</div>';return;}items.forEach(item=>{const row=document.createElement("div");row.className="activity-row";row.innerHTML="<strong>"+escapeHtml(item.label)+"</strong><span>"+item.count+"</span>";el.appendChild(row);});}
   function renderDetail(){
-    const student=students.find(s=>s.id===selectedStudentId);
-    if(!student){$("studentDetail").classList.add("hidden");return;}
-    $("studentDetail").classList.remove("hidden");
-    $("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+student.code;
-    $("detailSubtitle").textContent="Dagens registrerade mattearbete och veckans totalsumma.";
-    fillList("todayList",aggregateFor(student.id,"today"));
-    fillList("weekList",aggregateFor(student.id,"week"));
+    const student=students.find(s=>s.id===selectedStudentId);if(!student){$("studentDetail").classList.add("hidden");return;}
+    $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+student.code;$("detailSubtitle").textContent="Uppdragsprogress räknas i hela omgångar. Aktiviteten räknar enskilda rätta svar.";
+    const taskBox=$("detailAssignments");taskBox.innerHTML="";
+    if(!assignments.length)taskBox.innerHTML='<div class="empty">Inga läraruppdrag.</div>';
+    assignments.forEach(a=>{const p=getProgress(student.id,a.id);const completed=Math.min(Number(p.completed)||0,Number(a.target)||1);const row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(a.title)+(a.enabled?"":" · pausat")+"</strong><div>"+completed+" av "+Number(a.target)+" omgångar</div><div class='progressbar'><span style='width:"+Math.min(100,Math.round(completed/Math.max(1,Number(a.target))*100))+"%'></span></div>";taskBox.appendChild(row);});
+    fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
   }
+
+  function beginEdit(id){
+    const a=assignments.find(x=>x.id===id);if(!a)return;editingAssignmentId=id;$("assignmentFormTitle").textContent="✏️ Ändra uppdrag";$("gameId").value=assignmentSelection(a);$("target").value=a.target;$("enabled").checked=a.enabled!==false;$("saveAssignmentBtn").textContent="Spara ändring";$("cancelEditBtn").classList.remove("hidden");setFeedback("assignmentFeedback","");window.scrollTo({top:$("assignmentFormTitle").getBoundingClientRect().top+window.scrollY-30,behavior:"smooth"});
+  }
+  function cancelEdit(){editingAssignmentId=null;$("assignmentFormTitle").textContent="➕ Lägg till uppdrag";$("saveAssignmentBtn").textContent="+ Lägg till uppdrag";$("cancelEditBtn").classList.add("hidden");$("target").value=3;$("enabled").checked=true;setFeedback("assignmentFeedback","");}
 
   async function saveAssignment(){
-    if(!classId)return;
-    const selected=parseGameSelection($("gameId").value);
-    const target=Math.max(1,Math.min(500,Number($("target").value)||20));
-    const enabled=$("enabled").checked;
-    $("saveAssignmentBtn").disabled=true;
-    setFeedback("assignmentFeedback","Sparar …");
+    if(!classId)return;const selected=parseGameSelection($("gameId").value);const target=Math.max(1,Math.min(500,Number($("target").value)||1));const enabled=$("enabled").checked;
+    $("saveAssignmentBtn").disabled=true;setFeedback("assignmentFeedback","Sparar …");
     try{
-      let res=await sb.rpc("teacher_save_assignment",{
-        p_class_id:classId,
-        p_game_id:selected.gameId,
-        p_title:selected.title,
-        p_description:selected.description,
-        p_target:target,
-        p_enabled:enabled,
-        p_game_config:selected.gameConfig
-      });
-      // Före databasuppdatering v2 kan vanliga spel fortfarande sparas via gamla RPC:n.
-      if(res.error && Object.keys(selected.gameConfig).length===0){
-        res=await sb.rpc("teacher_save_assignment",{
-          p_class_id:classId,
-          p_game_id:selected.gameId,
-          p_title:selected.title,
-          p_description:selected.description,
-          p_target:target,
-          p_enabled:enabled
-        });
-      }
-      if(res.error)throw res.error;
-      if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara");
-      setFeedback("assignmentFeedback","Uppdraget är sparat i Supabase.","good");
-      await loadClassData({silent:true});
-    }catch(error){
-      console.error(error);
-      setFeedback("assignmentFeedback","Kunde inte spara uppdraget. Om du valt en specifik multiplikationstabell behöver Admin v2-SQL vara körd.","bad");
-    }finally{$("saveAssignmentBtn").disabled=false;}
+      const fn=editingAssignmentId?"teacher_update_assignment":"teacher_create_assignment";
+      const args=editingAssignmentId?{
+        p_assignment_id:editingAssignmentId,p_game_id:selected.gameId,p_title:selected.title,p_description:selected.description,p_target:target,p_enabled:enabled,p_game_config:selected.gameConfig
+      }:{
+        p_class_id:classId,p_game_id:selected.gameId,p_title:selected.title,p_description:selected.description,p_target:target,p_enabled:enabled,p_game_config:selected.gameConfig
+      };
+      const res=await sb.rpc(fn,args);if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara");
+      setFeedback("assignmentFeedback",editingAssignmentId?"Uppdraget är ändrat.":"Uppdraget är tillagt.","good");editingAssignmentId=null;$("assignmentFormTitle").textContent="➕ Lägg till uppdrag";$("saveAssignmentBtn").textContent="+ Lägg till uppdrag";$("cancelEditBtn").classList.add("hidden");$("target").value=3;$("enabled").checked=true;await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("assignmentFeedback","Kunde inte spara. Kör Admin v3-SQL i Supabase först.","bad");}
+    finally{$("saveAssignmentBtn").disabled=false;}
+  }
+  async function toggleAssignment(id){
+    const a=assignments.find(x=>x.id===id);if(!a)return;
+    const res=await sb.rpc("teacher_update_assignment",{p_assignment_id:a.id,p_game_id:a.game_id,p_title:a.title,p_description:a.description,p_target:a.target,p_enabled:!a.enabled,p_game_config:a.game_config||{}});
+    if(res.error||!res.data?.ok){setFeedback("globalFeedback","Kunde inte ändra uppdraget.","bad");return;}await loadClassData({silent:true});
+  }
+  async function deleteAssignment(id){
+    const a=assignments.find(x=>x.id===id);if(!a)return;
+    if(!window.confirm('Ta bort uppdraget "'+a.title+'"? Elevprogress för just detta uppdrag tas också bort.'))return;
+    const res=await sb.rpc("teacher_delete_assignment",{p_assignment_id:id});if(res.error||!res.data?.ok){setFeedback("globalFeedback","Kunde inte ta bort uppdraget.","bad");return;}
+    if(editingAssignmentId===id)cancelEdit();await loadClassData({silent:true});
   }
 
   async function createClass(){
-    const code=String($("newClassCode").value||"").trim().toUpperCase();
-    const name=String($("newClassName").value||"").trim();
-    if(!code){setFeedback("classFeedback","Skriv en klasskod, till exempel 7A.","bad");return;}
-    $("createClassBtn").disabled=true;
-    setFeedback("classFeedback","Skapar klass …");
-    try{
-      const res=await sb.rpc("teacher_create_class",{p_code:code,p_name:name});
-      if(res.error)throw res.error;
-      if(!res.data?.ok){
-        const reason=res.data?.reason;
-        throw new Error(reason==="class_exists"?"Den klasskoden finns redan.":reason||"Kunde inte skapa klass");
-      }
-      await loadClasses();
-      classId=res.data.class_id;
-      renderClassSelect();
-      $("newClassCode").value="";
-      $("newClassName").value="";
-      selectedStudentId=null;
-      setFeedback("classFeedback",`Klassen ${res.data.code} är skapad.`,"good");
-      await loadClassData({silent:true});
-    }catch(error){
-      console.error(error);
-      setFeedback("classFeedback",error?.message?.includes("teacher_create_class")?"Kör Admin v2-SQL i Supabase först.":(error?.message||"Kunde inte skapa klassen."),"bad");
-    }finally{$("createClassBtn").disabled=false;}
+    const code=String($("newClassCode").value||"").trim().toUpperCase(),name=String($("newClassName").value||"").trim();if(!code){setFeedback("classFeedback","Skriv en klasskod, till exempel 7A.","bad");return;}
+    $("createClassBtn").disabled=true;setFeedback("classFeedback","Skapar klass …");
+    try{const res=await sb.rpc("teacher_create_class",{p_code:code,p_name:name});if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason==="class_exists"?"Den klasskoden finns redan.":res.data?.reason||"Kunde inte skapa klass");await loadClasses();classId=res.data.class_id;renderClassSelect();$("newClassCode").value="";$("newClassName").value="";selectedStudentId=null;setFeedback("classFeedback","Klassen "+res.data.code+" är skapad.","good");await loadClassData({silent:true});}
+    catch(error){console.error(error);setFeedback("classFeedback",error?.message||"Kunde inte skapa klassen.","bad");}
+    finally{$("createClassBtn").disabled=false;}
   }
-
-  let lastGeneratedCodes=[];
-
   async function generateCodes(){
-    if(!classId)return;
-    const count=Math.max(1,Math.min(40,Number($("codeCount").value)||1));
-    $("generateCodesBtn").disabled=true;
-    setFeedback("codesFeedback","Genererar koder …");
-    try{
-      const res=await sb.rpc("teacher_generate_student_codes",{p_class_id:classId,p_count:count});
-      if(res.error)throw res.error;
-      if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte skapa elevkoder");
-      lastGeneratedCodes=Array.isArray(res.data.codes)?res.data.codes:[];
-      $("generatedCodes").innerHTML="";
-      lastGeneratedCodes.forEach(code=>{
-        const chip=document.createElement("span");
-        chip.className="code-chip";
-        chip.textContent=code;
-        $("generatedCodes").appendChild(chip);
-      });
-      $("copyCodesBtn").classList.toggle("hidden",!lastGeneratedCodes.length);
-      setFeedback("codesFeedback",`${lastGeneratedCodes.length} nya elevkoder skapade.`,"good");
-      await loadClassData({silent:true});
-    }catch(error){
-      console.error(error);
-      setFeedback("codesFeedback",error?.message?.includes("teacher_generate_student_codes")?"Kör Admin v2-SQL i Supabase först.":"Kunde inte generera elevkoder.","bad");
-    }finally{$("generateCodesBtn").disabled=false;}
+    if(!classId)return;const count=Math.max(1,Math.min(40,Number($("codeCount").value)||1));$("generateCodesBtn").disabled=true;setFeedback("codesFeedback","Genererar koder …");
+    try{const res=await sb.rpc("teacher_generate_student_codes",{p_class_id:classId,p_count:count});if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte skapa elevkoder");lastGeneratedCodes=Array.isArray(res.data.codes)?res.data.codes:[];$("generatedCodes").innerHTML="";lastGeneratedCodes.forEach(code=>{const chip=document.createElement("span");chip.className="code-chip";chip.textContent=code;$("generatedCodes").appendChild(chip);});$("copyCodesBtn").classList.toggle("hidden",!lastGeneratedCodes.length);setFeedback("codesFeedback",lastGeneratedCodes.length+" nya elevkoder skapade.","good");await loadClassData({silent:true});}
+    catch(error){console.error(error);setFeedback("codesFeedback","Kunde inte generera elevkoder.","bad");}
+    finally{$("generateCodesBtn").disabled=false;}
   }
+  async function copyCodes(){if(!lastGeneratedCodes.length)return;try{await navigator.clipboard.writeText(lastGeneratedCodes.join("\n"));setFeedback("codesFeedback","Koderna är kopierade.","good");}catch{setFeedback("codesFeedback","Kunde inte kopiera automatiskt. Markera koderna ovan.","bad");}}
 
-  async function copyCodes(){
-    if(!lastGeneratedCodes.length)return;
-    try{
-      await navigator.clipboard.writeText(lastGeneratedCodes.join("\n"));
-      setFeedback("codesFeedback","Koderna är kopierade.","good");
-    }catch{
-      setFeedback("codesFeedback","Kunde inte kopiera automatiskt. Markera koderna ovan.","bad");
-    }
-  }
+  function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+  async function restore(){const {data,error}=await sb.auth.getSession();if(error){console.error(error);return;}if(data?.session?.user){user=data.session.user;await enterAdmin();}}
 
-  async function restore(){
-    const {data,error}=await sb.auth.getSession();
-    if(error){console.error(error);return;}
-    if(data?.session?.user){user=data.session.user;await enterAdmin();}
-  }
-
-  $("loginBtn").addEventListener("click",login);
-  $("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});
-  $("logoutBtn").addEventListener("click",logout);
-  $("refreshBtn").addEventListener("click",()=>loadClassData());
-  $("saveAssignmentBtn").addEventListener("click",saveAssignment);
-  $("createClassBtn").addEventListener("click",createClass);
-  $("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
-  $("generateCodesBtn").addEventListener("click",generateCodes);
-  $("copyCodesBtn").addEventListener("click",copyCodes);
-  $("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;$("studentDetail").classList.add("hidden");render();});
-  $("classSelect").addEventListener("change",async()=>{classId=$("classSelect").value;selectedStudentId=null;await loadClassData();});
+  $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("logoutBtn").addEventListener("click",logout);$("refreshBtn").addEventListener("click",()=>loadClassData());
+  $("saveAssignmentBtn").addEventListener("click",saveAssignment);$("cancelEditBtn").addEventListener("click",cancelEdit);$("createClassBtn").addEventListener("click",createClass);$("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
+  $("generateCodesBtn").addEventListener("click",generateCodes);$("copyCodesBtn").addEventListener("click",copyCodes);$("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;$("studentDetail").classList.add("hidden");renderStudents();});
+  $("classSelect").addEventListener("change",async()=>{classId=$("classSelect").value;selectedStudentId=null;editingAssignmentId=null;cancelEdit();await loadClassData();});
   restore();
 })();
 </script>
