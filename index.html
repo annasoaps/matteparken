@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.75 Direkt läxstart</title>
+<title>Matteparken – v0.4.76 Läxstart via uppdragsmotorn</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10895,31 +10895,6 @@ async function login(){
  finally{busy=false;if($("#studentLoginBtn"))$("#studentLoginBtn").disabled=false;}
 }
 async function logout(){setSelection(null);setActiveAssignment(null);current=null;if($("#studentCode"))$("#studentCode").value="";if($("#studentDisplayName"))$("#studentDisplayName").value="";feedback("");render();try{await client().auth.signOut({scope:"local"});}catch(error){console.warn(error);}}
-function launchAssignmentGame(a){
- const buttonMap={
-  multiplication:"openMultiplication",equations:"openEquations",pow10:"openPow10",
-  fractionDecimal:"openFractionDecimal",fractionArithmetic:"openFractionArithmetic",
-  percentConvert:"openPercentConvert",prefixMatch:"openPrefixMatch",unitConvert:"openUnitConvert",
-  statistics:"openStatistics",scientificNotation:"openScientificNotation"
- };
- const cfg=(a?.game_config&&typeof a.game_config==="object")?a.game_config:{};
- MZ.closeModal("missionBoardModal");
- $("#activityView")?.classList.add("hidden");
- if(a.game_id==="multiplication"){
-   const table=Number(cfg.table);
-   if(table>=1&&table<=10){
-     MZ.games.multiplication.openRequired(table);
-     window.setTimeout(()=>$("#startBtn")?.click(),80);
-     return true;
-   }
- }
- const button=buttonMap[a.game_id];
- if(!button)return false;
- MZ.openModal("officeModal");
- $("#"+button)?.click();
- if(a.game_id==="equations")window.setTimeout(()=>$("#eqRandomOne")?.click(),80);
- return true;
-}
 function startAssignment(id){
  const a=current?.allAssignments?.find(x=>x.id===id);
  if(!a){$("#status").textContent="⚠️ Uppdraget kunde inte hittas. Ladda om sidan och försök igen.";return;}
@@ -10930,12 +10905,21 @@ function startAssignment(id){
     render();return;
   }
  }
- const launched=launchAssignmentGame(a);
- if(!launched){
-   $("#status").textContent="⚠️ Matteparken hittade inte spelet för den här läxan.";
+
+ // Läraruppdrag och läxor använder samma, redan fungerande spelstart.
+ // Om Parkkontorsnyckeln saknas visar launch() anslagstavlan och förklarar varför.
+ if(!MZ.state.onboarding?.keyTaken){
+   setActiveAssignment(null);
+   MZ.missionBoard.launch(a.game_id,a.game_config||{});
    return;
  }
+
  setActiveAssignment(a.id);
+ MZ.missionBoard.launch(a.game_id,a.game_config||{});
+
+ // Ekvationsuppdrag ska börja med en slumpad ekvation direkt.
+ if(a.game_id==="equations")window.setTimeout(()=>$("#eqRandomOne")?.click(),120);
+
  $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";
 }
 
