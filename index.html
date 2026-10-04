@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.90 Läxförhör 57,5</title>
+<title>Matteparken – v0.4.91 Läxförhör öppnas ovanpå kontoret</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2133,11 +2133,11 @@ button.office-fixture:focus-visible{outline:4px solid #fff4a6;outline-offset:4px
 /* v0.4.73 – Läxa + läxförhör */
 .student-homework-section{margin:15px 0 4px;padding-top:13px;border-top:2px dashed #c7b994}.student-homework-section h4{margin:0 0 9px;font:700 16px Georgia,serif;color:#4c4436}
 .student-homework-list{display:grid;gap:10px}.student-homework-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:2px solid #c8b78e;border-radius:8px;background:#fffaf0}.student-homework-card.done{background:#eef5e9;border-color:#9bad85}.student-homework-card.locked{opacity:.72;background:#f1eee5}.student-homework-card h5{margin:0 0 4px;font-size:15px}.homework-window{font-size:11px;color:#72766d;margin-top:5px}.homework-reward{font-size:11px;font-weight:850;color:#6a5331;margin-top:5px}
-.office-homework-quiz{position:absolute;z-index:7;left:17.2%;top:57.5%;width:13.5%;height:15.5%;border:0;background:transparent url("assets/homework_quiz_stack.webp") center/contain no-repeat;cursor:pointer;filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24));transition:transform .14s ease,filter .14s ease}
+.office-homework-quiz{position:absolute;z-index:7;left:17.2%;top:58.5%;width:13.5%;height:15.5%;border:0;background:transparent url("assets/homework_quiz_stack.webp") center/contain no-repeat;cursor:pointer;filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24));transition:transform .14s ease,filter .14s ease}
 .office-homework-quiz.has-quiz{animation:quizPaperGlow 2.2s ease-in-out infinite}.office-homework-quiz:focus-visible{outline:4px solid #fff4a6;outline-offset:3px;border-radius:10px}.office-homework-quiz:hover{transform:translateY(-3px) scale(1.025)}
 @keyframes quizPaperGlow{0%,100%{filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24))}50%{filter:drop-shadow(0 0 10px rgba(255,226,113,.95))}}
-#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
-@media(max-width:720px){.student-homework-card,.quiz-list-item{grid-template-columns:1fr}.office-homework-quiz{left:17.2%;top:57.5%;width:13.5%;height:15.5%}}
+#homeworkQuizModal{z-index:140}#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
+@media(max-width:720px){.student-homework-card,.quiz-list-item{grid-template-columns:1fr}.office-homework-quiz{left:17.2%;top:58.5%;width:13.5%;height:15.5%}}
 </style>
 <style>
 /* Matteparken v0447 — an actual noticeboard, with the welcome gift attached. */
