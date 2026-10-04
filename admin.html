@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matteparken · Läraradmin v3</title>
+<title>Matteparken · Läraradmin v4</title>
 <style>
 :root{
   color-scheme:light;
@@ -43,7 +43,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="brand-mark">🌲</div><div><h1>Matteparken</h1><div class="muted">Läraradmin · flera uppdrag · hela omgångar</div></div></div>
+  <div class="brand"><div class="brand-mark">🌲</div><div><h1>Matteparken</h1><div class="muted">Läraradmin · flera uppdrag · ett uppdrag = en omgång</div></div></div>
 
   <section id="loginView" class="card login-card">
     <h2>👩‍🏫 Logga in som lärare</h2>
@@ -91,8 +91,8 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 
     <div class="wide-grid">
       <section class="card">
-        <div class="section-head"><div><h2 id="assignmentFormTitle">➕ Lägg till uppdrag</h2><p class="muted">Målet anges i hela omgångar, inte enskilda frågor.</p></div></div>
-        <div class="callout">Exempel: <strong>6:ans tabell × 5 omgångar</strong> betyder att eleven gör hela 6×1–6×10 fem gånger.</div>
+        <div class="section-head"><div><h2 id="assignmentFormTitle">➕ Lägg till uppdrag</h2><p class="muted">Varje uppdrag är exakt en hel spelomgång.</p></div></div>
+        <div class="callout">Exempel: vill du att klassen gör <strong>6:ans tabell fem gånger</strong> väljer du 6:ans tabell och lägger till <strong>5 likadana uppdrag</strong>. Varje uppdrag kräver hela 6×1–6×10.</div>
         <div class="form-grid">
           <label class="wide">Matteområde
             <select id="gameId">
@@ -117,7 +117,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
               </optgroup>
             </select>
           </label>
-          <label>Antal omgångar<input id="target" type="number" min="1" max="500" value="3"></label>
+          <label id="repeatCountLabel">Antal likadana uppdrag<input id="repeatCount" type="number" min="1" max="20" value="1"></label>
           <label class="toggle"><input id="enabled" type="checkbox" checked> Aktivt uppdrag</label>
           <div class="wide form-actions">
             <button class="btn primary" id="saveAssignmentBtn" type="button">+ Lägg till uppdrag</button>
@@ -275,10 +275,10 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     const box=$("assignmentList");box.innerHTML="";
     if(!assignments.length){box.innerHTML='<div class="empty">Inga läraruppdrag ännu. Lägg till det första till vänster.</div>';return;}
     assignments.forEach(a=>{
-      const doneStudents=students.filter(s=>Number(getProgress(s.id,a.id).completed)>=Number(a.target)).length;
+      const doneStudents=students.filter(s=>Number(getProgress(s.id,a.id).completed)>=1).length;
       const item=document.createElement("div");item.className="assignment-item"+(a.enabled?"":" paused");
       item.innerHTML='<div class="assignment-item-head"><div><h3>'+escapeHtml(a.title)+'</h3><div class="muted small">'+escapeHtml(roundDescription(a))+'</div></div><span class="mini-pill">'+(a.enabled?"Aktivt":"Pausat")+'</span></div>'+
-        '<div class="assignment-meta"><span class="mini-pill">🎯 '+Number(a.target)+' omgångar</span><span class="mini-pill">✓ '+doneStudents+' / '+students.length+' elever klara</span></div>'+
+        '<div class="assignment-meta"><span class="mini-pill">🎯 1 hel omgång</span><span class="mini-pill">✓ '+doneStudents+' / '+students.length+' elever klara</span></div>'+
         '<div class="assignment-buttons"><button class="btn secondary edit-assignment" type="button">Ändra</button><button class="btn secondary toggle-assignment" type="button">'+(a.enabled?"Pausa":"Aktivera")+'</button><button class="btn danger delete-assignment" type="button">Ta bort</button></div>';
       item.querySelector(".edit-assignment").addEventListener("click",()=>beginEdit(a.id));
       item.querySelector(".toggle-assignment").addEventListener("click",()=>toggleAssignment(a.id));
@@ -291,7 +291,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     $("studentCount").textContent=students.length+" "+(students.length===1?"elev":"elever");
     const tbody=$("studentRows");tbody.innerHTML="";const active=assignments.filter(a=>a.enabled);
     students.forEach(student=>{
-      const done=active.filter(a=>Number(getProgress(student.id,a.id).completed)>=Number(a.target)).length;
+      const done=active.filter(a=>Number(getProgress(student.id,a.id).completed)>=1).length;
       const total=active.length;const pct=total?Math.round(done/total*100):0;
       const anyProgress=active.some(a=>Number(getProgress(student.id,a.id).completed)>0);
       const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
@@ -312,36 +312,46 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   function fillList(id,items){const el=$(id);el.innerHTML="";if(!items.length){el.innerHTML='<div class="empty">Ingen registrerad träning ännu.</div>';return;}items.forEach(item=>{const row=document.createElement("div");row.className="activity-row";row.innerHTML="<strong>"+escapeHtml(item.label)+"</strong><span>"+item.count+"</span>";el.appendChild(row);});}
   function renderDetail(){
     const student=students.find(s=>s.id===selectedStudentId);if(!student){$("studentDetail").classList.add("hidden");return;}
-    $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+student.code;$("detailSubtitle").textContent="Uppdragsprogress räknas i hela omgångar. Aktiviteten räknar enskilda rätta svar.";
+    $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+student.code;$("detailSubtitle").textContent="Varje läraruppdrag blir klart efter en hel omgång. Aktiviteten räknar samtidigt enskilda rätta svar.";
     const taskBox=$("detailAssignments");taskBox.innerHTML="";
     if(!assignments.length)taskBox.innerHTML='<div class="empty">Inga läraruppdrag.</div>';
-    assignments.forEach(a=>{const p=getProgress(student.id,a.id);const completed=Math.min(Number(p.completed)||0,Number(a.target)||1);const row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(a.title)+(a.enabled?"":" · pausat")+"</strong><div>"+completed+" av "+Number(a.target)+" omgångar</div><div class='progressbar'><span style='width:"+Math.min(100,Math.round(completed/Math.max(1,Number(a.target))*100))+"%'></span></div>";taskBox.appendChild(row);});
+    assignments.forEach(a=>{const p=getProgress(student.id,a.id);const done=Number(p.completed)>=1;const row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(a.title)+(a.enabled?"":" · pausat")+"</strong><div>"+(done?"✓ Klar":"○ Inte klar")+" · 1 hel omgång</div><div class='progressbar'><span style='width:"+(done?100:0)+"%'></span></div>";taskBox.appendChild(row);});
     fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
   }
 
   function beginEdit(id){
-    const a=assignments.find(x=>x.id===id);if(!a)return;editingAssignmentId=id;$("assignmentFormTitle").textContent="✏️ Ändra uppdrag";$("gameId").value=assignmentSelection(a);$("target").value=a.target;$("enabled").checked=a.enabled!==false;$("saveAssignmentBtn").textContent="Spara ändring";$("cancelEditBtn").classList.remove("hidden");setFeedback("assignmentFeedback","");window.scrollTo({top:$("assignmentFormTitle").getBoundingClientRect().top+window.scrollY-30,behavior:"smooth"});
+    const a=assignments.find(x=>x.id===id);if(!a)return;editingAssignmentId=id;$("assignmentFormTitle").textContent="✏️ Ändra uppdrag";$("gameId").value=assignmentSelection(a);$("enabled").checked=a.enabled!==false;$("saveAssignmentBtn").textContent="Spara ändring";$("cancelEditBtn").classList.remove("hidden");$("repeatCount").value=1;$("repeatCount").disabled=true;$("repeatCountLabel").classList.add("hidden");setFeedback("assignmentFeedback","");window.scrollTo({top:$("assignmentFormTitle").getBoundingClientRect().top+window.scrollY-30,behavior:"smooth"});
   }
-  function cancelEdit(){editingAssignmentId=null;$("assignmentFormTitle").textContent="➕ Lägg till uppdrag";$("saveAssignmentBtn").textContent="+ Lägg till uppdrag";$("cancelEditBtn").classList.add("hidden");$("target").value=3;$("enabled").checked=true;setFeedback("assignmentFeedback","");}
+  function cancelEdit(){editingAssignmentId=null;$("assignmentFormTitle").textContent="➕ Lägg till uppdrag";$("saveAssignmentBtn").textContent="+ Lägg till uppdrag";$("cancelEditBtn").classList.add("hidden");$("repeatCount").value=1;$("repeatCount").disabled=false;$("repeatCountLabel").classList.remove("hidden");$("enabled").checked=true;setFeedback("assignmentFeedback","");}
 
   async function saveAssignment(){
-    if(!classId)return;const selected=parseGameSelection($("gameId").value);const target=Math.max(1,Math.min(500,Number($("target").value)||1));const enabled=$("enabled").checked;
+    if(!classId)return;const selected=parseGameSelection($("gameId").value);const enabled=$("enabled").checked;
+    const repeats=editingAssignmentId?1:Math.max(1,Math.min(20,Number($("repeatCount").value)||1));
     $("saveAssignmentBtn").disabled=true;setFeedback("assignmentFeedback","Sparar …");
     try{
-      const fn=editingAssignmentId?"teacher_update_assignment":"teacher_create_assignment";
-      const args=editingAssignmentId?{
-        p_assignment_id:editingAssignmentId,p_game_id:selected.gameId,p_title:selected.title,p_description:selected.description,p_target:target,p_enabled:enabled,p_game_config:selected.gameConfig
-      }:{
-        p_class_id:classId,p_game_id:selected.gameId,p_title:selected.title,p_description:selected.description,p_target:target,p_enabled:enabled,p_game_config:selected.gameConfig
-      };
-      const res=await sb.rpc(fn,args);if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara");
-      setFeedback("assignmentFeedback",editingAssignmentId?"Uppdraget är ändrat.":"Uppdraget är tillagt.","good");editingAssignmentId=null;$("assignmentFormTitle").textContent="➕ Lägg till uppdrag";$("saveAssignmentBtn").textContent="+ Lägg till uppdrag";$("cancelEditBtn").classList.add("hidden");$("target").value=3;$("enabled").checked=true;await loadClassData({silent:true});
-    }catch(error){console.error(error);setFeedback("assignmentFeedback","Kunde inte spara. Kör Admin v3-SQL i Supabase först.","bad");}
+      if(editingAssignmentId){
+        const res=await sb.rpc("teacher_update_assignment",{
+          p_assignment_id:editingAssignmentId,p_game_id:selected.gameId,p_title:selected.title,p_description:selected.description,p_target:1,p_enabled:enabled,p_game_config:selected.gameConfig
+        });
+        if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara");
+        setFeedback("assignmentFeedback","Uppdraget är ändrat.","good");
+      }else{
+        for(let i=1;i<=repeats;i++){
+          const title=repeats>1?selected.title+" · omgång "+i:selected.title;
+          const res=await sb.rpc("teacher_create_assignment",{
+            p_class_id:classId,p_game_id:selected.gameId,p_title:title,p_description:selected.description,p_target:1,p_enabled:enabled,p_game_config:selected.gameConfig
+          });
+          if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara");
+        }
+        setFeedback("assignmentFeedback",repeats===1?"Uppdraget är tillagt.":repeats+" separata uppdrag är tillagda.","good");
+      }
+      editingAssignmentId=null;$("assignmentFormTitle").textContent="➕ Lägg till uppdrag";$("saveAssignmentBtn").textContent="+ Lägg till uppdrag";$("cancelEditBtn").classList.add("hidden");$("repeatCount").value=1;$("repeatCount").disabled=false;$("repeatCountLabel").classList.remove("hidden");$("enabled").checked=true;await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("assignmentFeedback","Kunde inte spara. Kör den nya fleruppdrags-SQL-filen i Supabase först.","bad");}
     finally{$("saveAssignmentBtn").disabled=false;}
   }
   async function toggleAssignment(id){
     const a=assignments.find(x=>x.id===id);if(!a)return;
-    const res=await sb.rpc("teacher_update_assignment",{p_assignment_id:a.id,p_game_id:a.game_id,p_title:a.title,p_description:a.description,p_target:a.target,p_enabled:!a.enabled,p_game_config:a.game_config||{}});
+    const res=await sb.rpc("teacher_update_assignment",{p_assignment_id:a.id,p_game_id:a.game_id,p_title:a.title,p_description:a.description,p_target:1,p_enabled:!a.enabled,p_game_config:a.game_config||{}});
     if(res.error||!res.data?.ok){setFeedback("globalFeedback","Kunde inte ändra uppdraget.","bad");return;}await loadClassData({silent:true});
   }
   async function deleteAssignment(id){
