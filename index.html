@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.5.03 Robust TOMTETEST</title>
+<title>Matteparken – v0.5.04 Andel i läraruppdrag</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -12105,11 +12105,13 @@ document.addEventListener("DOMContentLoaded", () => {
     fractionDecimal:['Bråk ↔ Decimal','openFractionDecimal'],
     fractionArithmetic:['Räkna med bråk','openFractionArithmetic'],
     percentConvert:['Bråk · Decimal · Procent','openPercentConvert'],
+    sharePart:['Hur stor andel?','openSharePart'],
     prefixMatch:['Prefix – para ihop','openPrefixMatch'],
     unitConvert:['Enhetsomvandling','openUnitConvert'],
     statistics:['Statistik','openStatistics'],
     scientificNotation:['Grundpotensform','openScientificNotation']
   };
+  const randomGameIds=Object.keys(games).filter(id=>id!=='sharePart');
   const storeKey='matteparken_randomMissions_v1';
   let returningFocus=null, dateSeen='';
   function today(){return MZ.getLocalDateKey();}
@@ -12122,7 +12124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!all[who] || typeof all[who]!=='object')all[who]={};
     let m=all[who][day];
     if(!m || !games[m.gameId]){
-      const ids=Object.keys(games);
+      const ids=randomGameIds;
       m=all[who][day]={gameId:ids[Math.floor(Math.random()*ids.length)],completed:0,target:10};write(all);
     }
     return m;
