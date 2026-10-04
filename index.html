@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.83 Bråk decimal procent-trior</title>
+<title>Matteparken – v0.4.84 Procenttrior rättningsfix</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10210,20 +10210,32 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     window.setTimeout(focusFirstMissing,30);
   }
 
+  function visibleTarget(q){
+    if(q.from==="decimal"){
+      const shown=parseNum($("#percentDecimalGiven").textContent);
+      if(Number.isFinite(shown)) return shown;
+    }
+    if(q.from==="percent"){
+      const shown=parseNum($("#percentPercentGiven").textContent);
+      if(Number.isFinite(shown)) return shown/100;
+    }
+    return q.n/q.d;
+  }
   function fractionCheck(q){
-    const n=Number($("#percentFractionNumerator").value),d=Number($("#percentFractionDenominator").value);
-    const valid=Number.isInteger(n)&&Number.isInteger(d)&&d>0&&n>=0;
-    const correct=valid&&n*q.d===q.n*d;
+    const rawN=String($("#percentFractionNumerator").value).trim(),rawD=String($("#percentFractionDenominator").value).trim();
+    const n=Number(rawN),d=Number(rawD),target=visibleTarget(q);
+    const valid=rawN!==""&&rawD!==""&&Number.isInteger(n)&&Number.isInteger(d)&&d>0&&n>=0;
+    const correct=valid&&Math.abs(n/d-target)<1e-9;
     const simplest=correct&&gcd(n,d)===1;
     return{correct,simplest,n,d};
   }
   function decimalCheck(q){
-    const value=parseNum($("#percentDecimalAnswer").value);
-    return{correct:Number.isFinite(value)&&Math.abs(value-q.n/q.d)<1e-9,value};
+    const raw=String($("#percentDecimalAnswer").value).trim(),value=parseNum(raw),target=visibleTarget(q);
+    return{correct:raw!==""&&Number.isFinite(value)&&Math.abs(value-target)<1e-9,value};
   }
   function percentCheck(q){
-    const value=parseNum($("#percentPercentAnswer").value);
-    return{correct:Number.isFinite(value)&&Math.abs(value-q.n/q.d*100)<1e-9,value};
+    const raw=String($("#percentPercentAnswer").value).trim(),value=parseNum(raw),target=visibleTarget(q)*100;
+    return{correct:raw!==""&&Number.isFinite(value)&&Math.abs(value-target)<1e-9,value};
   }
 
   function markResult(kind,result){
@@ -10273,8 +10285,12 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const allCorrect=Object.values(results).every(result=>result.correct);
 
     if(!allCorrect){
-      const correctCount=Object.values(results).filter(result=>result.correct).length;
-      $("#percentConvertFeedback").textContent=(correctCount===1?"En form stämmer. Kontrollera den markerade rutan. ":"Inte riktigt än. ")+hintFor(current);
+      const correctKinds=Object.entries(results).filter(([,result])=>result.correct).map(([kind])=>kind);
+      const wrongKinds=Object.entries(results).filter(([,result])=>!result.correct).map(([kind])=>kind);
+      const names={fraction:"bråkformen",decimal:"decimalformen",percent:"procentformen"};
+      let message="Inte riktigt än. ";
+      if(correctKinds.length===1&&wrongKinds.length===1) message="✓ "+names[correctKinds[0]][0].toUpperCase()+names[correctKinds[0]].slice(1)+" stämmer. Kontrollera "+names[wrongKinds[0]]+". ";
+      $("#percentConvertFeedback").textContent=message+hintFor(current);
       $("#percentConvertFeedback").className="feedback bad";
       return;
     }
