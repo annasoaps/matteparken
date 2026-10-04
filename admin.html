@@ -94,8 +94,8 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 
     <div class="wide-grid">
       <section class="card">
-        <div class="section-head"><div><h2 id="assignmentFormTitle">➕ Lägg till uppdrag</h2><p class="muted">Varje uppdrag är exakt en hel spelomgång.</p></div></div>
-        <div class="callout">Exempel: vill du att klassen gör <strong>6:ans tabell fem gånger</strong> väljer du 6:ans tabell och lägger till <strong>5 likadana uppdrag</strong>. Varje uppdrag kräver hela 6×1–6×10.</div>
+        <div class="section-head"><div><h2 id="assignmentFormTitle">➕ Lägg till uppdrag</h2><p class="muted">Varje aktivt uppdrag blir en del av ”Ditt uppdrag idag” och börjar om varje dag på elevsidan.</p></div></div>
+        <div class="callout">Du kan låta samma uppdrag vara aktivt hela veckan. Elevernas dagsstatus nollställs varje morgon. <strong>Pausa</strong> döljer uppdraget för eleverna men behåller det i Admin; <strong>Ta bort</strong> raderar också uppdragets sparade elevprogress.</div>
         <div class="form-grid">
           <label class="wide">Matteområde
             <select id="gameId">
@@ -121,7 +121,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
             </select>
           </label>
           <label id="repeatCountLabel">Antal likadana uppdrag<input id="repeatCount" type="number" min="1" max="20" value="1"></label>
-          <label class="toggle"><input id="enabled" type="checkbox" checked> Aktivt uppdrag</label>
+          <label class="toggle"><input id="enabled" type="checkbox" checked> Aktivt · syns för elever</label>
           <div class="wide form-actions">
             <button class="btn primary" id="saveAssignmentBtn" type="button">+ Lägg till uppdrag</button>
             <button class="btn secondary hidden" id="cancelEditBtn" type="button">Avbryt ändring</button>
@@ -131,7 +131,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       </section>
 
       <section class="card">
-        <div class="section-head"><div><h2>📌 Klassens uppdrag</h2><p class="muted">Eleven ser alla aktiva uppdrag och väljer vilket som ska tränas.</p></div><strong id="assignmentCount">0 uppdrag</strong></div>
+        <div class="section-head"><div><h2>📌 Dagens uppdrag</h2><p class="muted">Aktiva uppdrag visas för eleverna under ”Ditt uppdrag idag”. Pausade uppdrag ligger kvar här med sin historik men syns inte för eleverna.</p></div><strong id="assignmentCount">0 uppdrag</strong></div>
         <div class="assignment-list" id="assignmentList"></div>
       </section>
     </div>
@@ -481,7 +481,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   }
   async function deleteAssignment(id){
     const a=assignments.find(x=>x.id===id);if(!a)return;
-    if(!window.confirm('Ta bort uppdraget "'+a.title+'"? Elevprogress för just detta uppdrag tas också bort.'))return;
+    if(!window.confirm('Ta bort uppdraget "'+a.title+'"? Detta är permanent och elevprogress för just detta uppdrag tas också bort. Om du bara vill dölja det för eleverna, välj Pausa i stället.'))return;
     const res=await sb.rpc("teacher_delete_assignment",{p_assignment_id:id});if(res.error||!res.data?.ok){setFeedback("globalFeedback","Kunde inte ta bort uppdraget.","bad");return;}
     if(editingAssignmentId===id)cancelEdit();await loadClassData({silent:true});
   }
