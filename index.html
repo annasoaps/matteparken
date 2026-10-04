@@ -10700,433 +10700,142 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (() => {
-  "use strict";
+"use strict";
+const MZ=window.Mattezoo,{$}=MZ;
+const SUPABASE_URL="https://mjgkkwdgowvxuehiudvj.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
+const SELECTION_KEY="matteparkenCloudStudentSelection_v1";
+const ACTIVE_ASSIGNMENT_KEY="matteparkenCloudActiveAssignment_v1";
+let sb=null,current=null,busy=false,reconnectPromise=null,writeQueue=Promise.resolve(),keepAliveTimer=null;
 
-  const MZ = window.Mattezoo;
-  const {$} = MZ;
-  const SUPABASE_URL = "https://mjgkkwdgowvxuehiudvj.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
-  const SELECTION_KEY = "matteparkenCloudStudentSelection_v1";
+const expectedRoundTypes={
+ multiplication:"table-round",equations:"solved-random-equation",pow10:"ten-question-round",
+ fractionDecimal:"matching-board",fractionArithmetic:"three-calculation-round",
+ percentConvert:"ten-question-round",prefixMatch:"ten-question-round",
+ unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round"
+};
+const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform"};
 
-  let sb = null;
-  let current = null;
-  let busy = false;
-  let reconnectPromise = null;
-  let writeQueue = Promise.resolve();
-  let keepAliveTimer = null;
+const norm=v=>String(v||"").trim().toUpperCase().replace(/\s+/g,"");
+function formatLast(v){if(!v)return"–";const d=new Date(v);if(Number.isNaN(d.getTime()))return"–";const n=new Date();return d.toDateString()===n.toDateString()?"idag "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});}
+function gameTitle(id){return MZ.math.listGames().find(g=>g.id===id)?.title||fallbackTitles[id]||id;}
+function activityDescriptor(d){if(d.gameId==="multiplication"&&Number.isFinite(Number(d.table))){const t=Number(d.table);return{key:"multiplication:"+t,label:t+":ans tabell"};}return{key:d.gameId,label:gameTitle(d.gameId)};}
+function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 10 rätt.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt."};return x[a?.game_id]||"En hel omgång.";}
 
-  const fallbackTitles = {
-    multiplication:"Multiplikation",
-    equations:"Ekvationer",
-    pow10:"Tiopotenser",
-    fractionDecimal:"Bråk och decimaltal",
-    fractionArithmetic:"Räkna med bråk",
-    mgn:"Minsta gemensamma nämnaren",
-    percentConvert:"Bråk • Decimal • Procent",
-    prefixMatch:"Prefix",
-    unitConvert:"Enhetsomvandling",
-    statistics:"Statistik",
-    scientificNotation:"Grundpotensform"
-  };
+function getSelection(){try{return JSON.parse(localStorage.getItem(SELECTION_KEY)||"null");}catch{return null;}}
+function setSelection(v){v?localStorage.setItem(SELECTION_KEY,JSON.stringify(v)):localStorage.removeItem(SELECTION_KEY);}
+function getActiveAssignment(){return localStorage.getItem(ACTIVE_ASSIGNMENT_KEY)||"";}
+function setActiveAssignment(id){id?localStorage.setItem(ACTIVE_ASSIGNMENT_KEY,id):localStorage.removeItem(ACTIVE_ASSIGNMENT_KEY);}
+function feedback(msg="",kind=""){const el=$("#studentLoginFeedback");if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
 
-  function norm(value){
-    return String(value||"").trim().toUpperCase().replace(/\s+/g,"");
-  }
+function client(){
+ if(sb)return sb;
+ if(!window.supabase?.createClient)throw new Error("Supabase-biblioteket kunde inte laddas.");
+ sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"matteparken-student-auth-v1"}});
+ return sb;
+}
+async function ensureAnonymousSession(){const c=client(),{data,error}=await c.auth.getSession();if(error)throw error;if(data?.session)return data.session;const created=await c.auth.signInAnonymously();if(created.error)throw created.error;if(!created.data?.session)throw new Error("Kunde inte skapa elevsession.");return created.data.session;}
 
-  function formatLast(value){
-    if(!value) return "–";
-    const d=new Date(value);
-    if(Number.isNaN(d.getTime())) return "–";
-    const today=new Date();
-    const same=d.toDateString()===today.toDateString();
-    return same
-      ? `idag ${d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"})}`
-      : d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});
-  }
+async function readCloudState(){
+ const c=client();
+ const sr=await c.from("students").select("id,code,class_id,last_active").maybeSingle();
+ if(sr.error)throw sr.error;
+ if(!sr.data){current=null;render();return null;}
+ const student=sr.data;
+ const [cr,ar]=await Promise.all([
+  c.from("classes").select("id,code,name").eq("id",student.class_id).maybeSingle(),
+  c.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true})
+ ]);
+ if(cr.error)throw cr.error;if(ar.error)throw ar.error;
+ const assignments=ar.data||[],progressMap=new Map(),ids=assignments.map(x=>x.id);
+ if(ids.length){
+  const pr=await c.from("student_assignment_progress").select("assignment_id,completed,last_active,updated_at").eq("student_id",student.id).in("assignment_id",ids);
+  if(pr.error)throw pr.error;(pr.data||[]).forEach(p=>progressMap.set(p.assignment_id,p));
+ }
+ current={classInfo:cr.data,student,assignments,progressMap};
+ const active=getActiveAssignment();if(active&&!assignments.some(x=>x.id===active))setActiveAssignment(null);
+ render();return current;
+}
+function activeStudent(){
+ if(!current?.student)return null;
+ return{classId:current.classInfo?.code||getSelection()?.classId||"",code:current.student.code,student:current.student,assignments:(current.assignments||[]).map(a=>({...a,gameId:a.game_id,progress:current.progressMap.get(a.id)||{completed:0,last_active:null}}))};
+}
+async function claim(classCode,studentCode){
+ const c=client();await ensureAnonymousSession();
+ const r=await c.rpc("claim_student_code",{p_class_code:classCode,p_student_code:studentCode});
+ if(r.error)throw r.error;
+ if(!r.data?.ok){if(r.data?.reason==="invalid_code")throw new Error("Klass eller elevkod känns inte igen.");if(r.data?.reason==="not_anonymous_student")throw new Error("Den här webbläsaren har fel typ av Supabase-session.");throw new Error("Kunde inte koppla elevkoden till Matteparken.");}
+ setSelection({classId:classCode,code:studentCode});return readCloudState();
+}
 
-  function gameTitle(gameId){
-    return MZ.math.listGames().find(game=>game.id===gameId)?.title || fallbackTitles[gameId] || gameId;
-  }
+function render(){
+ const loggedIn=Boolean(current?.student);
+ window.setTimeout(()=>MZ.missionBoard?.render?.(),0);
+ $("#studentLoginPanel")?.classList.toggle("hidden",loggedIn);
+ $("#studentAssignmentsPanel")?.classList.toggle("hidden",!loggedIn);
+ if(!loggedIn){if($("#studentIdentityPill"))$("#studentIdentityPill").textContent="Inte inloggad";return;}
+ $("#studentIdentityPill").textContent=(current.classInfo?.code||getSelection()?.classId||"")+" · "+current.student.code;
+ const list=$("#studentAssignmentsList");if(!list)return;list.innerHTML="";
+ if(!current.assignments.length){list.innerHTML='<div class="assignment-empty-cloud">🌿 Inga läraruppdrag är aktiva just nu. Du kan träna fritt i Matteparken.</div>';return;}
+ current.assignments.forEach(a=>{
+  const p=current.progressMap.get(a.id)||{completed:0,last_active:null},target=Math.max(1,Number(a.target)||1),completed=Math.min(Math.max(0,Number(p.completed)||0),target),pct=Math.min(100,Math.round(completed/target*100)),done=completed>=target;
+  const card=document.createElement("div");card.className="student-cloud-task"+(done?" done":"");
+  const info=document.createElement("div"),h=document.createElement("h4");h.textContent=(done?"✓ ":"📌 ")+a.title;info.appendChild(h);
+  const desc=document.createElement("div");desc.className="muted";desc.textContent=a.description||roundDescription(a);info.appendChild(desc);
+  const note=document.createElement("div");note.className="round-note";note.textContent=roundDescription(a);info.appendChild(note);
+  const copy=document.createElement("div");copy.className="assignment-progress-copy";copy.innerHTML="<span>"+completed+" av "+target+" omgångar klara</span><strong>"+pct+" %</strong>";info.appendChild(copy);
+  const bar=document.createElement("div");bar.className="progress";bar.innerHTML='<div style="width:'+pct+'%"></div>';info.appendChild(bar);
+  const last=document.createElement("div");last.className="assignment-demo-note";last.textContent=done?"Uppdraget är klart"+(p.last_active?" · senast "+formatLast(p.last_active):"")+".":p.last_active?"Senast aktiv "+formatLast(p.last_active)+".":"Inte påbörjat ännu.";info.appendChild(last);
+  const actions=document.createElement("div");actions.className="assignment-actions";const btn=document.createElement("button");btn.className="primary";btn.type="button";btn.textContent=done?"Träna vidare":completed?"Fortsätt uppdraget":"Starta uppdraget";btn.addEventListener("click",()=>startAssignment(a.id));actions.appendChild(btn);
+  card.append(info,actions);list.appendChild(card);
+ });
+}
 
-  function activityDescriptor(detail){
-    if(detail.gameId==="multiplication" && Number.isFinite(Number(detail.table))){
-      const table=Number(detail.table);
-      return {key:`multiplication:${table}`,label:`${table}:ans tabell`};
-    }
-    return {key:detail.gameId,label:gameTitle(detail.gameId)};
-  }
+async function login(){
+ if(busy)return;const c=norm($("#studentClassCode")?.value),code=norm($("#studentCode")?.value);if(!c||!code){feedback("Skriv både klass och elevkod.","bad");return;}
+ busy=true;if($("#studentLoginBtn"))$("#studentLoginBtn").disabled=true;feedback("Kopplar till Matteparken …");
+ try{await claim(c,code);feedback("");$("#status").textContent="☁️ "+c+" · "+code+" är kopplad till Matteparkens databas.";}
+ catch(error){console.error("Supabase login:",error);if(!current?.student){current=null;render();}feedback(error?.message||"Kunde inte logga in just nu.","bad");}
+ finally{busy=false;if($("#studentLoginBtn"))$("#studentLoginBtn").disabled=false;}
+}
+async function logout(){setSelection(null);setActiveAssignment(null);current=null;if($("#studentCode"))$("#studentCode").value="";feedback("");render();try{await client().auth.signOut({scope:"local"});}catch(error){console.warn(error);}}
+function startAssignment(id){const a=current?.assignments?.find(x=>x.id===id);if(!a)return;MZ.missionBoard.launch(a.game_id,a.game_config||{});setActiveAssignment(a.id);$("#status").textContent="📌 Läraruppdrag aktivt: "+a.title+". Hela omgångar räknas.";}
 
-  function getSelection(){
-    try{return JSON.parse(localStorage.getItem(SELECTION_KEY)||"null");}
-    catch{return null;}
-  }
+async function reconnectSaved({showFeedback=false,refresh=false}={}){
+ const saved=getSelection();if(!saved)return null;if($("#studentClassCode"))$("#studentClassCode").value=saved.classId||"9A";if($("#studentCode"))$("#studentCode").value=saved.code||"";if(reconnectPromise)return reconnectPromise;
+ reconnectPromise=(async()=>{try{if(showFeedback&&!current?.student)feedback("Hämtar dina läraruppdrag …");if(current?.student&&refresh){await ensureAnonymousSession();const r=await readCloudState();if(r){feedback("");return r;}}const r=await claim(norm(saved.classId),norm(saved.code));feedback("");return r;}catch(error){console.warn("Supabase reconnect:",error);if(showFeedback&&!current?.student)feedback("Återansluter automatiskt till Matteparken …");return null;}finally{reconnectPromise=null;}})();return reconnectPromise;
+}
+async function ensureStudentConnection(){if(current?.student){try{await ensureAnonymousSession();return current;}catch(error){console.warn(error);}}return reconnectSaved();}
 
-  function setSelection(value){
-    if(value) localStorage.setItem(SELECTION_KEY,JSON.stringify(value));
-    else localStorage.removeItem(SELECTION_KEY);
-  }
+function recordQuestion(event){
+ const d=event.detail||{};if(!d.gameId||!getSelection())return;const x=activityDescriptor(d);
+ writeQueue=writeQueue.then(async()=>{await ensureStudentConnection();if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");let r=await client().rpc("record_math_activity",{p_game_id:d.gameId,p_activity_key:x.key,p_label:x.label});if(r.error)throw r.error;if(r.data?.ok===false&&r.data?.reason==="no_student_session"){await reconnectSaved();r=await client().rpc("record_math_activity",{p_game_id:d.gameId,p_activity_key:x.key,p_label:x.label});if(r.error)throw r.error;}if(r.data?.ok===false)throw new Error(r.data?.reason||"Synkningen misslyckades.");}).catch(error=>{console.error("Supabase activity:",error);$("#status").textContent="☁️ Synkningen tappade kontakten en stund. Matteparken försöker ansluta igen.";window.setTimeout(()=>reconnectSaved(),1500);});
+}
+function matchingRound(a,x){if(!a||!x||a.game_id!==x.gameId||expectedRoundTypes[a.game_id]!==x.type)return false;const t=Number(a.game_config?.table);return !(a.game_id==="multiplication"&&t>=1&&t<=10)||Number(x.table)===t;}
+function recordRound(event){
+ const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.assignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
+ writeQueue=writeQueue.then(async()=>{
+  await ensureStudentConnection();if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");
+  let r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;
+  if(r.data?.ok===false&&r.data?.reason==="no_student_session"){await reconnectSaved();r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;}
+  if(r.data?.ok===false)throw new Error(r.data?.reason||"Omgången kunde inte registreras.");
+  current.progressMap.set(id,{...(current.progressMap.get(id)||{}),completed:Number(r.data.completed)||0,last_active:new Date().toISOString(),updated_at:new Date().toISOString()});current.student.last_active=new Date().toISOString();
+  if(r.data.done){setActiveAssignment(null);$("#status").textContent="🎉 Läraruppdraget är klart: "+a.title+".";}else{$("#status").textContent="📌 En hel omgång registrerad i "+a.title+": "+r.data.completed+" av "+r.data.target+".";}render();
+ }).catch(error=>{console.error("Supabase assignment round:",error);$("#status").textContent="☁️ Omgången kunde inte synkas just nu. Matteparken försöker återansluta.";window.setTimeout(()=>reconnectSaved(),1500);});
+}
 
-  function feedback(message="",kind=""){
-    const el=$("#studentLoginFeedback");
-    if(!el) return;
-    el.textContent=message;
-    el.className=`feedback${kind?" "+kind:""}`;
-  }
+async function restore(){if(!getSelection()){current=null;render();return;}await reconnectSaved({showFeedback:true});}
+async function keepConnected(){if(getSelection())await reconnectSaved({refresh:Boolean(current?.student)});}
+function clearAssignmentOnFreeNavigation(event){const b=event.target?.closest?.("button");if(b&&(b.classList.contains("game-card")||b.id==="backToShelf"||b.id.startsWith("backFrom")))setActiveAssignment(null);}
 
-  function client(){
-    if(sb) return sb;
-    if(!window.supabase?.createClient) throw new Error("Supabase-biblioteket kunde inte laddas.");
-    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
-      auth:{
-        persistSession:true,
-        autoRefreshToken:true,
-        detectSessionInUrl:false,
-        storageKey:"matteparken-student-auth-v1"
-      }
-    });
-    return sb;
-  }
-
-  async function ensureAnonymousSession(){
-    const c=client();
-    const {data,error}=await c.auth.getSession();
-    if(error) throw error;
-    if(data?.session) return data.session;
-
-    const created=await c.auth.signInAnonymously();
-    if(created.error) throw created.error;
-    if(!created.data?.session) throw new Error("Kunde inte skapa elevsession.");
-    return created.data.session;
-  }
-
-  async function readCloudState(){
-    const c=client();
-
-    const studentResult=await c
-      .from("students")
-      .select("id,code,class_id,last_active")
-      .maybeSingle();
-    if(studentResult.error) throw studentResult.error;
-    const student=studentResult.data;
-    if(!student){
-      current=null;
-      render();
-      return null;
-    }
-
-    const [classResult,assignmentResult]=await Promise.all([
-      c.from("classes").select("id,code,name").eq("id",student.class_id).maybeSingle(),
-      c.from("assignments").select("*").eq("class_id",student.class_id).maybeSingle()
-    ]);
-    if(classResult.error) throw classResult.error;
-    if(assignmentResult.error) throw assignmentResult.error;
-
-    const assignment=assignmentResult.data;
-    let progress={completed:0,last_active:null};
-    if(assignment){
-      const progressResult=await c
-        .from("student_assignment_progress")
-        .select("completed,last_active,updated_at")
-        .eq("student_id",student.id)
-        .eq("assignment_id",assignment.id)
-        .maybeSingle();
-      if(progressResult.error) throw progressResult.error;
-      if(progressResult.data) progress=progressResult.data;
-    }
-
-    current={
-      classInfo:classResult.data,
-      student,
-      assignment,
-      progress
-    };
-    render();
-    return current;
-  }
-
-  function activeStudent(){
-    if(!current?.student) return null;
-    return {
-      classId:current.classInfo?.code || getSelection()?.classId || "",
-      code:current.student.code,
-      student:current.student,
-      assignment:current.assignment ? {...current.assignment,gameId:current.assignment.game_id} : null
-    };
-  }
-
-  async function claim(classCode,studentCode){
-    const c=client();
-    await ensureAnonymousSession();
-
-    const result=await c.rpc("claim_student_code",{
-      p_class_code:classCode,
-      p_student_code:studentCode
-    });
-    if(result.error) throw result.error;
-    if(!result.data?.ok){
-      if(result.data?.reason==="invalid_code") throw new Error("Klass eller elevkod känns inte igen.");
-      if(result.data?.reason==="not_anonymous_student") throw new Error("Den här webbläsaren har fel typ av Supabase-session.");
-      throw new Error("Kunde inte koppla elevkoden till Matteparken.");
-    }
-
-    setSelection({classId:classCode,code:studentCode});
-    return readCloudState();
-  }
-
-  function render(){
-    const loggedIn=Boolean(current?.student);
-    window.setTimeout(()=>MZ.missionBoard?.render?.(),0);
-    $("#studentLoginPanel")?.classList.toggle("hidden",loggedIn);
-    $("#studentAssignmentPanel")?.classList.toggle("hidden",!loggedIn);
-
-    if(!loggedIn){
-      if($("#studentIdentityPill")) $("#studentIdentityPill").textContent="Inte inloggad";
-      return;
-    }
-
-    const classCode=current.classInfo?.code || getSelection()?.classId || "";
-    const code=current.student.code;
-    const assignment=current.assignment;
-
-    $("#studentIdentityPill").textContent=`${classCode} · ${code}`;
-
-    const mainBlock=document.querySelector("#studentAssignmentPanel .assignment-current > div:first-child");
-    const startButton=$("#startStudentAssignment");
-
-    if(!assignment){
-      mainBlock?.classList.remove("hidden");
-      startButton?.classList.add("hidden");
-      $("#studentAssignmentTitle").textContent="🌿 Inget läraruppdrag just nu";
-      $("#studentAssignmentDescription").textContent="Du kan använda Matteparken som vanligt.";
-      $("#studentAssignmentProgressLabel").textContent="0 av 0 uppgifter";
-      $("#studentAssignmentPercent").textContent="";
-      $("#studentAssignmentProgressFill").style.width="0%";
-      $("#studentAssignmentLastActive").textContent="Väntar på nästa läraruppdrag.";
-      return;
-    }
-
-    const enabled=assignment.enabled!==false;
-    mainBlock?.classList.remove("hidden");
-    startButton?.classList.toggle("hidden",!enabled);
-
-    const target=Math.max(1,Number(assignment.target)||20);
-    const completed=Math.min(Math.max(0,Number(current.progress?.completed)||0),target);
-    const pct=Math.min(100,Math.round(completed/target*100));
-
-    $("#studentAssignmentTitle").textContent=`🔬 ${assignment.title}`;
-    $("#studentAssignmentDescription").textContent=enabled
-      ? assignment.description
-      : "Läraruppdraget är pausat. Du kan träna fritt i Matteparken.";
-    $("#studentAssignmentProgressLabel").textContent=`${completed} av ${target} uppgifter klara`;
-    $("#studentAssignmentPercent").textContent=`${pct} %`;
-    $("#studentAssignmentProgressFill").style.width=`${pct}%`;
-
-    const last=current.progress?.last_active || current.student.last_active;
-    $("#studentAssignmentLastActive").textContent=completed>=target
-      ? `✓ Uppdraget är klart. Senast aktiv ${formatLast(last)}.`
-      : last
-        ? `Senast aktiv ${formatLast(last)}.`
-        : "Inte påbörjat ännu.";
-
-    if(startButton){
-      startButton.textContent=completed>=target ? "Träna vidare" : "Starta uppdraget";
-    }
-  }
-
-  async function login(){
-    if(busy) return;
-    const classCode=norm($("#studentClassCode")?.value);
-    const studentCode=norm($("#studentCode")?.value);
-
-    if(!classCode || !studentCode){
-      feedback("Skriv både klass och elevkod.","bad");
-      return;
-    }
-
-    busy=true;
-    if($("#studentLoginBtn")) $("#studentLoginBtn").disabled=true;
-    feedback("Kopplar till Matteparken …");
-
-    try{
-      await claim(classCode,studentCode);
-      feedback("");
-      $("#status").textContent=`☁️ ${classCode} · ${studentCode} är kopplad till Matteparkens databas.`;
-    }catch(error){
-      console.error("Supabase login:",error);
-      if(!current?.student){
-        current=null;
-        render();
-      }
-      feedback(error?.message || "Kunde inte logga in just nu.","bad");
-    }finally{
-      busy=false;
-      if($("#studentLoginBtn")) $("#studentLoginBtn").disabled=false;
-    }
-  }
-
-  async function logout(){
-    setSelection(null);
-    current=null;
-    if($("#studentCode")) $("#studentCode").value="";
-    feedback("");
-    render();
-
-    try{
-      await client().auth.signOut({scope:"local"});
-    }catch(error){
-      console.warn("Supabase local signout:",error);
-    }
-  }
-
-  function startAssignment(){
-    if(!current?.assignment || current.assignment.enabled===false) return;
-    MZ.missionBoard.launch(current.assignment.game_id,current.assignment.game_config||{});
-  }
-
-  async function reconnectSaved({showFeedback=false,refresh=false}={}){
-    const saved=getSelection();
-    if(!saved) return null;
-
-    if($("#studentClassCode")) $("#studentClassCode").value=saved.classId||"9A";
-    if($("#studentCode")) $("#studentCode").value=saved.code||"";
-
-    if(reconnectPromise) return reconnectPromise;
-
-    reconnectPromise=(async()=>{
-      try{
-        if(showFeedback && !current?.student) feedback("Hämtar ditt läraruppdrag …");
-
-        if(current?.student && refresh){
-          await ensureAnonymousSession();
-          const refreshed=await readCloudState();
-          if(refreshed){
-            feedback("");
-            return refreshed;
-          }
-        }
-
-        const restored=await claim(norm(saved.classId),norm(saved.code));
-        feedback("");
-        return restored;
-      }catch(error){
-        console.warn("Supabase reconnect:",error);
-        // Behåll elevkoden. Tillfälligt nätverks- eller sessionsfel ska inte
-        // kasta ut eleven eller kräva en ny manuell inloggning.
-        if(showFeedback && !current?.student){
-          feedback("Återansluter automatiskt till Matteparken …");
-        }
-        return null;
-      }finally{
-        reconnectPromise=null;
-      }
-    })();
-
-    return reconnectPromise;
-  }
-
-  async function ensureStudentConnection(){
-    if(current?.student){
-      try{
-        await ensureAnonymousSession();
-        return current;
-      }catch(error){
-        console.warn("Supabase session check:",error);
-      }
-    }
-    return reconnectSaved();
-  }
-
-  function recordQuestion(event){
-    const detail=event.detail||{};
-    if(!detail.gameId || !getSelection()) return;
-    const descriptor=activityDescriptor(detail);
-
-    writeQueue=writeQueue.then(async()=>{
-      await ensureStudentConnection();
-      if(!current?.student) throw new Error("Ingen aktiv elevkoppling.");
-
-      let result=await client().rpc("record_math_activity",{
-        p_game_id:detail.gameId,
-        p_activity_key:descriptor.key,
-        p_label:descriptor.label
-      });
-      if(result.error) throw result.error;
-
-      // Om Supabase-sessionen bytts i bakgrunden kopplar vi om elevkoden
-      // och provar samma registrering en gång till.
-      if(result.data?.ok===false && result.data?.reason==="no_student_session"){
-        await reconnectSaved();
-        result=await client().rpc("record_math_activity",{
-          p_game_id:detail.gameId,
-          p_activity_key:descriptor.key,
-          p_label:descriptor.label
-        });
-        if(result.error) throw result.error;
-      }
-
-      if(result.data?.ok===false) throw new Error(result.data?.reason||"Synkningen misslyckades.");
-
-      if(current?.assignment && result.data?.assignment_id===current.assignment.id){
-        current.progress={
-          ...current.progress,
-          completed:Math.max(0,Number(result.data.completed)||0),
-          last_active:new Date().toISOString()
-        };
-        current.student.last_active=current.progress.last_active;
-        render();
-      }
-    }).catch(error=>{
-      console.error("Supabase activity:",error);
-      $("#status").textContent="☁️ Synkningen tappade kontakten en stund. Matteparken försöker ansluta eleven automatiskt igen.";
-      window.setTimeout(()=>reconnectSaved(),1500);
-    });
-  }
-
-  async function restore(){
-    const saved=getSelection();
-    if(!saved){
-      current=null;
-      render();
-      return;
-    }
-    await reconnectSaved({showFeedback:true});
-  }
-
-  async function keepConnected(){
-    if(!getSelection()) return;
-    await reconnectSaved({refresh:Boolean(current?.student)});
-  }
-
-  function init(){
-    $("#studentLoginBtn")?.addEventListener("click",login);
-    $("#studentCode")?.addEventListener("keydown",e=>{if(e.key==="Enter")login();});
-    $("#studentLogoutBtn")?.addEventListener("click",logout);
-    $("#startStudentAssignment")?.addEventListener("click",startAssignment);
-    MZ.events.addEventListener("mathquestion",recordQuestion);
-
-    window.addEventListener("online",()=>keepConnected());
-    document.addEventListener("visibilitychange",()=>{
-      if(document.visibilityState==="visible") keepConnected();
-    });
-
-    try{
-      client().auth.onAuthStateChange((event)=>{
-        if((event==="SIGNED_OUT" || event==="SIGNED_IN" || event==="TOKEN_REFRESHED") && getSelection()){
-          window.setTimeout(()=>keepConnected(),0);
-        }
-      });
-    }catch(error){
-      console.warn("Supabase auth listener:",error);
-    }
-
-    if(keepAliveTimer) window.clearInterval(keepAliveTimer);
-    keepAliveTimer=window.setInterval(keepConnected,5*60*1000);
-
-    render();
-    restore();
-  }
-
-  MZ.cloudStudent={init,login,logout,readCloudState,activeStudent};
+function init(){
+ $("#studentLoginBtn")?.addEventListener("click",login);$("#studentCode")?.addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("#studentLogoutBtn")?.addEventListener("click",logout);
+ MZ.events.addEventListener("mathquestion",recordQuestion);MZ.events.addEventListener("mathcomplete",recordRound);document.addEventListener("click",clearAssignmentOnFreeNavigation,true);
+ window.addEventListener("online",()=>keepConnected());document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")keepConnected();});
+ try{client().auth.onAuthStateChange(event=>{if((event==="SIGNED_OUT"||event==="SIGNED_IN"||event==="TOKEN_REFRESHED")&&getSelection())window.setTimeout(()=>keepConnected(),0);});}catch(error){console.warn(error);}
+ if(keepAliveTimer)window.clearInterval(keepAliveTimer);keepAliveTimer=window.setInterval(keepConnected,5*60*1000);render();restore();
+}
+MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment};
 })();
 </script>
 
