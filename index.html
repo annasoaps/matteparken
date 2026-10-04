@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.76 Läxstart via uppdragsmotorn</title>
+<title>Matteparken – v0.4.77 Gemensam uppdragsstart</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10859,6 +10859,7 @@ function render(){
     const st=homeworkStatus(hw),card=document.createElement("div");card.className="student-homework-card"+(st.complete?" done":"")+(st.locked?" locked":"");
     const info=document.createElement("div"),h=document.createElement("h5");h.textContent=(st.complete?"✓ ":"🏠 ")+hw.title;info.appendChild(h);
     const progress=document.createElement("div");progress.className="muted";progress.textContent=st.complete?"Läxan är klar":st.done+" av "+st.total+" omgångar klara";info.appendChild(progress);
+    const subject=document.createElement("div");subject.className="round-note";subject.textContent=st.tasks[0]?.title||"Matteuppgift";info.appendChild(subject);
     const time=document.createElement("div");time.className="homework-window";
     time.textContent=st.locked?"🔒 Öppnar "+formatMoment(hw.opens_at):(hw.due_at?"Deadline "+formatMoment(hw.due_at)+(st.late?" · klar efter deadline":""):"Ingen deadline");info.appendChild(time);
     const reward=document.createElement("div");reward.className="homework-reward";reward.textContent=st.complete?"🎁 Blind bag utdelad när läxan blev klar":"🎁 Belöning: 1 blind bag";info.appendChild(reward);
@@ -10866,8 +10867,8 @@ function render(){
     const next=st.tasks.find(a=>Number(current.progressMap.get(a.id)?.completed)<1);
     btn.disabled=st.locked||st.complete||!next;
     btn.textContent=st.complete?"Klar":st.locked?"Inte öppen än":!st.total?"Ladda om läxan":st.done?"Fortsätt läxan":"Starta läxan";
-    if(next)btn.addEventListener("click",()=>startAssignment(next.id));
-    else if(!st.locked&&!st.complete)btn.disabled=false,btn.addEventListener("click",async()=>{$("#status").textContent="☁️ Hämtar läxans omgångar igen …";await readCloudState();});
+    if(next){btn.dataset.startAssignment=next.id;btn.dataset.assignmentKind="homework";}
+    else if(!st.locked&&!st.complete){btn.disabled=false;btn.dataset.reloadHomework="1";}
     actions.appendChild(btn);card.append(info,actions);homeworkList.appendChild(card);
   });
  }
@@ -10882,7 +10883,7 @@ function render(){
   const copy=document.createElement("div");copy.className="assignment-progress-copy";copy.innerHTML="<span>"+(done?"✓ Uppdraget är klart":"○ En hel omgång återstår")+"</span><strong>"+pct+" %</strong>";info.appendChild(copy);
   const bar=document.createElement("div");bar.className="progress";bar.innerHTML='<div style="width:'+pct+'%"></div>';info.appendChild(bar);
   const last=document.createElement("div");last.className="assignment-demo-note";last.textContent=done?"Klart"+(p.last_active?" · "+formatLast(p.last_active):"")+".":p.last_active?"Senast aktiv "+formatLast(p.last_active)+".":"Inte påbörjat ännu.";info.appendChild(last);
-  const actions=document.createElement("div");actions.className="assignment-actions";const btn=document.createElement("button");btn.className="primary";btn.type="button";btn.textContent=done?"Träna igen":"Starta uppdraget";btn.addEventListener("click",()=>startAssignment(a.id));actions.appendChild(btn);
+  const actions=document.createElement("div");actions.className="assignment-actions";const btn=document.createElement("button");btn.className="primary";btn.type="button";btn.textContent=done?"Träna igen":"Starta uppdraget";btn.dataset.startAssignment=a.id;btn.dataset.assignmentKind="teacher";actions.appendChild(btn);
   card.append(info,actions);list.appendChild(card);
  });
 }
@@ -10895,32 +10896,35 @@ async function login(){
  finally{busy=false;if($("#studentLoginBtn"))$("#studentLoginBtn").disabled=false;}
 }
 async function logout(){setSelection(null);setActiveAssignment(null);current=null;if($("#studentCode"))$("#studentCode").value="";if($("#studentDisplayName"))$("#studentDisplayName").value="";feedback("");render();try{await client().auth.signOut({scope:"local"});}catch(error){console.warn(error);}}
+function startFeedback(message="",kind=""){
+ const el=$("#studentStartFeedback");
+ if(el){el.textContent=message;el.className="feedback"+(kind?" "+kind:"");}
+}
 function startAssignment(id){
  const a=current?.allAssignments?.find(x=>x.id===id);
- if(!a){$("#status").textContent="⚠️ Uppdraget kunde inte hittas. Ladda om sidan och försök igen.";return;}
+ if(!a){startFeedback("Uppdraget kunde inte hittas. Ladda om sidan och försök igen.","bad");return false;}
  if(a.homework_id){
-  const hw=current?.homeworks?.find(x=>x.id===a.homework_id);
-  if(hw?.opens_at&&Date.now()<new Date(hw.opens_at).getTime()){
-    $("#status").textContent="🔒 Läxan öppnar "+formatMoment(hw.opens_at)+".";
-    render();return;
-  }
+   const hw=current?.homeworks?.find(x=>x.id===a.homework_id);
+   if(hw?.opens_at&&Date.now()<new Date(hw.opens_at).getTime()){
+     startFeedback("🔒 Läxan öppnar "+formatMoment(hw.opens_at)+".","bad");
+     render();
+     return false;
+   }
  }
-
- // Läraruppdrag och läxor använder samma, redan fungerande spelstart.
- // Om Parkkontorsnyckeln saknas visar launch() anslagstavlan och förklarar varför.
- if(!MZ.state.onboarding?.keyTaken){
-   setActiveAssignment(null);
+ startFeedback("Öppnar "+a.title+" …");
+ try{
+   setActiveAssignment(a.id);
    MZ.missionBoard.launch(a.game_id,a.game_config||{});
-   return;
+   if(a.game_id==="equations")window.setTimeout(()=>$("#eqRandomOne")?.click(),120);
+   $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";
+   startFeedback("");
+   return true;
+ }catch(error){
+   console.error("Assignment start:",error);
+   setActiveAssignment(null);
+   startFeedback("Kunde inte öppna uppgiften: "+(error?.message||"okänt fel"),"bad");
+   return false;
  }
-
- setActiveAssignment(a.id);
- MZ.missionBoard.launch(a.game_id,a.game_config||{});
-
- // Ekvationsuppdrag ska börja med en slumpad ekvation direkt.
- if(a.game_id==="equations")window.setTimeout(()=>$("#eqRandomOne")?.click(),120);
-
- $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";
 }
 
 async function reconnectSaved({showFeedback=false,refresh=false}={}){
@@ -10963,6 +10967,21 @@ function clearAssignmentOnFreeNavigation(event){
 }
 
 function init(){
+ $("#studentAssignmentCard")?.addEventListener("click",async event=>{
+   const startBtn=event.target?.closest?.("[data-start-assignment]");
+   if(startBtn){
+     event.preventDefault();
+     event.stopPropagation();
+     startAssignment(startBtn.dataset.startAssignment);
+     return;
+   }
+   const reloadBtn=event.target?.closest?.("[data-reload-homework]");
+   if(reloadBtn){
+     event.preventDefault();
+     startFeedback("☁️ Hämtar läxans omgångar igen …");
+     await readCloudState();
+   }
+ },true);
  $("#studentLoginBtn")?.addEventListener("click",login);$("#studentClassCode")?.addEventListener("keydown",e=>{if(e.key==="Enter")$("#studentCode")?.focus();});$("#studentCode")?.addEventListener("keydown",e=>{if(e.key==="Enter")$("#studentDisplayName")?.focus();});$("#studentDisplayName")?.addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("#studentLogoutBtn")?.addEventListener("click",logout);
  MZ.events.addEventListener("mathquestion",recordQuestion);MZ.events.addEventListener("mathcomplete",recordRound);document.addEventListener("click",clearAssignmentOnFreeNavigation,true);
  window.addEventListener("online",()=>keepConnected());document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")keepConnected();});
@@ -11218,6 +11237,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <div id="studentHomeworkList" class="student-homework-list"></div>
             </div>
             <div id="studentAssignmentsList" class="student-assignment-list"></div>
+            <div id="studentStartFeedback" class="feedback" style="min-height:22px;margin-top:8px"></div>
             <div class="assignment-actions student-switch-row"><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
           </div>
         </section>
