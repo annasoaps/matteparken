@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.93 Hur stor andel?</title>
+<title>Matteparken – v0.4.94 Kompakt andel</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2308,32 +2308,43 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 </style>
 
 <style>
-/* v0.4.93 – Hur stor andel? */
+/* v0.4.94 – Hur stor andel? kompakt layout */
 .share-part-panel{max-width:880px;margin:0 auto}
 .share-part-visual{display:flex;align-items:center;justify-content:center;min-height:250px;margin:18px 0;padding:22px;border:2px solid #c4b58f;border-radius:18px;background:#f5eedb}
 .share-part-grid{display:grid;gap:3px;width:min(100%,430px)}
 .share-part-cell{aspect-ratio:1/1;min-width:0;border:1px solid #9e987f;border-radius:2px;background:#fffdf5}
 .share-part-cell.filled{background:#dc7449;border-color:#a95031}
-.share-part-guided{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.share-part-guided{display:grid;grid-template-columns:repeat(2,minmax(0,220px));justify-content:center;gap:14px 22px;margin:14px auto;max-width:520px}
 .share-part-guided label,.share-part-answer-box{display:flex;flex-direction:column;gap:6px;font-weight:800;color:#354838}
 .share-part-guided small{font-weight:600;color:#6f765e}
-.share-part-guided input,.share-part-answer-box input{min-height:48px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:8px 12px;font:inherit;font-size:18px}
+.share-part-guided input,.share-part-answer-box input{box-sizing:border-box;min-height:44px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:7px 10px;font:inherit;font-size:18px}
+.share-part-guided input{width:100%;max-width:220px}
 .share-part-formula{grid-column:1/-1;padding:10px 14px;border-radius:10px;background:#e9eddc;text-align:center;font-weight:950;letter-spacing:.04em}
-.share-part-answers{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:14px;align-items:end;margin-top:16px}
-.share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:6px;width:110px;margin:auto}
+.share-part-answers{display:grid;grid-template-columns:repeat(3,minmax(0,180px));justify-content:center;gap:18px;align-items:end;max-width:620px;margin:16px auto 0}
+.share-part-answer-box{min-width:0}
+.share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:6px;width:112px;margin:0 auto}
 .share-part-fraction .line{background:#405441;border-radius:99px}
-.share-part-fraction input{text-align:center}
-.share-part-percent-row{display:flex;align-items:center;gap:8px}
+.share-part-fraction input{width:112px;min-width:0;text-align:center}
+.share-part-answer-box>input{width:100%;max-width:180px}
+.share-part-percent-row{display:flex;align-items:center;gap:8px;width:100%;max-width:180px}
 .share-part-percent-row input{min-width:0;width:100%}
 .share-part-percent-row strong{font-size:22px}
 .share-part-answer-box.correct input,.share-part-fraction.correct input{border-color:#5e885c;background:#f1f8e8}
 .share-part-answer-box.wrong input,.share-part-fraction.wrong input{border-color:#a95a45;background:#fff1eb}
-.share-part-step-note{margin-top:8px;text-align:center;color:#69705b;font-weight:700}
+.share-part-step-note{margin-top:10px;text-align:center;color:#69705b;font-weight:700}
 @media(max-width:700px){
   .share-part-visual{min-height:190px;padding:14px}
-  .share-part-answers{grid-template-columns:1fr}
-  .share-part-guided{grid-template-columns:1fr}
+  .share-part-guided{grid-template-columns:repeat(2,minmax(0,170px));max-width:380px;gap:12px}
+  .share-part-guided input{max-width:170px}
+  .share-part-answers{grid-template-columns:repeat(3,minmax(0,145px));gap:10px;max-width:475px}
+  .share-part-answer-box>input,.share-part-percent-row{max-width:145px}
+}
+@media(max-width:520px){
+  .share-part-guided{grid-template-columns:1fr;max-width:220px}
+  .share-part-guided input{max-width:220px}
   .share-part-formula{grid-column:auto}
+  .share-part-answers{grid-template-columns:1fr;max-width:190px;gap:14px}
+  .share-part-answer-box>input,.share-part-percent-row{max-width:180px}
 }
 </style>
 
