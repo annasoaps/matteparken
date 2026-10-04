@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.78 Läxans första omgång</title>
+<title>Matteparken – v0.4.79 Läxans tider</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10757,7 +10757,7 @@ const SUPABASE_URL="https://mjgkkwdgowvxuehiudvj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
 const SELECTION_KEY="matteparkenCloudStudentSelection_v1";
 const ACTIVE_ASSIGNMENT_KEY="matteparkenCloudActiveAssignment_v1";
-let sb=null,current=null,busy=false,reconnectPromise=null,writeQueue=Promise.resolve(),keepAliveTimer=null;
+let sb=null,current=null,busy=false,reconnectPromise=null,writeQueue=Promise.resolve(),keepAliveTimer=null,homeworkClockTimer=null;
 
 const expectedRoundTypes={
  multiplication:"table-round",equations:"solved-random-equation",pow10:"ten-question-round",
@@ -10772,11 +10772,25 @@ const cleanDisplayName=v=>String(v||"").trim().replace(/\s+/g," ").slice(0,24);
 function formatLast(v){if(!v)return"–";const d=new Date(v);if(Number.isNaN(d.getTime()))return"–";const n=new Date();return d.toDateString()===n.toDateString()?"idag "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});}
 function formatMoment(v){if(!v)return"";const d=new Date(v);return d.toLocaleString("sv-SE",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}
 function homeworkTasks(hwId){return (current?.allAssignments||[]).filter(a=>a.homework_id===hwId);}
+function homeworkSchoolPause(){
+ let weekday="",hour=0,minute=0;
+ try{
+  const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Stockholm",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
+  const values=Object.fromEntries(parts.filter(p=>p.type!=="literal").map(p=>[p.type,p.value]));
+  weekday=values.weekday||"";hour=Number(values.hour)||0;minute=Number(values.minute)||0;
+ }catch{
+  const d=new Date(),days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  weekday=days[d.getDay()];hour=d.getHours();minute=d.getMinutes();
+ }
+ const schoolDay=["Mon","Tue","Wed","Thu","Fri"].includes(weekday),minutes=hour*60+minute;
+ return{blocked:schoolDay&&minutes>=8*60+20&&minutes<14*60};
+}
 function homeworkStatus(hw){
  const tasks=homeworkTasks(hw.id),done=tasks.filter(a=>Number(current?.progressMap?.get(a.id)?.completed)>=1).length;
  const complete=tasks.length>0&&done===tasks.length;
  const completedAt=complete?tasks.map(a=>current.progressMap.get(a.id)?.completed_at).filter(Boolean).sort().at(-1)||null:null;
- return{tasks,done,total:tasks.length,complete,completedAt,locked:Boolean(hw.opens_at&&Date.now()<new Date(hw.opens_at).getTime()),late:Boolean(complete&&hw.due_at&&completedAt&&new Date(completedAt)>new Date(hw.due_at))};
+ const schoolBlocked=!complete&&homeworkSchoolPause().blocked;
+ return{tasks,done,total:tasks.length,complete,completedAt,locked:Boolean(hw.opens_at&&Date.now()<new Date(hw.opens_at).getTime()),schoolBlocked,late:Boolean(complete&&hw.due_at&&completedAt&&new Date(completedAt)>new Date(hw.due_at))};
 }
 function gameTitle(id){return MZ.math.listGames().find(g=>g.id===id)?.title||fallbackTitles[id]||id;}
 function activityDescriptor(d){if(d.gameId==="multiplication"&&Number.isFinite(Number(d.table))){const t=Number(d.table);return{key:"multiplication:"+t,label:t+":ans tabell"};}return{key:d.gameId,label:gameTitle(d.gameId)};}
@@ -10856,17 +10870,18 @@ function render(){
   if(!current.homeworks?.length){
     homeworkList.innerHTML='<div class="assignment-empty-cloud">Ingen läxa är aktiv just nu.</div>';
   }else current.homeworks.forEach(hw=>{
-    const st=homeworkStatus(hw),card=document.createElement("div");card.className="student-homework-card"+(st.complete?" done":"")+(st.locked?" locked":"");
+    const st=homeworkStatus(hw),card=document.createElement("div");card.className="student-homework-card"+(st.complete?" done":"")+((st.locked||st.schoolBlocked)?" locked":"");
     const info=document.createElement("div"),h=document.createElement("h5");h.textContent=(st.complete?"✓ ":"🏠 ")+hw.title;info.appendChild(h);
     const progress=document.createElement("div");progress.className="muted";progress.textContent=st.complete?"Läxan är klar":st.done+" av "+st.total+" omgångar klara";info.appendChild(progress);
     const subject=document.createElement("div");subject.className="round-note";subject.textContent=st.tasks[0]?.title||"Matteuppgift";info.appendChild(subject);
     const time=document.createElement("div");time.className="homework-window";
     time.textContent=st.locked?"🔒 Öppnar "+formatMoment(hw.opens_at):(hw.due_at?"Deadline "+formatMoment(hw.due_at)+(st.late?" · klar efter deadline":""):"Ingen deadline");info.appendChild(time);
+    const access=document.createElement("div");access.className="homework-window";access.textContent=st.schoolBlocked?"⏰ Pausad nu · öppnar kl. 14.00":"⏰ Vardagar: före 08.20 eller efter 14.00";info.appendChild(access);
     const reward=document.createElement("div");reward.className="homework-reward";reward.textContent=st.complete?"🎁 Blind bag utdelad när läxan blev klar":"🎁 Belöning: 1 blind bag";info.appendChild(reward);
     const actions=document.createElement("div"),btn=document.createElement("button");btn.className="primary";btn.type="button";
     const next=st.tasks.find(a=>Number(current.progressMap.get(a.id)?.completed ?? 0)<1);
-    btn.disabled=st.locked||st.complete||!next;
-    btn.textContent=st.complete?"Klar":st.locked?"Inte öppen än":!st.total?"Ladda om läxan":st.done?"Fortsätt läxan":"Starta läxan";
+    btn.disabled=st.locked||st.schoolBlocked||st.complete||!next;
+    btn.textContent=st.complete?"Klar":st.locked?"Inte öppen än":st.schoolBlocked?"Öppnar 14.00":!st.total?"Ladda om läxan":st.done?"Fortsätt läxan":"Starta läxan";
     if(next){btn.dataset.startAssignment=next.id;btn.dataset.assignmentKind="homework";}
     else if(!st.locked&&!st.complete){btn.disabled=false;btn.dataset.reloadHomework="1";}
     actions.appendChild(btn);card.append(info,actions);homeworkList.appendChild(card);
@@ -10907,6 +10922,11 @@ function startAssignment(id){
    const hw=current?.homeworks?.find(x=>x.id===a.homework_id);
    if(hw?.opens_at&&Date.now()<new Date(hw.opens_at).getTime()){
      startFeedback("🔒 Läxan öppnar "+formatMoment(hw.opens_at)+".","bad");
+     render();
+     return false;
+   }
+   if(homeworkSchoolPause().blocked){
+     startFeedback("⏰ Läxan är pausad på vardagar kl. 08.20–14.00. Försök igen efter 14.00.","bad");
      render();
      return false;
    }
@@ -10986,7 +11006,9 @@ function init(){
  MZ.events.addEventListener("mathquestion",recordQuestion);MZ.events.addEventListener("mathcomplete",recordRound);document.addEventListener("click",clearAssignmentOnFreeNavigation,true);
  window.addEventListener("online",()=>keepConnected());document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")keepConnected();});
  try{client().auth.onAuthStateChange(event=>{if((event==="SIGNED_OUT"||event==="SIGNED_IN"||event==="TOKEN_REFRESHED")&&getSelection())window.setTimeout(()=>keepConnected(),0);});}catch(error){console.warn(error);}
- if(keepAliveTimer)window.clearInterval(keepAliveTimer);keepAliveTimer=window.setInterval(keepConnected,5*60*1000);render();restore();
+ if(keepAliveTimer)window.clearInterval(keepAliveTimer);keepAliveTimer=window.setInterval(keepConnected,5*60*1000);
+ if(homeworkClockTimer)window.clearInterval(homeworkClockTimer);homeworkClockTimer=window.setInterval(()=>{if(current?.student)render();},60*1000);
+ render();restore();
 }
 MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,getClient:client,currentState:()=>current,formatMoment};
 })();
