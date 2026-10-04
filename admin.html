@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matteparken · Läraradmin v8</title>
+<title>Matteparken · Läraradmin v9</title>
 <style>
 :root{
   color-scheme:light;
@@ -141,7 +141,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     <div class="schoolwork-grid">
       <section class="card">
         <div class="section-head"><div><h2>🏠 Läxa</h2><p class="muted">Läxan öppnas först vid vald tid. Varje omgång är fortfarande ett eget uppdrag.</p></div></div>
-        <div class="callout">Genomförd läxa ger <strong>1 blind bag</strong>. Eleven kan inte starta den före öppningstiden.</div>
+        <div class="callout">Hela veckoläxan ger <strong>1 blind bag totalt</strong>. Vill du ha flera matteområden i samma läxa, lägg till dem med samma rubrik, öppningstid och deadline. De samlas automatiskt till en gemensam läxa.</div>
         <div class="form-grid">
           <label class="wide">Rubrik<input id="homeworkTitle" value="Veckans läxa" maxlength="80"></label>
           <label class="wide">Matteområde
@@ -268,6 +268,32 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     const completedAt=complete?tasks.map(a=>getProgress(studentId,a.id).completed_at).filter(Boolean).sort().at(-1)||null:null;
     return{done,total:tasks.length,complete,completedAt,late:Boolean(complete&&hw.due_at&&completedAt&&new Date(completedAt)>new Date(hw.due_at))};
   }
+  function homeworkGroupKey(hw){return [String(hw?.title||"").trim().toLowerCase(),hw?.opens_at||"",hw?.due_at||""].join("|");}
+  function homeworkGroups(list=homeworks){
+    const map=new Map();
+    (list||[]).forEach(hw=>{
+      const key=homeworkGroupKey(hw);
+      if(!map.has(key))map.set(key,{key,title:hw.title,opens_at:hw.opens_at,due_at:hw.due_at,homeworks:[]});
+      map.get(key).homeworks.push(hw);
+    });
+    return Array.from(map.values());
+  }
+  function homeworkGroupTasks(group){return (group?.homeworks||[]).flatMap(hw=>homeworkTasks(hw.id));}
+  function homeworkGroupStatus(studentId,group){
+    const statuses=(group?.homeworks||[]).map(hw=>homeworkStatus(studentId,hw));
+    const done=statuses.reduce((sum,x)=>sum+x.done,0),total=statuses.reduce((sum,x)=>sum+x.total,0),complete=total>0&&done===total;
+    const completedAt=complete?statuses.map(x=>x.completedAt).filter(Boolean).sort().at(-1)||null:null;
+    return{done,total,complete,completedAt,late:Boolean(complete&&group?.due_at&&completedAt&&new Date(completedAt)>new Date(group.due_at))};
+  }
+  function homeworkGroupSummary(group){
+    const counts=new Map();
+    homeworkGroupTasks(group).forEach(task=>{
+      const table=Number(task?.game_config?.table);
+      const label=task?.game_id==="multiplication"&&table>=1&&table<=10?table+":ans tabell":(gameMeta[task?.game_id]?.title||task?.title||"Matteuppgift");
+      counts.set(label,(counts.get(label)||0)+1);
+    });
+    return Array.from(counts.entries()).map(([label,count])=>label+(count>1?" × "+count:"")).join(" · ");
+  }
   function quizAttempt(studentId,quizId){return quizAttempts.find(a=>a.student_id===studentId&&a.quiz_id===quizId)||null;}
   function windowText(item){const parts=[];if(item.opens_at)parts.push("öppnar "+formatMoment(item.opens_at));if(item.due_at)parts.push("senast "+formatMoment(item.due_at));return parts.join(" · ")||"Ingen tidsgräns";}
 
@@ -383,14 +409,17 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 
   function renderHomeworks(){
     const box=$("homeworkList");if(!box)return;box.innerHTML="";
-    if(!homeworks.length){box.innerHTML='<div class="empty">Ingen läxa skapad ännu.</div>';return;}
-    homeworks.forEach(hw=>{
-      const tasks=homeworkTasks(hw.id);
-      const complete=students.filter(st=>homeworkStatus(st.id,hw).complete).length;
-      const item=document.createElement("div");item.className="schoolwork-item"+(hw.enabled?"":" paused");
-      item.innerHTML="<h3>"+escapeHtml(hw.title)+"</h3><div class='time-note'>"+escapeHtml(windowText(hw))+"</div><div class='schoolwork-meta'><span class='mini-pill'>"+tasks.length+" omgångar</span><span class='mini-pill'>✓ "+complete+" / "+students.length+" klara</span><span class='mini-pill'>🎁 Blind bag</span></div><div class='schoolwork-actions'><button class='btn secondary hw-toggle'>"+(hw.enabled?"Pausa":"Aktivera")+"</button><button class='btn danger hw-delete'>Ta bort</button></div>";
-      item.querySelector(".hw-toggle").addEventListener("click",()=>toggleHomework(hw.id));
-      item.querySelector(".hw-delete").addEventListener("click",()=>deleteHomework(hw.id));
+    const groups=homeworkGroups();
+    if(!groups.length){box.innerHTML='<div class="empty">Ingen läxa skapad ännu.</div>';return;}
+    groups.forEach(group=>{
+      const tasks=homeworkGroupTasks(group),complete=students.filter(st=>homeworkGroupStatus(st.id,group).complete).length;
+      const allEnabled=group.homeworks.every(hw=>hw.enabled),anyEnabled=group.homeworks.some(hw=>hw.enabled);
+      const item=document.createElement("div");item.className="schoolwork-item"+(allEnabled?"":" paused");
+      const partText=group.homeworks.length>1?group.homeworks.length+" delar · ":"";
+      const stateText=allEnabled?"":anyEnabled?" · några delar pausade":" · pausad";
+      item.innerHTML="<h3>"+escapeHtml(group.title)+stateText+"</h3><div class='time-note'>"+escapeHtml(windowText(group))+"</div><div class='time-note' style='margin-top:5px'>"+escapeHtml(homeworkGroupSummary(group))+"</div><div class='schoolwork-meta'><span class='mini-pill'>"+partText+tasks.length+" omgångar</span><span class='mini-pill'>✓ "+complete+" / "+students.length+" klara</span><span class='mini-pill'>🎁 1 blind bag totalt</span></div><div class='schoolwork-actions'><button class='btn secondary hw-toggle'>"+(allEnabled?"Pausa hela":"Aktivera hela")+"</button><button class='btn danger hw-delete'>Ta bort hela</button></div>";
+      item.querySelector(".hw-toggle").addEventListener("click",()=>toggleHomeworkGroup(group));
+      item.querySelector(".hw-delete").addEventListener("click",()=>deleteHomeworkGroup(group));
       box.appendChild(item);
     });
   }
@@ -415,7 +444,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       const done=active.filter(a=>assignmentDoneToday(student.id,a.id)).length;
       const total=active.length;const pct=total?Math.round(done/total*100):0;
       const anyProgress=active.some(a=>progressTouchedToday(getProgress(student.id,a.id)));
-      const activeHw=homeworks.filter(h=>h.enabled),hwDone=activeHw.filter(h=>homeworkStatus(student.id,h).complete).length;
+      const activeHw=homeworkGroups(homeworks.filter(h=>h.enabled)),hwDone=activeHw.filter(group=>homeworkGroupStatus(student.id,group).complete).length;
       const activeQ=quizzes.filter(q=>q.enabled),qDone=activeQ.filter(q=>quizAttempt(student.id,q.id)).length;
       const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
       tr.innerHTML="<td><strong>"+(Number(student.list_number)||"–")+"</strong></td>"+
@@ -444,8 +473,9 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     if(!normalAssignments.length)taskBox.innerHTML='<div class="empty">Inga läraruppdrag.</div>';
     normalAssignments.forEach(a=>{const p=getProgress(student.id,a.id);const done=assignmentDoneToday(student.id,a.id);const row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(a.title)+(a.enabled?"":" · pausat")+"</strong><div>"+(done?"✓ Klar idag":"○ Inte klar idag")+" · 1 hel omgång</div><div class='progressbar'><span style='width:"+(done?100:0)+"%'></span></div>";taskBox.appendChild(row);});
     const hwBox=$("detailHomeworks");hwBox.innerHTML="";
-    if(!homeworks.length)hwBox.innerHTML='<div class="empty">Inga läxor.</div>';
-    homeworks.forEach(hw=>{const st=homeworkStatus(student.id,hw),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(hw.title)+"</strong><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
+    const hwGroups=homeworkGroups();
+    if(!hwGroups.length)hwBox.innerHTML='<div class="empty">Inga läxor.</div>';
+    hwGroups.forEach(group=>{const st=homeworkGroupStatus(student.id,group),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(group.title)+"</strong><div>"+escapeHtml(homeworkGroupSummary(group))+"</div><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
     const qBox=$("detailQuizzes");qBox.innerHTML="";
     if(!quizzes.length)qBox.innerHTML='<div class="empty">Inga läxförhör.</div>';
     quizzes.forEach(q=>{const a=quizAttempt(student.id,q.id),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(q.title)+"</strong><div>"+(a?"✓ "+a.score+" / "+a.total+" · "+formatMoment(a.completed_at):"○ Inte genomfört")+"</div>";qBox.appendChild(row);});
@@ -506,6 +536,23 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   }
   async function toggleHomework(id){const h=homeworks.find(x=>x.id===id);if(!h)return;const r=await sb.rpc("teacher_set_homework_enabled",{p_homework_id:id,p_enabled:!h.enabled});if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ändra läxan.","bad");return;}await loadClassData({silent:true});}
   async function deleteHomework(id){const h=homeworks.find(x=>x.id===id);if(!h||!confirm('Ta bort läxan "'+h.title+'"?'))return;const r=await sb.rpc("teacher_delete_homework",{p_homework_id:id});if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ta bort läxan.","bad");return;}await loadClassData({silent:true});}
+  async function toggleHomeworkGroup(group){
+    if(!group?.homeworks?.length)return;
+    const next=!group.homeworks.every(hw=>hw.enabled);
+    for(const hw of group.homeworks){
+      const r=await sb.rpc("teacher_set_homework_enabled",{p_homework_id:hw.id,p_enabled:next});
+      if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ändra hela läxan.","bad");return;}
+    }
+    await loadClassData({silent:true});
+  }
+  async function deleteHomeworkGroup(group){
+    if(!group?.homeworks?.length||!confirm('Ta bort hela läxan "'+group.title+'" med alla delar?'))return;
+    for(const hw of group.homeworks){
+      const r=await sb.rpc("teacher_delete_homework",{p_homework_id:hw.id});
+      if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ta bort hela läxan.","bad");return;}
+    }
+    await loadClassData({silent:true});
+  }
 
   async function createQuiz(){
     if(!classId)return;const selected=parseGameSelection($("quizGame").value),questions=Math.max(5,Math.min(20,Number($("quizQuestions").value)||10));
