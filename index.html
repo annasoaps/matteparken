@@ -10851,8 +10851,8 @@ function dailyAssignmentBucket(create=false){
 }
 function dailyAssignmentDone(a){
  if(!a)return false;const local=dailyAssignmentBucket(false)?.bucket;if(local?.completed?.[a.id])return true;
- const p=current?.progressMap?.get(a.id);const stamp=p?.completed_at||p?.updated_at||"";
- return Number(p?.completed)>=1&&stockholmDateKey(stamp)===stockholmDateKey();
+ const p=current?.progressMap?.get(a.id),today=stockholmDateKey();
+ return Number(p?.completed)>=1&&[p?.completed_at,p?.updated_at,p?.last_active].filter(Boolean).some(stamp=>stockholmDateKey(stamp)===today);
 }
 function markDailyAssignmentDone(id){
  const x=dailyAssignmentBucket(true);if(!x)return;x.bucket.completed[id]=true;x.all[x.who][x.day]=x.bucket;writeDailyAssignmentState(x.all);
