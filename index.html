@@ -11449,7 +11449,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const s=current(),hasDaily=Boolean(s?.assignments?.length);
     if($('studentAssignmentIntro'))$('studentAssignmentIntro').textContent=s?(hasDaily?'Gör hela dagens uppdrag. I morgon börjar du om från början.':'Du är inloggad. Inget läraruppdrag är aktivt idag, så du får ett slumpat dagsuppdrag.'):'Logga in med klass och elevkod för att se dagens uppdrag.';
     $('randomAssignmentCard').classList.toggle('hidden',hasDaily);
-    if(!teacher){const m=randomMission();$('randomMissionTitle').textContent=games[m.gameId][0];$('randomMissionDescription').textContent=`Lös ${m.target} uppgifter i ${games[m.gameId][0].toLowerCase()}.`;
+    if(!hasDaily){const m=randomMission();$('randomMissionTitle').textContent=games[m.gameId][0];$('randomMissionDescription').textContent=`Lös ${m.target} uppgifter i ${games[m.gameId][0].toLowerCase()}.`;
       $('randomMissionProgress').textContent=m.completed>=m.target?`✓ Klart! Du har löst ${m.target} uppgifter.`:`${m.completed} av ${m.target} uppgifter klara`;
       $('randomMissionFill').style.width=Math.min(100,m.completed/m.target*100)+'%';$('startRandomMission').textContent=m.completed>=m.target?'Träna vidare':'Starta uppdraget';}
     const seed=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
