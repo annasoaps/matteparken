@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.5.02 Tydligt TOMTETEST</title>
+<title>Matteparken – v0.5.03 Robust TOMTETEST</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -5673,25 +5673,61 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
   function showGnomeSighting({forced=false,spawnIndex=null}={}){
     clearTimeout(gnomeDelayTimer);clearTimeout(gnomeShowTimer);
-    const el=$("#gnomeSighting"),img=$("#gnomeSightingImg");if(!el)return;
+    const park=$(".park");
+    if(!park) return false;
+
+    let el=$("#gnomeSighting");
+    if(!el){
+      el=document.createElement("div");
+      el.id="gnomeSighting";
+      el.className="gnome-sighting";
+      el.setAttribute("aria-hidden","true");
+      park.appendChild(el);
+    }
+
     let spot;
     if(forced){
-      // TOMTETEST ska vara omöjligt att missa: stor och på en tydlig plats.
-      // Den vanliga, extremt sällsynta tomtesynen använder fortfarande kantgömställena.
-      spot={left:"18%",top:"70%",width:150};
-      el.classList.add("test-preview");
+      // Testläget använder en fast, tydlig plats och inline-stilar
+      // så att inget annat CSS-lager kan råka gömma tomtespåret.
+      spot={left:"18%",top:"70%",width:160};
     }else{
       const index=Number.isInteger(spawnIndex)?spawnIndex:Math.floor(Math.random()*GNOME_SPAWN_POINTS.length);
       spot=GNOME_SPAWN_POINTS[Math.max(0,Math.min(GNOME_SPAWN_POINTS.length-1,index))];
-      el.classList.remove("test-preview");
     }
-    el.style.left=spot.left;el.style.top=spot.top;el.style.width=spot.width+"px";
-    el.classList.remove("leaving");el.classList.add("visible");
-    if(img && img.complete && !img.naturalWidth){
-      $("#status").textContent="🍄 TOMTETEST startade, men luvbilden kunde inte laddas.";
+
+    el.innerHTML="";
+    const img=document.createElement("img");
+    img.alt="";
+    img.src="assets/gnome_hat_192.png?v=503";
+    img.style.cssText="display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;";
+    img.addEventListener("error",()=>{
+      const status=$("#status");
+      if(status) status.textContent="🍄 TOMTETEST kördes, men sprite-filen kunde inte laddas.";
+    });
+    el.appendChild(img);
+
+    el.classList.remove("leaving");
+    el.classList.add("visible");
+    el.classList.toggle("test-preview",forced);
+    el.style.cssText=[
+      "position:absolute",
+      "left:"+spot.left,
+      "top:"+spot.top,
+      "width:"+spot.width+"px",
+      "height:"+spot.width+"px",
+      "z-index:"+(forced?999:5),
+      "display:block",
+      "opacity:1",
+      "pointer-events:none",
+      "transform:translate(-50%,-50%)",
+      "filter:drop-shadow(0 5px 0 rgba(45,65,45,.12))"
+    ].join(";");
+
+    if(!forced){
+      const st=readGnomeSightingState();st.shown=true;saveGnomeSightingState(st);
     }
-    if(!forced){const st=readGnomeSightingState();st.shown=true;saveGnomeSightingState(st);}
     gnomeShowTimer=window.setTimeout(hideGnomeSighting,forced?70000:GNOME_SHOW_MS);
+    return true;
   }
   function initGnomeSighting(){
     if(!state.onboarding?.tutorialComplete)return;
