@@ -10699,7 +10699,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   let sb = null;
   let current = null;
   let busy = false;
+  let reconnectPromise = null;
   let writeQueue = Promise.resolve();
+  let keepAliveTimer = null;
 
   const fallbackTitles = {
     multiplication:"Multiplikation",
@@ -10939,8 +10941,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       $("#status").textContent=`☁️ ${classCode} · ${studentCode} är kopplad till Matteparkens databas.`;
     }catch(error){
       console.error("Supabase login:",error);
-      current=null;
-      render();
+      if(!current?.student){
+        current=null;
+        render();
+      }
       feedback(error?.message || "Kunde inte logga in just nu.","bad");
     }finally{
       busy=false;
@@ -10948,12 +10952,18 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     }
   }
 
-  function logout(){
+  async function logout(){
     setSelection(null);
     current=null;
     if($("#studentCode")) $("#studentCode").value="";
     feedback("");
     render();
+
+    try{
+      await client().auth.signOut({scope:"local"});
+    }catch(error){
+      console.warn("Supabase local signout:",error);
+    }
   }
 
   function startAssignment(){
@@ -10961,19 +10971,88 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     MZ.missionBoard.launch(current.assignment.game_id,current.assignment.game_config||{});
   }
 
+  async function reconnectSaved({showFeedback=false,refresh=false}={}){
+    const saved=getSelection();
+    if(!saved) return null;
+
+    if($("#studentClassCode")) $("#studentClassCode").value=saved.classId||"9A";
+    if($("#studentCode")) $("#studentCode").value=saved.code||"";
+
+    if(reconnectPromise) return reconnectPromise;
+
+    reconnectPromise=(async()=>{
+      try{
+        if(showFeedback && !current?.student) feedback("Hämtar ditt läraruppdrag …");
+
+        if(current?.student && refresh){
+          await ensureAnonymousSession();
+          const refreshed=await readCloudState();
+          if(refreshed){
+            feedback("");
+            return refreshed;
+          }
+        }
+
+        const restored=await claim(norm(saved.classId),norm(saved.code));
+        feedback("");
+        return restored;
+      }catch(error){
+        console.warn("Supabase reconnect:",error);
+        // Behåll elevkoden. Tillfälligt nätverks- eller sessionsfel ska inte
+        // kasta ut eleven eller kräva en ny manuell inloggning.
+        if(showFeedback && !current?.student){
+          feedback("Återansluter automatiskt till Matteparken …");
+        }
+        return null;
+      }finally{
+        reconnectPromise=null;
+      }
+    })();
+
+    return reconnectPromise;
+  }
+
+  async function ensureStudentConnection(){
+    if(current?.student){
+      try{
+        await ensureAnonymousSession();
+        return current;
+      }catch(error){
+        console.warn("Supabase session check:",error);
+      }
+    }
+    return reconnectSaved();
+  }
+
   function recordQuestion(event){
     const detail=event.detail||{};
-    if(!detail.gameId || !current?.student || !getSelection()) return;
+    if(!detail.gameId || !getSelection()) return;
     const descriptor=activityDescriptor(detail);
 
     writeQueue=writeQueue.then(async()=>{
-      await ensureAnonymousSession();
-      const result=await client().rpc("record_math_activity",{
+      await ensureStudentConnection();
+      if(!current?.student) throw new Error("Ingen aktiv elevkoppling.");
+
+      let result=await client().rpc("record_math_activity",{
         p_game_id:detail.gameId,
         p_activity_key:descriptor.key,
         p_label:descriptor.label
       });
       if(result.error) throw result.error;
+
+      // Om Supabase-sessionen bytts i bakgrunden kopplar vi om elevkoden
+      // och provar samma registrering en gång till.
+      if(result.data?.ok===false && result.data?.reason==="no_student_session"){
+        await reconnectSaved();
+        result=await client().rpc("record_math_activity",{
+          p_game_id:detail.gameId,
+          p_activity_key:descriptor.key,
+          p_label:descriptor.label
+        });
+        if(result.error) throw result.error;
+      }
+
+      if(result.data?.ok===false) throw new Error(result.data?.reason||"Synkningen misslyckades.");
 
       if(current?.assignment && result.data?.assignment_id===current.assignment.id){
         current.progress={
@@ -10986,7 +11065,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       }
     }).catch(error=>{
       console.error("Supabase activity:",error);
-      $("#status").textContent="☁️ Kunde inte synka den senaste matteuppgiften. Den lokala parken påverkas inte.";
+      $("#status").textContent="☁️ Synkningen tappade kontakten en stund. Matteparken försöker ansluta eleven automatiskt igen.";
+      window.setTimeout(()=>reconnectSaved(),1500);
     });
   }
 
@@ -10997,21 +11077,12 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       render();
       return;
     }
+    await reconnectSaved({showFeedback:true});
+  }
 
-    if($("#studentClassCode")) $("#studentClassCode").value=saved.classId||"9A";
-    if($("#studentCode")) $("#studentCode").value=saved.code||"";
-    feedback("Hämtar ditt läraruppdrag …");
-
-    try{
-      await claim(norm(saved.classId),norm(saved.code));
-      feedback("");
-    }catch(error){
-      console.error("Supabase restore:",error);
-      setSelection(null);
-      current=null;
-      render();
-      feedback("Elevkopplingen kunde inte återställas. Logga in med elevkoden igen.","bad");
-    }
+  async function keepConnected(){
+    if(!getSelection()) return;
+    await reconnectSaved({refresh:Boolean(current?.student)});
   }
 
   function init(){
@@ -11020,6 +11091,25 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#studentLogoutBtn")?.addEventListener("click",logout);
     $("#startStudentAssignment")?.addEventListener("click",startAssignment);
     MZ.events.addEventListener("mathquestion",recordQuestion);
+
+    window.addEventListener("online",()=>keepConnected());
+    document.addEventListener("visibilitychange",()=>{
+      if(document.visibilityState==="visible") keepConnected();
+    });
+
+    try{
+      client().auth.onAuthStateChange((event)=>{
+        if((event==="SIGNED_OUT" || event==="SIGNED_IN" || event==="TOKEN_REFRESHED") && getSelection()){
+          window.setTimeout(()=>keepConnected(),0);
+        }
+      });
+    }catch(error){
+      console.warn("Supabase auth listener:",error);
+    }
+
+    if(keepAliveTimer) window.clearInterval(keepAliveTimer);
+    keepAliveTimer=window.setInterval(keepConnected,5*60*1000);
+
     render();
     restore();
   }
