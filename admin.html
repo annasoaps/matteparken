@@ -208,7 +208,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         <div><h3>📄 Läxförhör</h3><div class="student-assignment-detail" id="detailQuizzes"></div></div>
       </div>
       <div class="detail-grid">
-        <div><h3>Läraruppdrag</h3><div class="student-assignment-detail" id="detailAssignments"></div></div>
+        <div><h3>Dagens uppdrag</h3><div class="student-assignment-detail" id="detailAssignments"></div></div>
         <div><h3>Idag · enskilda rätta svar</h3><div class="activity-list" id="todayList"></div></div>
         <div><h3>Den här veckan · enskilda rätta svar</h3><div class="activity-list" id="weekList"></div></div>
       </div>
@@ -250,7 +250,12 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   function weekStartKey(){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return localDateKey(d);}
   function formatLast(value){if(!value)return "–";const d=new Date(value);if(Number.isNaN(d.getTime()))return "–";const now=new Date();return d.toDateString()===now.toDateString()?"idag "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});}
   function progressKey(studentId,assignmentId){return studentId+":"+assignmentId;}
-  function getProgress(studentId,assignmentId){return progressMap.get(progressKey(studentId,assignmentId))||{completed:0,last_active:null,completed_at:null};}
+  function getProgress(studentId,assignmentId){return progressMap.get(progressKey(studentId,assignmentId))||{completed:0,last_active:null,updated_at:null,completed_at:null};}
+  function progressTouchedToday(p){
+    const today=localDateKey();
+    return [p?.completed_at,p?.updated_at,p?.last_active].filter(Boolean).some(value=>{const d=new Date(value);return !Number.isNaN(d.getTime())&&localDateKey(d)===today;});
+  }
+  function assignmentDoneToday(studentId,assignmentId){const p=getProgress(studentId,assignmentId);return Number(p.completed)>=1&&progressTouchedToday(p);}
   function toIsoOrNull(id){const v=$(id)?.value;return v?new Date(v).toISOString():null;}
   function formatMoment(v){if(!v)return "–";const d=new Date(v);return d.toLocaleString("sv-SE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}
   function homeworkTasks(id){return assignments.filter(a=>a.homework_id===id);}
@@ -361,7 +366,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     const box=$("assignmentList");box.innerHTML="";
     if(!normal.length){box.innerHTML='<div class="empty">Inga läraruppdrag ännu. Lägg till det första till vänster.</div>';return;}
     normal.forEach(a=>{
-      const doneStudents=students.filter(s=>Number(getProgress(s.id,a.id).completed)>=1).length;
+      const doneStudents=students.filter(s=>assignmentDoneToday(s.id,a.id)).length;
       const item=document.createElement("div");item.className="assignment-item"+(a.enabled?"":" paused");
       item.innerHTML='<div class="assignment-item-head"><div><h3>'+escapeHtml(a.title)+'</h3><div class="muted small">'+escapeHtml(roundDescription(a))+'</div></div><span class="mini-pill">'+(a.enabled?"Aktivt":"Pausat")+'</span></div>'+
         '<div class="assignment-meta"><span class="mini-pill">🎯 1 hel omgång</span><span class="mini-pill">✓ '+doneStudents+' / '+students.length+' elever klara</span></div>'+
@@ -404,9 +409,9 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     $("studentCount").textContent=students.length+" "+(students.length===1?"elev":"elever");
     const tbody=$("studentRows");tbody.innerHTML="";const active=assignments.filter(a=>a.enabled&&!a.homework_id);
     students.forEach(student=>{
-      const done=active.filter(a=>Number(getProgress(student.id,a.id).completed)>=1).length;
+      const done=active.filter(a=>assignmentDoneToday(student.id,a.id)).length;
       const total=active.length;const pct=total?Math.round(done/total*100):0;
-      const anyProgress=active.some(a=>Number(getProgress(student.id,a.id).completed)>0);
+      const anyProgress=active.some(a=>progressTouchedToday(getProgress(student.id,a.id)));
       const activeHw=homeworks.filter(h=>h.enabled),hwDone=activeHw.filter(h=>homeworkStatus(student.id,h).complete).length;
       const activeQ=quizzes.filter(q=>q.enabled),qDone=activeQ.filter(q=>quizAttempt(student.id,q.id)).length;
       const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
@@ -430,11 +435,11 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   function fillList(id,items){const el=$(id);el.innerHTML="";if(!items.length){el.innerHTML='<div class="empty">Ingen registrerad träning ännu.</div>';return;}items.forEach(item=>{const row=document.createElement("div");row.className="activity-row";row.innerHTML="<strong>"+escapeHtml(item.label)+"</strong><span>"+item.count+"</span>";el.appendChild(row);});}
   function renderDetail(){
     const student=students.find(s=>s.id===selectedStudentId);if(!student){$("studentDetail").classList.add("hidden");return;}
-    $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+(student.list_number?"nr "+student.list_number+" · ":"")+student.code;$("detailSubtitle").textContent="Varje läraruppdrag blir klart efter en hel omgång. Aktiviteten räknar samtidigt enskilda rätta svar.";
+    $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+(student.list_number?"nr "+student.list_number+" · ":"")+student.code;$("detailSubtitle").textContent="Dagens uppdrag räknas om från början varje dag. Aktiviteten visar samtidigt elevens enskilda rätta svar.";
     const taskBox=$("detailAssignments");taskBox.innerHTML="";
     const normalAssignments=assignments.filter(a=>!a.homework_id);
     if(!normalAssignments.length)taskBox.innerHTML='<div class="empty">Inga läraruppdrag.</div>';
-    normalAssignments.forEach(a=>{const p=getProgress(student.id,a.id);const done=Number(p.completed)>=1;const row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(a.title)+(a.enabled?"":" · pausat")+"</strong><div>"+(done?"✓ Klar":"○ Inte klar")+" · 1 hel omgång</div><div class='progressbar'><span style='width:"+(done?100:0)+"%'></span></div>";taskBox.appendChild(row);});
+    normalAssignments.forEach(a=>{const p=getProgress(student.id,a.id);const done=assignmentDoneToday(student.id,a.id);const row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(a.title)+(a.enabled?"":" · pausat")+"</strong><div>"+(done?"✓ Klar idag":"○ Inte klar idag")+" · 1 hel omgång</div><div class='progressbar'><span style='width:"+(done?100:0)+"%'></span></div>";taskBox.appendChild(row);});
     const hwBox=$("detailHomeworks");hwBox.innerHTML="";
     if(!homeworks.length)hwBox.innerHTML='<div class="empty">Inga läxor.</div>';
     homeworks.forEach(hw=>{const st=homeworkStatus(student.id,hw),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(hw.title)+"</strong><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
