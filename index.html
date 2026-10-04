@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.69 Admin v2</title>
+<title>Matteparken – v0.4.71 Fleruppdrag</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -10778,15 +10778,15 @@ function render(){
  const list=$("#studentAssignmentsList");if(!list)return;list.innerHTML="";
  if(!current.assignments.length){list.innerHTML='<div class="assignment-empty-cloud">🌿 Inga läraruppdrag är aktiva just nu. Du kan träna fritt i Matteparken.</div>';return;}
  current.assignments.forEach(a=>{
-  const p=current.progressMap.get(a.id)||{completed:0,last_active:null},target=Math.max(1,Number(a.target)||1),completed=Math.min(Math.max(0,Number(p.completed)||0),target),pct=Math.min(100,Math.round(completed/target*100)),done=completed>=target;
+  const p=current.progressMap.get(a.id)||{completed:0,last_active:null},done=Number(p.completed)>=1,pct=done?100:0;
   const card=document.createElement("div");card.className="student-cloud-task"+(done?" done":"");
   const info=document.createElement("div"),h=document.createElement("h4");h.textContent=(done?"✓ ":"📌 ")+a.title;info.appendChild(h);
   const desc=document.createElement("div");desc.className="muted";desc.textContent=a.description||roundDescription(a);info.appendChild(desc);
   const note=document.createElement("div");note.className="round-note";note.textContent=roundDescription(a);info.appendChild(note);
-  const copy=document.createElement("div");copy.className="assignment-progress-copy";copy.innerHTML="<span>"+completed+" av "+target+" omgångar klara</span><strong>"+pct+" %</strong>";info.appendChild(copy);
+  const copy=document.createElement("div");copy.className="assignment-progress-copy";copy.innerHTML="<span>"+(done?"✓ Uppdraget är klart":"○ En hel omgång återstår")+"</span><strong>"+pct+" %</strong>";info.appendChild(copy);
   const bar=document.createElement("div");bar.className="progress";bar.innerHTML='<div style="width:'+pct+'%"></div>';info.appendChild(bar);
-  const last=document.createElement("div");last.className="assignment-demo-note";last.textContent=done?"Uppdraget är klart"+(p.last_active?" · senast "+formatLast(p.last_active):"")+".":p.last_active?"Senast aktiv "+formatLast(p.last_active)+".":"Inte påbörjat ännu.";info.appendChild(last);
-  const actions=document.createElement("div");actions.className="assignment-actions";const btn=document.createElement("button");btn.className="primary";btn.type="button";btn.textContent=done?"Träna vidare":completed?"Fortsätt uppdraget":"Starta uppdraget";btn.addEventListener("click",()=>startAssignment(a.id));actions.appendChild(btn);
+  const last=document.createElement("div");last.className="assignment-demo-note";last.textContent=done?"Klart"+(p.last_active?" · "+formatLast(p.last_active):"")+".":p.last_active?"Senast aktiv "+formatLast(p.last_active)+".":"Inte påbörjat ännu.";info.appendChild(last);
+  const actions=document.createElement("div");actions.className="assignment-actions";const btn=document.createElement("button");btn.className="primary";btn.type="button";btn.textContent=done?"Träna igen":"Starta uppdraget";btn.addEventListener("click",()=>startAssignment(a.id));actions.appendChild(btn);
   card.append(info,actions);list.appendChild(card);
  });
 }
@@ -10799,7 +10799,7 @@ async function login(){
  finally{busy=false;if($("#studentLoginBtn"))$("#studentLoginBtn").disabled=false;}
 }
 async function logout(){setSelection(null);setActiveAssignment(null);current=null;if($("#studentCode"))$("#studentCode").value="";feedback("");render();try{await client().auth.signOut({scope:"local"});}catch(error){console.warn(error);}}
-function startAssignment(id){const a=current?.assignments?.find(x=>x.id===id);if(!a)return;MZ.missionBoard.launch(a.game_id,a.game_config||{});setActiveAssignment(a.id);$("#status").textContent="📌 Läraruppdrag aktivt: "+a.title+". Hela omgångar räknas.";}
+function startAssignment(id){const a=current?.assignments?.find(x=>x.id===id);if(!a)return;setActiveAssignment(a.id);MZ.missionBoard.launch(a.game_id,a.game_config||{});$("#status").textContent="📌 Läraruppdrag aktivt: "+a.title+". När hela omgången är klar markeras uppdraget som klart.";}
 
 async function reconnectSaved({showFeedback=false,refresh=false}={}){
  const saved=getSelection();if(!saved)return null;if($("#studentClassCode"))$("#studentClassCode").value=saved.classId||"9A";if($("#studentCode"))$("#studentCode").value=saved.code||"";if(reconnectPromise)return reconnectPromise;
@@ -10819,8 +10819,8 @@ function recordRound(event){
   let r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;
   if(r.data?.ok===false&&r.data?.reason==="no_student_session"){await reconnectSaved();r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;}
   if(r.data?.ok===false)throw new Error(r.data?.reason||"Omgången kunde inte registreras.");
-  current.progressMap.set(id,{...(current.progressMap.get(id)||{}),completed:Number(r.data.completed)||0,last_active:new Date().toISOString(),updated_at:new Date().toISOString()});current.student.last_active=new Date().toISOString();
-  if(r.data.done){setActiveAssignment(null);$("#status").textContent="🎉 Läraruppdraget är klart: "+a.title+".";}else{$("#status").textContent="📌 En hel omgång registrerad i "+a.title+": "+r.data.completed+" av "+r.data.target+".";}render();
+  current.progressMap.set(id,{...(current.progressMap.get(id)||{}),completed:r.data.done?1:Math.max(0,Number(r.data.completed)||0),last_active:new Date().toISOString(),updated_at:new Date().toISOString()});current.student.last_active=new Date().toISOString();
+  if(r.data.done){setActiveAssignment(null);$("#status").textContent="🎉 Läraruppdraget är klart: "+a.title+".";}else{$("#status").textContent="📌 Omgången registrerades, men uppdraget kunde inte markeras klart ännu.";}render();
  }).catch(error=>{console.error("Supabase assignment round:",error);$("#status").textContent="☁️ Omgången kunde inte synkas just nu. Matteparken försöker återansluta.";window.setTimeout(()=>reconnectSaved(),1500);});
 }
 
@@ -10949,8 +10949,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!$('missionBoardModal'))return;
     const seedTutorial=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     $('missionBoardModal').classList.toggle('seed-tutorial-only',seedTutorial);
-    const s=current(),teacher=Boolean(s?.assignment && s.assignment.enabled!==false);
-    $('studentAssignmentCard').querySelector('.assignment-card-head .muted').textContent=s?(teacher?'Ditt uppdrag från läraren. Fortsätt där du slutade.':'Du är inloggad. Inget läraruppdrag är aktivt, så du får ett slumpat dagsuppdrag.'):'Logga in med klass och elevkod för att se ditt läraruppdrag.';
+    const s=current(),teacher=Boolean(s?.assignments?.length);
+    $('studentAssignmentCard').querySelector('.assignment-card-head .muted').textContent=s?(teacher?'Välj ett av dina läraruppdrag. Varje uppdrag är en hel omgång.':'Du är inloggad. Inget läraruppdrag är aktivt, så du får ett slumpat dagsuppdrag.'):'Logga in med klass och elevkod för att se dina läraruppdrag.';
     $('randomAssignmentCard').classList.toggle('hidden',teacher);
     if(!teacher){const m=randomMission();$('randomMissionTitle').textContent=games[m.gameId][0];$('randomMissionDescription').textContent=`Lös ${m.target} uppgifter i ${games[m.gameId][0].toLowerCase()}.`;
       $('randomMissionProgress').textContent=m.completed>=m.target?`✓ Klart! Du har löst ${m.target} uppgifter.`:`${m.completed} av ${m.target} uppgifter klara`;
@@ -11008,7 +11008,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $(button)?.click();
   }
   function record(event){
-    const s=current();if(s?.assignment && s.assignment.enabled!==false){render();return;}
+    const s=current();if(s?.assignments?.length){render();return;}
     const m=randomMission();if(event.detail?.gameId===m.gameId && m.completed<m.target){const all=read();all[profile()][today()].completed+=1;write(all);}render();
   }
   MZ.missionBoard={open,render,launch};
