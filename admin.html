@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matteparken · Läraradmin v6</title>
+<title>Matteparken · Läraradmin v7</title>
 <style>
 :root{
   color-scheme:light;
@@ -114,6 +114,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
                 <option value="fractionDecimal">Bråk ↔ Decimal</option>
                 <option value="fractionArithmetic">Räkna med bråk</option>
                 <option value="percentConvert">Bråk · Decimal · Procent</option>
+                <option value="sharePart">Hur stor andel?</option>
                 <option value="prefixMatch">Prefix – para ihop</option>
                 <option value="unitConvert">Enhetsomvandling</option>
                 <option value="statistics">Statistik</option>
@@ -150,7 +151,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
                 <option value="multiplication:1">1:ans tabell</option><option value="multiplication:2">2:ans tabell</option><option value="multiplication:3">3:ans tabell</option><option value="multiplication:4">4:ans tabell</option><option value="multiplication:5">5:ans tabell</option><option value="multiplication:6">6:ans tabell</option><option value="multiplication:7">7:ans tabell</option><option value="multiplication:8">8:ans tabell</option><option value="multiplication:9">9:ans tabell</option><option value="multiplication:10">10:ans tabell</option>
               </optgroup>
               <optgroup label="Övriga spel">
-                <option value="equations">Ekvationer</option><option value="pow10">× och ÷ med 10, 100, 1000</option><option value="fractionDecimal">Bråk ↔ Decimal</option><option value="fractionArithmetic">Räkna med bråk</option><option value="percentConvert">Bråk · Decimal · Procent</option><option value="prefixMatch">Prefix – para ihop</option><option value="unitConvert">Enhetsomvandling</option><option value="statistics">Statistik</option><option value="scientificNotation">Grundpotensform</option>
+                <option value="equations">Ekvationer</option><option value="pow10">× och ÷ med 10, 100, 1000</option><option value="fractionDecimal">Bråk ↔ Decimal</option><option value="fractionArithmetic">Räkna med bråk</option><option value="percentConvert">Bråk · Decimal · Procent</option><option value="sharePart">Hur stor andel?</option><option value="prefixMatch">Prefix – para ihop</option><option value="unitConvert">Enhetsomvandling</option><option value="statistics">Statistik</option><option value="scientificNotation">Grundpotensform</option>
               </optgroup>
             </select>
           </label>
@@ -237,6 +238,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     fractionDecimal:{title:"Bråk ↔ Decimal",round:"En omgång = hela brädet med 8 par. Brädet räknas även om eleven gjort fel på vägen."},
     fractionArithmetic:{title:"Räkna med bråk",round:"En omgång = 3 färdiga bråkberäkningar."},
     percentConvert:{title:"Bråk · Decimal · Procent",round:"En omgång = 6 kompletta trior."},
+    sharePart:{title:"Hur stor andel?",round:"En omgång = 10 uppgifter om delen och det hela."},
     prefixMatch:{title:"Prefix – para ihop",round:"En omgång = 10 rätt."},
     unitConvert:{title:"Enhetsomvandling",round:"En omgång = 10 rätt."},
     statistics:{title:"Statistik",round:"En omgång = 10 rätt."},
