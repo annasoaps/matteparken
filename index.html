@@ -2226,7 +2226,19 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 #missionBoardModal .primary{background:#415e40;color:#fff7df;border:2px solid #2f482e;border-radius:5px;padding:11px 16px;margin-top:12px}#missionBoardModal .secondary{white-space:normal;font-size:14px}#missionBoardModal .muted{color:#656c55}
 .mission-kicker{font-size:11px;letter-spacing:1.5px;font-weight:900;display:block;margin-bottom:10px}.mission-week-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.mission-week-day{text-align:center;font-size:11px;display:grid;gap:5px}.mission-week-day b{display:grid;place-items:center;height:29px;border:1px solid #bfb38e;border-radius:50%;background:#f6efd9;color:#697157}.mission-week-day.done b{background:#496744;color:#fff8dc;border-color:#496744}.mission-week-day.today b{outline:2px solid #bc8e48;outline-offset:2px}.mission-local-note{font-size:12px;line-height:1.5;margin:0;padding:0 8px;color:#312719}#missionBoardModal .extra-mission{background:#e8edda}
 @media(max-width:700px){#missionBoardModal{padding:12px}#missionBoardModal .mission-noticeboard{max-height:calc(100dvh - 24px);padding:20px 12px;border-width:10px}.mission-board-grid{grid-template-columns:1fr;gap:18px}#missionBoardModal .mission-paper,#missionBoardModal .assignment-card{padding:28px 18px 20px}#missionBoardModal .board-plaque{font-size:15px;letter-spacing:1px}}
-</style><style>.office-ready-mail-art{display:none;position:absolute;inset:0;z-index:1;pointer-events:none;background-image:url("assets/asset_003_ea8a3892caebb2dc.png");background-size:100% 100%;clip-path:inset(56.5% 0 23% 86.5%)}.office-room.has-ready-mail .office-ready-mail-art{display:block}</style></head>
+</style><style>.office-ready-mail-art{display:none;position:absolute;inset:0;z-index:1;pointer-events:none;background-image:url("assets/asset_003_ea8a3892caebb2dc.png");background-size:100% 100%;clip-path:inset(56.5% 0 23% 86.5%)}.office-room.has-ready-mail .office-ready-mail-art{display:block}</style><style id="cloudAssignmentsV3">
+.student-assignment-list{display:grid;gap:12px}
+.student-cloud-task{border:2px solid #b8aa87;border-radius:10px;background:#fffaf0;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+.student-cloud-task.done{border-color:#79966f;background:#f1f6e9}
+.student-cloud-task h4{margin:0 0 5px;font-size:18px}
+.student-cloud-task .round-note{font-size:12px;color:#71756d;margin-top:5px}
+.student-cloud-task .assignment-progress-copy{margin-top:10px}
+.student-cloud-task .assignment-actions{align-self:center}
+.student-switch-row{justify-content:flex-end;margin-top:12px}
+.assignment-empty-cloud{padding:13px;border:2px dashed #b8aa87;border-radius:9px;background:#f6f0df;color:#687168}
+@media(max-width:720px){.student-cloud-task{grid-template-columns:1fr}.student-cloud-task .assignment-actions{justify-content:flex-start}}
+</style>
+</head>
 <body>
 <main class="game" aria-label="Matteparken">
 <header class="topbar">
@@ -11149,29 +11161,22 @@ document.addEventListener("DOMContentLoaded", () => {
 <div class="board-plaque" id="missionBoardTitle">DAGENS UPPDRAG<span>MATTEPARKEN · PARKKONTORET</span></div>
 <div class="mission-board-grid"><div class="mission-paper-stack">        <section class="card assignment-card" id="studentAssignmentCard">
           <div class="assignment-card-head">
-            <div><h3>Mitt läraruppdrag</h3><div class="muted">Logga in med klass och elevkod för att se ditt läraruppdrag.</div></div>
+            <div><h3>Mina läraruppdrag</h3><div class="muted">Logga in med klass och elevkod för att se dina uppdrag.</div></div>
             <span class="pill" id="studentIdentityPill">Inte inloggad</span>
           </div>
-          <p class="muted identity-saving-note">Din elevkod koms ihåg i den här webbläsaren tills du väljer ”Byt elevkod”.</p><div id="studentLoginPanel">
+          <p class="muted identity-saving-note">Din elevkod koms ihåg i den här webbläsaren tills du väljer ”Byt elevkod”.</p>
+          <div id="studentLoginPanel">
             <div class="student-login-grid">
-              <label>Klass<input id="studentClassCode" value="9A" maxlength="8" autocomplete="off" /></label>
-              <label>Elevkod<input id="studentCode" placeholder="t.ex. K7M4" maxlength="12" autocomplete="off" /></label>
+              <label>Klass<input id="studentClassCode" value="9A" maxlength="20" autocomplete="off" /></label>
+              <label>Elevkod<input id="studentCode" placeholder="din elevkod" maxlength="16" autocomplete="off" /></label>
               <button class="primary" id="studentLoginBtn" type="button">Logga in</button>
             </div>
             <div class="feedback" id="studentLoginFeedback" style="text-align:left;min-height:24px;margin:6px 0 0"></div>
-            <div class="assignment-demo-note">Databastest · klass 9A. Testkoder: <strong>K7M4</strong>, <strong>P2R8</strong> och <strong>T9A3</strong>. Uppdrag och mattearbetet synkas nu via Supabase.</div>
+            <div class="assignment-demo-note">Läraruppdrag och matteaktivitet synkas via Matteparkens databas. Själva parken sparas fortfarande lokalt i den här webbläsaren.</div>
           </div>
-          <div id="studentAssignmentPanel" class="hidden">
-            <div class="assignment-current">
-              <div>
-                <h4 id="studentAssignmentTitle">🔬 Grundpotensform</h4>
-                <div class="muted" id="studentAssignmentDescription">Gör om stora tal till grundpotensform och tillbaka.</div>
-                <div class="assignment-progress-copy"><span id="studentAssignmentProgressLabel">0 av 20 uppgifter klara</span><strong id="studentAssignmentPercent">0 %</strong></div>
-                <div class="progress"><div id="studentAssignmentProgressFill"></div></div>
-                <div class="assignment-demo-note" id="studentAssignmentLastActive">Inte påbörjat ännu.</div>
-              </div>
-              <div class="assignment-actions"><button class="primary" id="startStudentAssignment" type="button">Starta uppdraget</button><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
-            </div>
+          <div id="studentAssignmentsPanel" class="hidden">
+            <div id="studentAssignmentsList" class="student-assignment-list"></div>
+            <div class="assignment-actions student-switch-row"><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
           </div>
         </section>
 
