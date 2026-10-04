@@ -10770,6 +10770,14 @@ const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow
 const norm=v=>String(v||"").trim().toUpperCase().replace(/\s+/g,"");
 const cleanDisplayName=v=>String(v||"").trim().replace(/\s+/g," ").slice(0,24);
 function formatLast(v){if(!v)return"–";const d=new Date(v);if(Number.isNaN(d.getTime()))return"–";const n=new Date();return d.toDateString()===n.toDateString()?"idag "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});}
+function formatMoment(v){if(!v)return"";const d=new Date(v);return d.toLocaleString("sv-SE",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}
+function homeworkTasks(hwId){return (current?.allAssignments||[]).filter(a=>a.homework_id===hwId);}
+function homeworkStatus(hw){
+ const tasks=homeworkTasks(hw.id),done=tasks.filter(a=>Number(current?.progressMap?.get(a.id)?.completed)>=1).length;
+ const complete=tasks.length>0&&done===tasks.length;
+ const completedAt=complete?tasks.map(a=>current.progressMap.get(a.id)?.completed_at).filter(Boolean).sort().at(-1)||null:null;
+ return{tasks,done,total:tasks.length,complete,completedAt,locked:Boolean(hw.opens_at&&Date.now()<new Date(hw.opens_at).getTime()),late:Boolean(complete&&hw.due_at&&completedAt&&new Date(completedAt)>new Date(hw.due_at))};
+}
 function gameTitle(id){return MZ.math.listGames().find(g=>g.id===id)?.title||fallbackTitles[id]||id;}
 function activityDescriptor(d){if(d.gameId==="multiplication"&&Number.isFinite(Number(d.table))){const t=Number(d.table);return{key:"multiplication:"+t,label:t+":ans tabell"};}return{key:d.gameId,label:gameTitle(d.gameId)};}
 function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 10 rätt.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt."};return x[a?.game_id]||"En hel omgång.";}
@@ -10794,23 +10802,34 @@ async function readCloudState(){
  if(sr.error)throw sr.error;
  if(!sr.data){current=null;render();return null;}
  const student=sr.data;
- const [cr,ar]=await Promise.all([
+ const [cr,ar,hr,qr]=await Promise.all([
   c.from("classes").select("id,code,name").eq("id",student.class_id).maybeSingle(),
-  c.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true})
+  c.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,homework_id,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
+  c.from("homeworks").select("id,class_id,title,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
+  c.from("quizzes").select("id,class_id,game_id,title,game_config,question_count,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true})
  ]);
- if(cr.error)throw cr.error;if(ar.error)throw ar.error;
- const assignments=ar.data||[],progressMap=new Map(),ids=assignments.map(x=>x.id);
+ if(cr.error)throw cr.error;if(ar.error)throw ar.error;if(hr.error)throw hr.error;if(qr.error)throw qr.error;
+ const allAssignments=ar.data||[],assignments=allAssignments.filter(a=>!a.homework_id),homeworks=hr.data||[],quizzes=qr.data||[],progressMap=new Map(),ids=allAssignments.map(x=>x.id);
  if(ids.length){
-  const pr=await c.from("student_assignment_progress").select("assignment_id,completed,last_active,updated_at").eq("student_id",student.id).in("assignment_id",ids);
+  const pr=await c.from("student_assignment_progress").select("assignment_id,completed,last_active,updated_at,completed_at").eq("student_id",student.id).in("assignment_id",ids);
   if(pr.error)throw pr.error;(pr.data||[]).forEach(p=>progressMap.set(p.assignment_id,p));
  }
- current={classInfo:cr.data,student,assignments,progressMap};
- const active=getActiveAssignment();if(active&&!assignments.some(x=>x.id===active))setActiveAssignment(null);
- render();return current;
+ let quizAttempts=[];
+ if(quizzes.length){
+  const qa=await c.from("quiz_attempts").select("quiz_id,score,total,started_at,completed_at,reward_claimed_at").eq("student_id",student.id).in("quiz_id",quizzes.map(q=>q.id));
+  if(qa.error)throw qa.error;quizAttempts=qa.data||[];
+ }
+ current={classInfo:cr.data,student,assignments,allAssignments,homeworks,quizzes,quizAttempts,progressMap};
+ const active=getActiveAssignment();if(active&&!allAssignments.some(x=>x.id===active))setActiveAssignment(null);
+ render();MZ.homeworkQuiz?.render?.();return current;
 }
 function activeStudent(){
  if(!current?.student)return null;
- return{classId:current.classInfo?.code||getSelection()?.classId||"",code:current.student.code,displayName:cleanDisplayName(getSelection()?.displayName||""),student:current.student,assignments:(current.assignments||[]).map(a=>({...a,gameId:a.game_id,progress:current.progressMap.get(a.id)||{completed:0,last_active:null}}))};
+ return{classId:current.classInfo?.code||getSelection()?.classId||"",code:current.student.code,displayName:cleanDisplayName(getSelection()?.displayName||""),student:current.student,
+  assignments:(current.assignments||[]).map(a=>({...a,gameId:a.game_id,progress:current.progressMap.get(a.id)||{completed:0,last_active:null,completed_at:null}})),
+  homeworks:(current.homeworks||[]).map(h=>({...h,status:homeworkStatus(h)})),
+  quizzes:(current.quizzes||[]).map(q=>({...q,attempt:(current.quizAttempts||[]).find(a=>a.quiz_id===q.id)||null}))
+ };
 }
 async function claim(classCode,studentCode,displayName=""){
  const c=client();await ensureAnonymousSession();
@@ -10831,8 +10850,27 @@ function render(){
  const localName=cleanDisplayName(getSelection()?.displayName||"");
  $("#studentIdentityPill").textContent=(current.classInfo?.code||getSelection()?.classId||"")+" · "+current.student.code;
  if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent=localName?"Välkommen, "+localName+"!":"Mina läraruppdrag";
+ const homeworkList=$("#studentHomeworkList");
+ if(homeworkList){
+  homeworkList.innerHTML="";
+  if(!current.homeworks?.length){
+    homeworkList.innerHTML='<div class="assignment-empty-cloud">Ingen läxa är aktiv just nu.</div>';
+  }else current.homeworks.forEach(hw=>{
+    const st=homeworkStatus(hw),card=document.createElement("div");card.className="student-homework-card"+(st.complete?" done":"")+(st.locked?" locked":"");
+    const info=document.createElement("div"),h=document.createElement("h5");h.textContent=(st.complete?"✓ ":"🏠 ")+hw.title;info.appendChild(h);
+    const progress=document.createElement("div");progress.className="muted";progress.textContent=st.complete?"Läxan är klar":st.done+" av "+st.total+" omgångar klara";info.appendChild(progress);
+    const time=document.createElement("div");time.className="homework-window";
+    time.textContent=st.locked?"🔒 Öppnar "+formatMoment(hw.opens_at):(hw.due_at?"Deadline "+formatMoment(hw.due_at)+(st.late?" · klar efter deadline":""):"Ingen deadline");info.appendChild(time);
+    const reward=document.createElement("div");reward.className="homework-reward";reward.textContent=st.complete?"🎁 Blind bag utdelad när läxan blev klar":"🎁 Belöning: 1 blind bag";info.appendChild(reward);
+    const actions=document.createElement("div"),btn=document.createElement("button");btn.className="primary";btn.type="button";
+    const next=st.tasks.find(a=>Number(current.progressMap.get(a.id)?.completed)<1);
+    btn.disabled=st.locked||st.complete||!next;btn.textContent=st.complete?"Klar":st.locked?"Inte öppen än":st.done?"Fortsätt läxan":"Starta läxan";
+    if(next)btn.addEventListener("click",()=>startAssignment(next.id));
+    actions.appendChild(btn);card.append(info,actions);homeworkList.appendChild(card);
+  });
+ }
  const list=$("#studentAssignmentsList");if(!list)return;list.innerHTML="";
- if(!current.assignments.length){list.innerHTML='<div class="assignment-empty-cloud">🌿 Inga läraruppdrag är aktiva just nu. Du kan träna fritt i Matteparken.</div>';return;}
+ if(!current.assignments.length){list.innerHTML='<div class="assignment-empty-cloud">🌿 Inga vanliga läraruppdrag är aktiva just nu.</div>';return;}
  current.assignments.forEach(a=>{
   const p=current.progressMap.get(a.id)||{completed:0,last_active:null},done=Number(p.completed)>=1,pct=done?100:0;
   const card=document.createElement("div");card.className="student-cloud-task"+(done?" done":"");
@@ -10855,7 +10893,7 @@ async function login(){
  finally{busy=false;if($("#studentLoginBtn"))$("#studentLoginBtn").disabled=false;}
 }
 async function logout(){setSelection(null);setActiveAssignment(null);current=null;if($("#studentCode"))$("#studentCode").value="";if($("#studentDisplayName"))$("#studentDisplayName").value="";feedback("");render();try{await client().auth.signOut({scope:"local"});}catch(error){console.warn(error);}}
-function startAssignment(id){const a=current?.assignments?.find(x=>x.id===id);if(!a)return;setActiveAssignment(a.id);MZ.missionBoard.launch(a.game_id,a.game_config||{});$("#status").textContent="📌 Läraruppdrag aktivt: "+a.title+". När hela omgången är klar markeras uppdraget som klart.";}
+function startAssignment(id){const a=current?.allAssignments?.find(x=>x.id===id);if(!a)return;setActiveAssignment(a.id);MZ.missionBoard.launch(a.game_id,a.game_config||{});$("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";}
 
 async function reconnectSaved({showFeedback=false,refresh=false}={}){
  const saved=getSelection();if(!saved)return null;if($("#studentClassCode"))$("#studentClassCode").value=saved.classId||"9A";if($("#studentCode"))$("#studentCode").value=saved.code||"";if($("#studentDisplayName"))$("#studentDisplayName").value=cleanDisplayName(saved.displayName||"");if(reconnectPromise)return reconnectPromise;
@@ -10869,14 +10907,23 @@ function recordQuestion(event){
 }
 function matchingRound(a,x){if(!a||!x||a.game_id!==x.gameId||expectedRoundTypes[a.game_id]!==x.type)return false;const t=Number(a.game_config?.table);return !(a.game_id==="multiplication"&&t>=1&&t<=10)||Number(x.table)===t;}
 function recordRound(event){
- const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.assignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
+ const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
  writeQueue=writeQueue.then(async()=>{
   await ensureStudentConnection();if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");
   let r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;
   if(r.data?.ok===false&&r.data?.reason==="no_student_session"){await reconnectSaved();r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;}
   if(r.data?.ok===false)throw new Error(r.data?.reason||"Omgången kunde inte registreras.");
-  current.progressMap.set(id,{...(current.progressMap.get(id)||{}),completed:r.data.done?1:Math.max(0,Number(r.data.completed)||0),last_active:new Date().toISOString(),updated_at:new Date().toISOString()});current.student.last_active=new Date().toISOString();
-  if(r.data.done){setActiveAssignment(null);$("#status").textContent="🎉 Läraruppdraget är klart: "+a.title+".";}else{$("#status").textContent="📌 Omgången registrerades, men uppdraget kunde inte markeras klart ännu.";}render();
+  const completedAt=r.data.completed_at||new Date().toISOString();
+  current.progressMap.set(id,{...(current.progressMap.get(id)||{}),completed:r.data.done?1:Math.max(0,Number(r.data.completed)||0),last_active:new Date().toISOString(),updated_at:new Date().toISOString(),completed_at:completedAt});current.student.last_active=new Date().toISOString();
+  if(r.data.done){
+    setActiveAssignment(null);
+    if(a.homework_id){
+      const reward=await client().rpc("claim_homework_reward",{p_homework_id:a.homework_id});
+      if(reward.error)throw reward.error;
+      if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();$("#status").textContent="🎉 Läxan är klar! En blind bag väntar bland Överraskningar.";}
+      else $("#status").textContent="🏠 Omgången är klar. Fortsätt med resten av läxan.";
+    }else $("#status").textContent="🎉 Läraruppdraget är klart: "+a.title+".";
+  }else{$("#status").textContent="📌 Omgången registrerades, men uppdraget kunde inte markeras klart ännu.";}render();MZ.homeworkQuiz?.render?.();
  }).catch(error=>{console.error("Supabase assignment round:",error);$("#status").textContent="☁️ Omgången kunde inte synkas just nu. Matteparken försöker återansluta.";window.setTimeout(()=>reconnectSaved(),1500);});
 }
 
@@ -10891,7 +10938,7 @@ function init(){
  try{client().auth.onAuthStateChange(event=>{if((event==="SIGNED_OUT"||event==="SIGNED_IN"||event==="TOKEN_REFRESHED")&&getSelection())window.setTimeout(()=>keepConnected(),0);});}catch(error){console.warn(error);}
  if(keepAliveTimer)window.clearInterval(keepAliveTimer);keepAliveTimer=window.setInterval(keepConnected,5*60*1000);render();restore();
 }
-MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment};
+MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,getClient:client,currentState:()=>current,formatMoment};
 })();
 </script>
 
