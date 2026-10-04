@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.4.80 Ditt uppdrag idag</title>
+<title>Matteparken – v0.4.81 Dagens uppdrag</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2257,7 +2257,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 #studentAssignmentCard .identity-saving-note{margin:6px 0 8px}
 .student-switch-top{justify-content:flex-start;margin:0 0 14px}
 .student-switch-top .secondary{padding:8px 13px;font-size:12px}
-.daily-assignment-overview{display:grid;gap:4px;margin:0 0 13px;padding:11px 13px;border-left:4px solid #7c966d;border-radius:5px;background:#eef3e4}
+.daily-assignment-title{margin:18px 0 10px!important;font-size:22px!important;color:#354a35}
+.daily-assignment-overview{display:grid;gap:4px;margin:13px 0 0;padding:11px 13px;border-left:4px solid #7c966d;border-radius:5px;background:#eef3e4}
 .daily-assignment-overview strong{font-size:14px;color:#344d36}
 .daily-assignment-overview span{font-size:12px;color:#66573c;font-weight:750}
 #studentHomeworkPaper .student-homework-section{margin:0;padding:0;border:0}
@@ -10930,13 +10931,13 @@ function render(){
  $("#studentHomeworkPaper")?.classList.toggle("hidden",!loggedIn);
  if(!loggedIn){
   if($("#studentIdentityPill"))$("#studentIdentityPill").textContent="Inte inloggad";
-  if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent="Ditt uppdrag idag";
+  if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent="Dagens uppdrag";
   if($("#studentAssignmentIntro"))$("#studentAssignmentIntro").textContent="Logga in med klass och elevkod för att se dagens uppdrag.";
   return;
  }
  const localName=cleanDisplayName(getSelection()?.displayName||"");
  $("#studentIdentityPill").textContent=(current.classInfo?.code||getSelection()?.classId||"")+" · "+current.student.code;
- if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent=localName?"Välkommen, "+localName+"!":"Ditt uppdrag idag";
+ if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent=localName?"Välkommen, "+localName+"!":"Dagens uppdrag";
  if($("#studentAssignmentIntro"))$("#studentAssignmentIntro").textContent=current.assignments.length?"Gör hela dagens uppdrag. I morgon börjar du om från början.":"Inget läraruppdrag är aktivt idag.";
  const homeworkList=$("#studentHomeworkList");
  if(homeworkList){
@@ -11335,8 +11336,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <section class="card assignment-card" id="studentAssignmentCard">
       <div class="assignment-card-head">
         <div>
-          <span class="mission-kicker">DITT UPPDRAG IDAG</span>
-          <h3 id="studentAssignmentHeading">Ditt uppdrag idag</h3>
+          <h3 id="studentAssignmentHeading">Dagens uppdrag</h3>
           <div class="muted" id="studentAssignmentIntro">Logga in med klass och elevkod för att se dagens uppdrag.</div>
         </div>
         <span class="pill" id="studentIdentityPill">Inte inloggad</span>
@@ -11354,11 +11354,12 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div id="studentAssignmentsPanel" class="hidden">
         <div class="assignment-actions student-switch-row student-switch-top"><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
+        <h4 class="daily-assignment-title">📌 Dagens uppdrag</h4>
+        <div id="studentAssignmentsList" class="student-assignment-list"></div>
         <div class="daily-assignment-overview">
           <strong id="dailyAssignmentSummary">0 av 0 delar klara idag</strong>
           <span id="dailyAssignmentReward">🎁 Belöning: 1 blind bag när hela dagens uppdrag är klart</span>
         </div>
-        <div id="studentAssignmentsList" class="student-assignment-list"></div>
         <div id="studentStartFeedback" class="feedback" style="min-height:22px;margin-top:8px"></div>
       </div>
     </section>
