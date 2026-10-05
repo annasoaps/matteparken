@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matteparken · Läraradmin v9</title>
+<title>Matteparken · Läraradmin v10</title>
 <style>
 :root{
   color-scheme:light;
@@ -41,6 +41,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 .schoolwork-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
 .schoolwork-list{display:grid;gap:10px;margin-top:14px}.schoolwork-item{padding:13px;border:1px solid #d4dece;border-radius:14px;background:#fff}.schoolwork-item.paused{opacity:.68}.schoolwork-item h3{margin:0 0 5px;font-size:16px}.schoolwork-meta{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.schoolwork-actions{display:flex;gap:7px;flex-wrap:wrap}.time-note{font-size:12px;color:var(--muted);margin-top:4px}
 .result-badge{display:inline-flex;padding:5px 8px;border-radius:999px;background:#edf3e8;font-size:12px;font-weight:850}
+.class-manager{display:grid;gap:10px;margin-top:16px}.class-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border:1px solid #d4dece;border-radius:14px;background:#fff}.class-row.archived{opacity:.72;background:#f5f5f1}.class-actions{display:flex;gap:7px;flex-wrap:wrap}.class-row strong{display:block}.invite-card{max-width:520px;margin:70px auto 0}
 @media(max-width:900px){.grid,.wide-grid,.detail-grid,.schoolwork-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.code-controls{grid-template-columns:1fr}}
 </style>
 </head>
@@ -57,6 +58,17 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       <button class="btn primary" id="loginBtn" type="button">Logga in</button>
     </div>
     <div class="feedback" id="loginFeedback"></div>
+  </section>
+
+  <section id="invitePasswordView" class="card invite-card hidden">
+    <h2>🔐 Välj ditt lösenord</h2>
+    <p class="muted">Du är inloggad via lärarinbjudan. Välj ett eget lösenord innan du fortsätter till Matteparken.</p>
+    <div class="stack">
+      <label>Nytt lösenord<input id="invitePassword" type="password" autocomplete="new-password" minlength="8"></label>
+      <label>Upprepa lösenord<input id="invitePasswordAgain" type="password" autocomplete="new-password" minlength="8"></label>
+      <button class="btn primary" id="setInvitePasswordBtn" type="button">Spara lösenord</button>
+    </div>
+    <div class="feedback" id="invitePasswordFeedback"></div>
   </section>
 
   <main id="adminView" class="hidden">
@@ -79,6 +91,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
           <div class="wide"><button class="btn primary" id="createClassBtn" type="button">+ Skapa klass</button></div>
         </div>
         <div class="feedback" id="classFeedback"></div>
+        <div class="class-manager" id="classManager"></div>
       </section>
 
       <section class="card">
@@ -227,7 +240,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   const SUPABASE_URL="https://mjgkkwdgowvxuehiudvj.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
   const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
-    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"matteparken-admin-auth-v1"}
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:"matteparken-admin-auth-v1"}
   });
   const $=id=>document.getElementById(id);
 
@@ -245,6 +258,8 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     scientificNotation:{title:"Grundpotensform",round:"En omgång = 10 rätt."}
   };
 
+  const authUrlText=window.location.search+" "+window.location.hash;
+  const inviteFlow=/type=(invite|recovery)/i.test(authUrlText);
   let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],students=[],progressMap=new Map(),activity=[],selectedStudentId=null,editingAssignmentId=null;
   let refreshTimer=null,lastGeneratedCodes=[];
 
@@ -327,22 +342,52 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   async function loadClasses(){
     const tc=await sb.from("teacher_classes").select("class_id");if(tc.error)throw tc.error;
     const ids=(tc.data||[]).map(x=>x.class_id);if(!ids.length){classes=[];return;}
-    const cr=await sb.from("classes").select("id,code,name").in("id",ids).order("code");if(cr.error)throw cr.error;classes=cr.data||[];
+    let cr=await sb.from("classes").select("id,code,name,archived").in("id",ids).order("code");
+    if(cr.error&&String(cr.error.message||"").toLowerCase().includes("archived")){
+      cr=await sb.from("classes").select("id,code,name").in("id",ids).order("code");
+      if(!cr.error)cr.data=(cr.data||[]).map(c=>({...c,archived:false}));
+    }
+    if(cr.error)throw cr.error;classes=cr.data||[];
   }
+  function activeClasses(){return classes.filter(c=>!c.archived);}
   function renderClassSelect(){
-    $("classSelect").innerHTML="";
-    classes.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.code+(c.name&&c.name!==c.code?" · "+c.name:"");$("classSelect").appendChild(o);});
-    $("classSelect").value=classId||"";
+    const active=activeClasses();$("classSelect").innerHTML="";
+    active.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.code+(c.name&&c.name!==c.code?" · "+c.name:"");$("classSelect").appendChild(o);});
+    $("classSelect").disabled=!active.length;$("classSelect").value=classId||"";
+  }
+  function renderClassManager(){
+    const box=$("classManager");if(!box)return;box.innerHTML="";
+    if(!classes.length){box.innerHTML='<div class="empty">Du har inga klasser ännu. Skapa din första klass ovan.</div>';return;}
+    classes.forEach(c=>{
+      const row=document.createElement("div");row.className="class-row"+(c.archived?" archived":"");
+      const label=c.name&&c.name!==c.code?escapeHtml(c.code)+" · "+escapeHtml(c.name):escapeHtml(c.code);
+      row.innerHTML="<div><strong>"+label+"</strong><span class='muted small'>"+(c.archived?"Arkiverad":"Aktiv klass")+"</span></div><div class='class-actions'></div>";
+      const actions=row.querySelector(".class-actions");
+      if(!c.archived){
+        const rename=document.createElement("button");rename.className="btn secondary";rename.type="button";rename.textContent="✏️ Byt namn";rename.addEventListener("click",()=>renameClass(c));actions.appendChild(rename);
+        const archive=document.createElement("button");archive.className="btn secondary";archive.type="button";archive.textContent="📦 Arkivera";archive.addEventListener("click",()=>setClassArchived(c,true));actions.appendChild(archive);
+      }else{
+        const restoreBtn=document.createElement("button");restoreBtn.className="btn secondary";restoreBtn.type="button";restoreBtn.textContent="↩ Återställ";restoreBtn.addEventListener("click",()=>setClassArchived(c,false));actions.appendChild(restoreBtn);
+        const del=document.createElement("button");del.className="btn danger";del.type="button";del.textContent="Ta bort permanent";del.addEventListener("click",()=>deleteClassPermanent(c));actions.appendChild(del);
+      }
+      box.appendChild(row);
+    });
   }
 
   async function enterAdmin(){
-    $("loginView").classList.add("hidden");$("adminView").classList.remove("hidden");setFeedback("loginFeedback","");
+    $("loginView").classList.add("hidden");$("invitePasswordView").classList.add("hidden");$("adminView").classList.remove("hidden");setFeedback("loginFeedback","");
     await loadClasses();
-    if(!classes.length){setFeedback("globalFeedback","Lärarkontot är inte kopplat till någon klass ännu.","bad");return;}
-    if(!classId||!classes.some(c=>c.id===classId))classId=classes[0].id;
-    renderClassSelect();await loadClassData();
+    const active=activeClasses();
+    if(!classId||!active.some(c=>c.id===classId))classId=active[0]?.id||null;
+    renderClassSelect();renderClassManager();
+    if(!active.length){
+      $("classPill").textContent="Ingen aktiv klass";
+      setFeedback("globalFeedback","Skapa din första klass ovan. Du kan sedan lägga till elevkoder och uppdrag.","good");
+    }else{
+      await loadClassData();
+    }
     if(refreshTimer)clearInterval(refreshTimer);
-    refreshTimer=setInterval(()=>{if(!document.hidden)loadClassData({silent:true});},20000);
+    refreshTimer=setInterval(()=>{if(!document.hidden&&classId)loadClassData({silent:true});},20000);
   }
 
   async function loadClassData({silent=false}={}){
@@ -570,9 +615,41 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   async function createClass(){
     const code=String($("newClassCode").value||"").trim().toUpperCase(),name=String($("newClassName").value||"").trim();if(!code){setFeedback("classFeedback","Skriv en klasskod, till exempel 7A.","bad");return;}
     $("createClassBtn").disabled=true;setFeedback("classFeedback","Skapar klass …");
-    try{const res=await sb.rpc("teacher_create_class",{p_code:code,p_name:name});if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason==="class_exists"?"Den klasskoden finns redan.":res.data?.reason||"Kunde inte skapa klass");await loadClasses();classId=res.data.class_id;renderClassSelect();$("newClassCode").value="";$("newClassName").value="";selectedStudentId=null;setFeedback("classFeedback","Klassen "+res.data.code+" är skapad.","good");await loadClassData({silent:true});}
+    try{const res=await sb.rpc("teacher_create_class",{p_code:code,p_name:name});if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason==="class_exists"?"Den klasskoden finns redan.":res.data?.reason||"Kunde inte skapa klass");await loadClasses();classId=res.data.class_id;renderClassSelect();renderClassManager();$("newClassCode").value="";$("newClassName").value="";selectedStudentId=null;setFeedback("classFeedback","Klassen "+res.data.code+" är skapad.","good");await loadClassData({silent:true});}
     catch(error){console.error(error);setFeedback("classFeedback",error?.message||"Kunde inte skapa klassen.","bad");}
     finally{$("createClassBtn").disabled=false;}
+  }
+
+  async function renameClass(c){
+    const code=prompt("Ny klasskod, till exempel 9B:",c.code||"");if(code===null)return;
+    const cleanCode=String(code).trim().toUpperCase();if(!cleanCode){setFeedback("classFeedback","Klasskoden får inte vara tom.","bad");return;}
+    const name=prompt("Namn på klassen (valfritt):",c.name||"");if(name===null)return;
+    setFeedback("classFeedback","Sparar klassnamn …");
+    const res=await sb.rpc("teacher_update_class",{p_class_id:c.id,p_code:cleanCode,p_name:String(name).trim()});
+    if(res.error||!res.data?.ok){console.error(res.error||res.data);setFeedback("classFeedback","Kunde inte byta namn. Kör SQL-filen supabase_class_management.sql i Supabase först.","bad");return;}
+    await loadClasses();renderClassSelect();renderClassManager();render();setFeedback("classFeedback","Klassen heter nu "+cleanCode+".","good");
+  }
+  async function setClassArchived(c,archived){
+    if(archived&&!confirm('Arkivera "'+c.code+'"? Klassen försvinner från den vanliga klassväljaren, men all elevdata sparas.'))return;
+    const res=await sb.rpc("teacher_set_class_archived",{p_class_id:c.id,p_archived:archived});
+    if(res.error||!res.data?.ok){console.error(res.error||res.data);setFeedback("classFeedback","Kunde inte "+(archived?"arkivera":"återställa")+" klassen. Kör SQL-filen supabase_class_management.sql i Supabase först.","bad");return;}
+    if(archived&&classId===c.id)classId=null;
+    await loadClasses();const active=activeClasses();if(!classId||!active.some(x=>x.id===classId))classId=active[0]?.id||null;
+    renderClassSelect();renderClassManager();selectedStudentId=null;
+    if(classId)await loadClassData({silent:true});else{$("classPill").textContent="Ingen aktiv klass";setFeedback("globalFeedback","Alla klasser är arkiverade. Du kan återställa en klass eller skapa en ny.","good");}
+    setFeedback("classFeedback",archived?"Klassen är arkiverad. All data finns kvar.":"Klassen är aktiv igen.","good");
+  }
+  async function deleteClassPermanent(c){
+    if(!c.archived){setFeedback("classFeedback","Arkivera klassen innan den tas bort permanent.","bad");return;}
+    const typed=prompt('Permanent borttagning kan inte ångras. Skriv klasskoden "'+c.code+'" för att fortsätta:');
+    if(String(typed||"").trim().toUpperCase()!==String(c.code||"").trim().toUpperCase())return;
+    const res=await sb.rpc("teacher_delete_class",{p_class_id:c.id});
+    if(res.error||!res.data?.ok){
+      console.error(res.error||res.data);
+      const reason=res.data?.reason;
+      setFeedback("classFeedback",reason==="class_has_data"?"Klassen innehåller data som databasen inte tillåter att radera automatiskt. Låt den vara arkiverad i stället.":"Kunde inte ta bort klassen permanent.","bad");return;
+    }
+    await loadClasses();renderClassSelect();renderClassManager();setFeedback("classFeedback","Klassen är permanent borttagen.","good");
   }
   async function generateCodes(){
     if(!classId)return;const count=Math.max(1,Math.min(40,Number($("codeCount").value)||1));$("generateCodesBtn").disabled=true;setFeedback("codesFeedback","Genererar koder …");
@@ -605,9 +682,30 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     url.searchParams.set("teacher-test","1");
     window.open(url.toString(),"_blank","noopener");
   }
-  async function restore(){const {data,error}=await sb.auth.getSession();if(error){console.error(error);return;}if(data?.session?.user){user=data.session.user;await enterAdmin();}}
+  async function setInvitePassword(){
+    const p=$("invitePassword").value,p2=$("invitePasswordAgain").value;
+    if(p.length<8){setFeedback("invitePasswordFeedback","Välj minst 8 tecken.","bad");return;}
+    if(p!==p2){setFeedback("invitePasswordFeedback","Lösenorden är inte likadana.","bad");return;}
+    $("setInvitePasswordBtn").disabled=true;setFeedback("invitePasswordFeedback","Sparar …");
+    try{
+      const {data,error}=await sb.auth.updateUser({password:p});if(error)throw error;user=data.user||user;
+      history.replaceState({},document.title,location.pathname);
+      setFeedback("invitePasswordFeedback","Lösenordet är sparat.","good");await enterAdmin();
+    }catch(error){console.error(error);setFeedback("invitePasswordFeedback","Kunde inte spara lösenordet. Öppna den senaste inbjudningslänken igen och försök på nytt.","bad");}
+    finally{$("setInvitePasswordBtn").disabled=false;}
+  }
+  async function restore(){
+    const {data,error}=await sb.auth.getSession();if(error){console.error(error);return;}
+    if(data?.session?.user){
+      user=data.session.user;
+      if(inviteFlow){
+        $("loginView").classList.add("hidden");$("adminView").classList.add("hidden");$("invitePasswordView").classList.remove("hidden");return;
+      }
+      await enterAdmin();
+    }
+  }
 
-  $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("logoutBtn").addEventListener("click",logout);$("openTestModeBtn").addEventListener("click",openTeacherTestMode);$("refreshBtn").addEventListener("click",()=>loadClassData());
+  $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("setInvitePasswordBtn").addEventListener("click",setInvitePassword);$("invitePasswordAgain").addEventListener("keydown",e=>{if(e.key==="Enter")setInvitePassword();});$("logoutBtn").addEventListener("click",logout);$("openTestModeBtn").addEventListener("click",openTeacherTestMode);$("refreshBtn").addEventListener("click",()=>loadClassData());
   $("saveAssignmentBtn").addEventListener("click",saveAssignment);$("cancelEditBtn").addEventListener("click",cancelEdit);$("createClassBtn").addEventListener("click",createClass);$("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
   $("generateCodesBtn").addEventListener("click",generateCodes);$("copyCodesBtn").addEventListener("click",copyCodes);$("createHomeworkBtn").addEventListener("click",createHomework);$("createQuizBtn").addEventListener("click",createQuiz);$("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;$("studentDetail").classList.add("hidden");renderStudents();});
   $("classSelect").addEventListener("change",async()=>{classId=$("classSelect").value;selectedStudentId=null;editingAssignmentId=null;cancelEdit();await loadClassData();});
