@@ -129,9 +129,11 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $
 declare
   v_archived boolean;
+  v_uid uuid := auth.uid();
+  v_col text;
 begin
   if not public.matteparken_teacher_owns_class(p_class_id) then
     return jsonb_build_object('ok',false,'reason','forbidden');
@@ -145,11 +147,32 @@ begin
     return jsonb_build_object('ok',false,'reason','archive_first');
   end if;
 
-  -- Remove this teacher/class link first. If deleting the class is blocked by
-  -- related data, the exception block rolls the whole operation back.
-  delete from public.teacher_classes
-   where class_id = p_class_id
-     and public.matteparken_teacher_owns_class(p_class_id);
+  select c.column_name
+    into v_col
+  from information_schema.columns c
+  where c.table_schema = 'public'
+    and c.table_name = 'teacher_classes'
+    and c.column_name in ('teacher_id','user_id','auth_user_id')
+  order by case c.column_name
+    when 'teacher_id' then 1
+    when 'user_id' then 2
+    when 'auth_user_id' then 3
+    else 99
+  end
+  limit 1;
+
+  if v_col is null then
+    return jsonb_build_object('ok',false,'reason','teacher_identity_column_missing');
+  end if;
+
+  -- Remove only the current teacher's link. If the class is shared with another
+  -- teacher, or if related class data prevents deletion, the exception block
+  -- rolls this statement back as part of the same subtransaction.
+  execute format(
+    'delete from public.teacher_classes where class_id = $1 and %I = $2',
+    v_col
+  )
+  using p_class_id, v_uid;
 
   delete from public.classes
    where id = p_class_id;
@@ -159,7 +182,7 @@ exception
   when foreign_key_violation then
     return jsonb_build_object('ok',false,'reason','class_has_data');
 end;
-$$;
+$;
 
 revoke all on function public.teacher_delete_class(uuid) from public;
 grant execute on function public.teacher_delete_class(uuid) to authenticated;
