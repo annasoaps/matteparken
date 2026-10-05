@@ -534,11 +534,11 @@ begin
   join public.student_assignment_progress p on p.assignment_id=a.id and p.student_id=v_student
   where a.class_id=v_class and a.enabled=true and a.homework_id is null
     and p.completed >= 1
-    and coalesce(
-      (p.completed_at at time zone 'Europe/Stockholm')::date,
-      (p.updated_at at time zone 'Europe/Stockholm')::date,
-      (p.last_active at time zone 'Europe/Stockholm')::date
-    ) = v_today;
+    and (
+      (p.completed_at is not null and (p.completed_at at time zone 'Europe/Stockholm')::date = v_today)
+      or (p.updated_at is not null and (p.updated_at at time zone 'Europe/Stockholm')::date = v_today)
+      or (p.last_active is not null and (p.last_active at time zone 'Europe/Stockholm')::date = v_today)
+    );
 
   if v_done < v_total then
     return jsonb_build_object('ok',false,'reason','incomplete','done',v_done,'total',v_total);
