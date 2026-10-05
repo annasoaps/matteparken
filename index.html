@@ -11701,6 +11701,7 @@ async function readCloudState(){
  }
  current={classInfo:cr.data,student,assignments,allAssignments,homeworks,quizzes,quizAttempts,progressMap};
  const active=getActiveAssignment();if(active&&!allAssignments.some(x=>x.id===active))setActiveAssignment(null);
+ await syncLocalHomeworkCompletions();
  if(MZ.cloudCones?.sync)await MZ.cloudCones.sync();
  render();MZ.homeworkQuiz?.render?.();return current;
 }
@@ -11882,6 +11883,54 @@ async function recordAssignmentRound(id,x){
  }
  return r;
 }
+function homeworkSyncActivity(a){
+ if(!a?.game_id)return null;
+ const table=Number(a.game_config?.table);
+ return{gameId:a.game_id,type:expectedRoundTypes[a.game_id],table:Number.isFinite(table)?table:null};
+}
+async function homeworkCompletionRpc(a,x){
+ return client().rpc("student_complete_homework_assignment",{
+  p_assignment_id:a.id,
+  p_game_id:x.gameId,
+  p_round_type:x.type,
+  p_table:Number.isFinite(Number(x.table))?Number(x.table):null
+ });
+}
+async function recordHomeworkCompletion(a,x){
+ let r=await homeworkCompletionRpc(a,x);
+ if(!r.error&&r.data?.ok!==false)return r;
+ if(!r.error&&r.data?.reason==="no_student_session"){
+  await ensureStudentConnection();
+  r=await homeworkCompletionRpc(a,x);
+  if(!r.error&&r.data?.ok!==false)return r;
+ }
+ // Om den nya SQL-funktionen ännu inte är installerad faller vi tillbaka på den gamla RPC:n.
+ if(r.error){
+  console.warn("Homework completion RPC unavailable, using legacy sync:",r.error);
+  return recordAssignmentRound(a.id,x);
+ }
+ return r;
+}
+async function syncLocalHomeworkCompletions(){
+ if(!current?.student)return 0;
+ const local=homeworkAssignmentBucket(false)?.bucket?.completed||{};
+ const pending=(current.allAssignments||[]).filter(a=>a.homework_id&&local[a.id]&&Number(current.progressMap.get(a.id)?.completed||0)<1);
+ let synced=0;
+ for(const a of pending){
+  const x=homeworkSyncActivity(a);
+  if(!x?.type)continue;
+  try{
+    const r=await homeworkCompletionRpc(a,x);
+    if(r.error||r.data?.ok===false)continue;
+    const completedAt=r.data?.completed_at||local[a.id]||new Date().toISOString();
+    current.progressMap.set(a.id,{...(current.progressMap.get(a.id)||{}),completed:1,last_active:completedAt,updated_at:completedAt,completed_at:completedAt});
+    synced++;
+  }catch(error){
+    console.warn("Homework backfill sync:",error);
+  }
+ }
+ return synced;
+}
 function recordRound(event){
  const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
  if(a?.homework_id){
@@ -11903,7 +11952,7 @@ function recordRound(event){
  }
  writeQueue=writeQueue.then(async()=>{
   await ensureStudentConnection();if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");
-  const r=await recordAssignmentRound(id,x);
+  const r=a?.homework_id?await recordHomeworkCompletion(a,x):await recordAssignmentRound(id,x);
   if(r.data?.ok===false)throw new Error(r.data?.reason||"Omgången kunde inte registreras.");
   const serverCompleted=Math.max(0,Number(r.data?.completed)||0),target=Math.max(1,Number(a?.target)||1);
   const assignmentDone=Boolean(r.data?.done||serverCompleted>=target||(a?.homework_id&&homeworkAssignmentDone(a)));
