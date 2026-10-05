@@ -11847,14 +11847,27 @@ function recordRound(event){
         const leader=[...(group.homeworks||[])].sort((x,y)=>String(x.created_at||"").localeCompare(String(y.created_at||"")))[0];
         const reward=await client().rpc("claim_homework_reward",{p_homework_id:leader?.id||a.homework_id});
         if(reward.error)throw reward.error;
-        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();$("#status").textContent="🎉 Hela läxan är klar! En blind bag väntar bland Överraskningar.";}
+        let granted=Boolean(reward.data?.granted);
+        if(MZ.cloudEconomy?.isActive?.()){
+          const secure=await MZ.cloudEconomy.claimHomeworkBag(leader?.id||a.homework_id);
+          granted=Boolean(secure?.granted);
+        }else if(granted){
+          MZ.rewards.addBonusBlindBag(1);
+        }
+        if(granted){MZ.office?.render?.();$("#status").textContent="🎉 Hela läxan är klar! En blind bag väntar bland Överraskningar.";}
         else $("#status").textContent="🎉 Hela läxan är klar!";
       }else{
         $("#status").textContent="🏠 Omgången är klar. Fortsätt med resten av veckoläxan.";
       }
     }else{
       const daily=dailyAssignmentProgress();
-      $("#status").textContent=daily.complete?"🎉 Dagens uppdrag är klart!":"✓ Dagens deluppdrag är klart: "+a.title+".";
+      let dailyGranted=false;
+      if(daily.complete&&MZ.cloudEconomy?.isActive?.()){
+        const secure=await MZ.cloudEconomy.claimDailyAssignmentBag();
+        dailyGranted=Boolean(secure?.granted);
+        if(secure?.ok)markDailyAssignmentRewardClaimed();
+      }
+      $("#status").textContent=dailyGranted?"🎉 Dagens uppdrag är klart! En blind bag väntar bland Överraskningar.":daily.complete?"🎉 Dagens uppdrag är klart!":"✓ Dagens deluppdrag är klart: "+a.title+".";
     }
   }else if(a.homework_id){$("#status").textContent="📌 Omgången registrerades, men läxan kunde inte markeras klar ännu.";}render();MZ.homeworkQuiz?.render?.();
  }).catch(error=>{console.error("Supabase assignment round:",error);$("#status").textContent=a&&!a.homework_id?"☁️ Dagens del är sparad här, men molnsynkningen tappade kontakten en stund.":"☁️ Omgången kunde inte synkas just nu. Matteparken försöker återansluta.";window.setTimeout(()=>reconnectSaved(),1500);});
@@ -12213,7 +12226,13 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(first){
         const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
         if(reward.error)throw reward.error;
-        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();rewardGranted=true;}
+        if(MZ.cloudEconomy?.isActive?.()){
+          const secure=await MZ.cloudEconomy.claimQuizBag(activeQuiz.id);
+          rewardGranted=Boolean(secure?.granted);
+        }else if(reward.data?.granted){
+          MZ.rewards.addBonusBlindBag(1);rewardGranted=true;
+        }
+        if(rewardGranted)MZ.office?.render?.();
       }
       $("homeworkQuizTest").classList.add("hidden");const result=$("homeworkQuizResult");result.classList.remove("hidden");
       result.innerHTML="<h3>Förhöret är klart</h3><p><strong>"+r.data.score+" / "+r.data.total+"</strong></p><p>Det första resultatet är sparat.</p>"+(rewardGranted?"<p>🎁 Du fick en blind bag! Den väntar bland Överraskningar.</p>":"")+"<button class='secondary' id='quizBackToList' type='button'>Till läxförhören</button>";
