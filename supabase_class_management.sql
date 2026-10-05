@@ -129,7 +129,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
   v_archived boolean;
   v_uid uuid := auth.uid();
