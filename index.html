@@ -11976,10 +11976,16 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   async function claimMathReward(activity){
     if(!isActive())return null;
     const key=activityKey(activity);if(!key)return null;
-    try{return await rpc("student_claim_math_reward",{p_game_id:activity.gameId,p_activity_key:key});}
-    catch(error){console.warn("Math reward sync:",error);return null;}
+    try{
+      const data=await rpc("student_claim_math_reward",{p_game_id:activity.gameId,p_activity_key:key});
+      if(data?.granted)await sync();
+      return data;
+    }catch(error){console.warn("Math reward sync:",error);return null;}
   }
-  async function claimTutorialReward(){try{return await rpc("student_claim_tutorial_reward");}catch(error){console.warn(error);return null;}}
+  async function claimTutorialReward(){
+    try{const data=await rpc("student_claim_tutorial_reward");if(data?.granted)await sync();return data;}
+    catch(error){console.warn(error);return null;}
+  }
   async function purchase(kind,itemId=""){
     try{
       const data=await rpc("student_purchase",{p_purchase_kind:kind,p_item_id:itemId});
