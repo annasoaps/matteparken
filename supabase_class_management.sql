@@ -182,7 +182,7 @@ exception
   when foreign_key_violation then
     return jsonb_build_object('ok',false,'reason','class_has_data');
 end;
-$;
+$$;
 
 revoke all on function public.teacher_delete_class(uuid) from public;
 grant execute on function public.teacher_delete_class(uuid) to authenticated;
