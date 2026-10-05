@@ -14,7 +14,7 @@
 </script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.5.10 Läxa som separata delar</title>
+<title>Matteparken – v0.5.11 Kottar + redeem codes</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -3403,6 +3403,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       <h2>📦 Beställningskatalogen</h2>
       <p>Beställ saker till parken med kottar. Efter en kort stund kommer beställningen till Parkposten vid dörren. Fröpåsar och dekorationslådor flyttas sedan till Överraskningar tills du vill öppna dem.</p>
       <div class="catalog-order-feedback" id="catalogOrderFeedback" role="status" aria-live="polite"></div>
+      <div style="margin:14px 0 18px;padding:14px;border:2px dashed #b7a276;border-radius:10px;background:#fffaf0">
+        <strong>🎟️ Lös in kod</strong>
+        <div class="muted" style="margin:4px 0 9px">Har du fått en belöningskod av din lärare? Skriv den här.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="redeemCodeInput" maxlength="24" autocomplete="off" placeholder="t.ex. HOSTLOV26" style="flex:1;min-width:180px;padding:10px 12px;border:2px solid #9c8966;border-radius:7px;font:inherit;text-transform:uppercase">
+          <button class="secondary" id="redeemCodeBtn" type="button">Lös in</button>
+        </div>
+        <div class="feedback" id="redeemCodeFeedback"></div>
+      </div>
       <div class="catalog-list catalog-pack-list">
         <div class="shop-item">
           <div class="shop-icon">🌱</div><strong>Fröpåse</strong><p>30 kottar</p><div class="muted">Välj habitat när du öppnar. Därefter får du upp till tre växter att välja mellan.</div>
@@ -3775,7 +3784,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   MZ.storage = {
     getNaturePoints(){
-      if(MZ.cloudEconomy?.isActive?.()) return MZ.cloudEconomy.balance();
+      if(MZ.cloudCones?.isActive?.()) return MZ.cloudCones.balance();
       const raw = localStorage.getItem(MZ.keys.naturePoints);
       if(raw === null) return 0;
       const value = Number(raw);
@@ -3783,7 +3792,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     },
 
     setNaturePoints(value){
-      if(MZ.cloudEconomy?.isActive?.()) return MZ.cloudEconomy.balance();
+      if(MZ.cloudCones?.isActive?.()) return MZ.cloudCones.balance();
       const safeValue = Math.max(0, Number(value) || 0);
       localStorage.setItem(MZ.keys.naturePoints, String(safeValue));
       MZ.events.dispatchEvent(new CustomEvent("npchange", {detail:{value:safeValue}}));
@@ -3791,7 +3800,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     },
 
     addNaturePoints(amount){
-      if(MZ.cloudEconomy?.isActive?.()) return MZ.cloudEconomy.balance();
+      if(MZ.cloudCones?.isActive?.()) return MZ.cloudCones.balance();
       return this.setNaturePoints(this.getNaturePoints() + amount);
     },
 
@@ -4498,19 +4507,13 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function addBonusBlindBag(amount=1){
-    if(MZ.cloudEconomy?.isActive?.()) return Math.max(0,Number(state.rewards.bonusBlindBags)||0);
     state.rewards.bonusBlindBags=Math.max(0,Number(state.rewards.bonusBlindBags)||0)+Math.max(0,Number(amount)||0);
     save();
-    return state.rewards.bonusBlindBags;
   }
   function createBonusChoices(){
     if(state.rewards.activeBonusChoices?.length===3) return state.rewards.activeBonusChoices;
     if((Number(state.rewards.bonusBlindBags)||0)<1) return null;
-    if(MZ.cloudEconomy?.isActive?.()){
-      if(!MZ.cloudEconomy.takeBonusOpenToken()) return null;
-    }else{
-      state.rewards.bonusBlindBags-=1;
-    }
+    state.rewards.bonusBlindBags-=1;
     state.rewards.activeBonusChoices=variedChoices(dailyBlindBagPool,3,false);
     save(); return state.rewards.activeBonusChoices;
   }
@@ -5220,7 +5223,6 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function badgeIds(){
-    if(MZ.cloudEconomy?.isActive?.()) return MZ.cloudEconomy.badgeIds();
     const earned=Object.keys(badgeDefinitions).filter((id)=>Boolean(state.habitats.badges[id]));
     const tests=Object.keys(state.habitats.badges).filter((id)=>id.startsWith("testBadge")&&state.habitats.badges[id]);
     return [...earned,...tests];
@@ -5228,10 +5230,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const badgeCount=()=>badgeIds().length;
 
   function awardBadge(id){
-    if(!badgeDefinitions[id] || badgeIds().includes(id)) return false;
+    if(!badgeDefinitions[id] || state.habitats.badges[id]) return false;
     state.habitats.badges[id]=true;
     storage.saveHabitats();
-    if(MZ.cloudEconomy?.isActive?.()) MZ.cloudEconomy.claimBadge(id).catch(error=>console.warn("Cloud badge:",error));
     MZ.events.dispatchEvent(new CustomEvent("parkbadgeawarded",{detail:{badge:badgeDefinitions[id]}}));
     return true;
   }
@@ -5255,23 +5256,22 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   function snapshot(habitatId="northwest"){
     const def=habitats[habitatId];
     if(def?.futureLocked){
-      return {habitat:def,current:{badges:badgeCount(),mathRounds:0},requirements:{},checks:{},completed:0,total:0,ready:false,unlocked:MZ.cloudEconomy?.isActive?.()?MZ.cloudEconomy.isHabitatUnlocked(habitatId):Boolean(state.habitats.unlocked[habitatId]),futureLocked:true};
+      return {habitat:def,current:{badges:badgeCount(),mathRounds:0},requirements:{},checks:{},completed:0,total:0,ready:false,unlocked:Boolean(state.habitats.unlocked[habitatId]),futureLocked:true};
     }
     const req=def?.requirements||{uniqueItems:0,species:0,badges:0,mathRounds:0};
     const uniqueItems=uniqueDevelopedItems("southwest");
     const species=MZ.wildlife.discoveryCountForHabitat("southwest");
-    const mathRounds=MZ.cloudEconomy?.isActive?.()?MZ.cloudEconomy.mathRewardRounds():Math.max(0,Number(state.habitats.mathRoundsTotal)||0);
-    const earnedBadges=badgeIds();
+    const mathRounds=Math.max(0,Number(state.habitats.mathRoundsTotal)||0);
     const checks={
-      firstBloom:earnedBadges.includes("firstBloom"),
-      parkBuilder:earnedBadges.includes("parkBuilder"),
-      natureWatcher:earnedBadges.includes("natureWatcher"),
+      firstBloom:Boolean(state.habitats.badges.firstBloom),
+      parkBuilder:Boolean(state.habitats.badges.parkBuilder),
+      natureWatcher:Boolean(state.habitats.badges.natureWatcher),
       mathRounds:mathRounds>=req.mathRounds
     };
     const requiredBadgesEarned=startBadgeIds.filter((id)=>checks[id]).length;
     const current={uniqueItems,species,badges:requiredBadgesEarned,mathRounds};
     const completed=Object.values(checks).filter(Boolean).length;
-    return {habitat:def,current,requirements:req,checks,requiredBadgeIds:startBadgeIds,requiredBadgesEarned,completed,total:4,ready:Object.values(checks).every(Boolean),unlocked:MZ.cloudEconomy?.isActive?.()?MZ.cloudEconomy.isHabitatUnlocked(habitatId):Boolean(state.habitats.unlocked[habitatId])};
+    return {habitat:def,current,requirements:req,checks,requiredBadgeIds:startBadgeIds,requiredBadgesEarned,completed,total:4,ready:Object.values(checks).every(Boolean),unlocked:Boolean(state.habitats.unlocked[habitatId])};
   }
 
   function unlock(habitatId){
@@ -5284,7 +5284,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     storage.saveHabitats();
     return {ok:true,progress:snapshot(habitatId)};
   }
-  const isUnlocked=(habitatId)=>MZ.cloudEconomy?.isActive?.()?MZ.cloudEconomy.isHabitatUnlocked(habitatId):Boolean(state.habitats.unlocked[habitatId]);
+  const isUnlocked=(habitatId)=>Boolean(state.habitats.unlocked[habitatId]);
 
   function addTestBadge(){
     let n=1;
@@ -7076,8 +7076,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     if(item.source!=="catalog" || price<1 || storage.getNaturePoints()<price) return;
     const isTutorialBirdhouse = type === "birdhouse" && !state.onboarding.tutorialComplete;
     catalogOrderPending=true;
-    if(MZ.cloudEconomy?.isActive?.()){
-      const purchase=await MZ.cloudEconomy.purchase("catalog",item.type);
+    if(MZ.cloudCones?.isActive?.()){
+      const purchase=await MZ.cloudCones.spend("catalog",item.type);
       if(!purchase?.ok){catalogOrderPending=false;updateShopUI();$("#status").textContent="Köpet kunde inte genomföras.";return;}
     }else{
       storage.setNaturePoints(storage.getNaturePoints()-price);
@@ -7126,8 +7126,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       button.addEventListener("click",async()=>{
         if(catalogOrderPending || storage.getNaturePoints()<def.price) return;
         catalogOrderPending=true;
-        if(MZ.cloudEconomy?.isActive?.()){
-          const purchase=await MZ.cloudEconomy.purchase("seasonal",def.id);
+        if(MZ.cloudCones?.isActive?.()){
+          const purchase=await MZ.cloudCones.spend("seasonal",def.id);
           if(!purchase?.ok){catalogOrderPending=false;updateShopUI();return;}
         }else{
           storage.setNaturePoints(storage.getNaturePoints()-def.price);
@@ -7729,7 +7729,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     });
     const badges=$("#badgeCollection"); badges.innerHTML="";
     Object.values(badgeDefs).forEach((badge)=>{
-      const earned=MZ.habitats.badgeIds().includes(badge.id);
+      const earned=Boolean(state.habitats.badges[badge.id]);
       const node=document.createElement("div"); node.className=`park-badge ${earned ? "earned" : "locked"}`;
       node.innerHTML=`<span class="park-badge-icon">${earned ? badge.icon : "○"}</span><div><strong>${badge.name}</strong><div class="muted">${badge.description}</div></div>`;
       badges.appendChild(node);
@@ -7753,11 +7753,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function openHabitatModal(){ renderHabitatModal(); MZ.openModal("habitatModal"); }
-  async function unlockNorthwestHabitat(){
-    let result;
-    if(MZ.cloudEconomy?.isActive?.()) result=await MZ.cloudEconomy.claimHabitat("northwest");
-    else result=MZ.habitats.unlock("northwest");
-    if(!result?.ok){ renderHabitatModal(); return; }
+  function unlockNorthwestHabitat(){
+    const result=MZ.habitats.unlock("northwest");
+    if(!result.ok){ renderHabitatModal(); return; }
     renderHabitatProgress(); renderParkItems();
     // Unlocking is the action the dialog was waiting for. Return directly
     // to the park so the newly opened habitat is visible immediately.
@@ -8236,7 +8234,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     }
   }
 
-  async function renderRewardChoiceModal(kind, habitatId=null, seasonId=null){
+  function renderRewardChoiceModal(kind, habitatId=null, seasonId=null){
     const grid=$("#rewardChoiceGrid"),picker=$("#rewardHabitatPicker");
     grid.innerHTML=""; picker.innerHTML=""; picker.classList.add("hidden");
     const isSeed=kind==="seed", isCrate=kind==="crate", isDaily=kind==="daily", isBonus=kind==="bonus", isSeasonal=kind==="seasonal";
@@ -8249,14 +8247,6 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       choices=MZ.rewards.createDailyChoices();
       $("#rewardModalIntro").textContent="Tre slumpade belöningar. Välj den du vill behålla.";
     }else if(isBonus){
-      if(MZ.cloudEconomy?.isActive?.() && !state.rewards.activeBonusChoices?.length){
-        const consumed=await MZ.cloudEconomy.consumeBonusBag();
-        if(!consumed?.ok){
-          $("#rewardModalIntro").textContent="Ingen verifierad blind bag väntar just nu.";
-          $("#rewardModalHint").textContent="Ladda om skolarbetet om du nyss blev klar.";
-          MZ.openModal("rewardModal"); return;
-        }
-      }
       choices=MZ.rewards.createBonusChoices();
       $("#rewardModalIntro").textContent="Din belöning för genomfört skolarbete. Välj en av tre.";
     }else if(isSeasonal){
@@ -8484,8 +8474,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       if(state.onboarding.seedGrown && !state.onboarding.tutorialComplete && !state.onboarding.tutorialBirdhouseOrdered) return;
       if(catalogOrderPending || storage.getNaturePoints() < config.seedPackPrice) return;
       const button=$("#buySeedPack"); catalogOrderPending=true;
-      if(MZ.cloudEconomy?.isActive?.()){
-        const purchase=await MZ.cloudEconomy.purchase("seedPack","");
+      if(MZ.cloudCones?.isActive?.()){
+        const purchase=await MZ.cloudCones.spend("seedPack","");
         if(!purchase?.ok){catalogOrderPending=false;updateShopUI();return;}
       }else storage.setNaturePoints(storage.getNaturePoints() - config.seedPackPrice);
       MZ.office.queueDelivery({kind:"seedPack",name:"Fröpåse",icon:"🌱"});
@@ -8496,8 +8486,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       if(state.onboarding.seedGrown && !state.onboarding.tutorialComplete && !state.onboarding.tutorialBirdhouseOrdered) return;
       if(catalogOrderPending || storage.getNaturePoints() < config.decorBoxPrice) return;
       const button=$("#buyDecorBox"); catalogOrderPending=true;
-      if(MZ.cloudEconomy?.isActive?.()){
-        const purchase=await MZ.cloudEconomy.purchase("decorBox","");
+      if(MZ.cloudCones?.isActive?.()){
+        const purchase=await MZ.cloudCones.spend("decorBox","");
         if(!purchase?.ok){catalogOrderPending=false;updateShopUI();return;}
       }else storage.setNaturePoints(storage.getNaturePoints() - config.decorBoxPrice);
       MZ.office.queueDelivery({kind:"decorBox",name:"Dekorationslåda",icon:"📦"});
@@ -8927,6 +8917,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#seedQuestCheck").disabled = true;
 
     if(value === seedQuestA * seedQuestB){
+      MZ.math.recordQuestion({gameId:"multiplication",mode:"starter-seed"});
       const result = MZ.math.completeActivity({gameId:"multiplication",type:"starter-seed-correct"});
       $("#seedQuestFeedback").textContent = "Rätt! Fröet växer lite.";
       $("#seedQuestFeedback").className = "feedback good";
@@ -11674,7 +11665,6 @@ function dailyAssignmentProgress(){
 }
 function maybeGrantDailyAssignmentReward(){
  const p=dailyAssignmentProgress();if(!p.complete||dailyAssignmentRewardClaimed())return false;
- if(MZ.cloudEconomy?.isActive?.())return false;
  markDailyAssignmentRewardClaimed();MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();return true;
 }
 
@@ -11711,7 +11701,7 @@ async function readCloudState(){
  }
  current={classInfo:cr.data,student,assignments,allAssignments,homeworks,quizzes,quizAttempts,progressMap};
  const active=getActiveAssignment();if(active&&!allAssignments.some(x=>x.id===active))setActiveAssignment(null);
- if(MZ.cloudEconomy?.sync)await MZ.cloudEconomy.sync();
+ if(MZ.cloudCones?.sync)await MZ.cloudCones.sync();
  render();MZ.homeworkQuiz?.render?.();return current;
 }
 function activeStudent(){
@@ -11930,15 +11920,10 @@ function recordRound(event){
         const rewardId=leader?.id||a.homework_id;
         let granted=false;
         try{
-          if(MZ.cloudEconomy?.isActive?.()){
-            const secure=await MZ.cloudEconomy.claimHomeworkBag(rewardId);
-            granted=Boolean(secure?.granted);
-          }else{
-            const reward=await client().rpc("claim_homework_reward",{p_homework_id:rewardId});
-            if(reward.error)throw reward.error;
-            granted=Boolean(reward.data?.granted);
-            if(granted)MZ.rewards.addBonusBlindBag(1);
-          }
+          const reward=await client().rpc("claim_homework_reward",{p_homework_id:rewardId});
+          if(reward.error)throw reward.error;
+          granted=Boolean(reward.data?.granted);
+          if(granted)MZ.rewards.addBonusBlindBag(1);
         }catch(rewardError){
           console.warn("Homework reward sync:",rewardError);
         }
@@ -11953,13 +11938,7 @@ function recordRound(event){
       }
     }else{
       const daily=dailyAssignmentProgress();
-      let dailyGranted=false;
-      if(daily.complete&&MZ.cloudEconomy?.isActive?.()){
-        const secure=await MZ.cloudEconomy.claimDailyAssignmentBag();
-        dailyGranted=Boolean(secure?.granted);
-        if(secure?.ok)markDailyAssignmentRewardClaimed();
-      }
-      $("#status").textContent=dailyGranted?"🎉 Dagens uppdrag är klart! En blind bag väntar bland Överraskningar.":daily.complete?"🎉 Dagens uppdrag är klart!":"✓ Dagens deluppdrag är klart: "+a.title+".";
+      $("#status").textContent=daily.complete?"🎉 Dagens uppdrag är klart!":"✓ Dagens deluppdrag är klart: "+a.title+".";
     }
   }
   render();MZ.homeworkQuiz?.render?.();
@@ -12014,131 +11993,97 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 (() => {
   "use strict";
   const MZ=window.Mattezoo;
-  let ready=false,balanceValue=0,bonusBags=0,serverBadges={},serverUnlocked={southwest:true,northwest:false,northeast:false,southeast:false},serverMathRounds=0,bonusOpenToken=0;
-
+  let ready=false,coneBalance=0;
   const client=()=>MZ.cloudStudent?.getClient?.();
-  const activeStudent=()=>MZ.cloudStudent?.currentState?.()?.student||null;
-  function isActive(){return ready&&Boolean(activeStudent());}
-  function balance(){return Math.max(0,Number(balanceValue)||0);}
-  function badgeIds(){return Object.keys(serverBadges||{}).filter(id=>serverBadges[id]===true);}
-  function isHabitatUnlocked(id){return Boolean(serverUnlocked?.[id]);}
-  function mathRewardRounds(){return Math.max(0,Number(serverMathRounds)||0);}
-
-  function apply(data){
-    if(!data?.ok)return data;
-    if(Number.isFinite(Number(data.nature_points)))balanceValue=Math.max(0,Number(data.nature_points));
-    if(Number.isFinite(Number(data.balance)))balanceValue=Math.max(0,Number(data.balance));
-    if(Number.isFinite(Number(data.bonus_blind_bags)))bonusBags=Math.max(0,Number(data.bonus_blind_bags));
-    if(data.badges&&typeof data.badges==="object")serverBadges={...data.badges};
-    if(data.unlocked_habitats&&typeof data.unlocked_habitats==="object")serverUnlocked={...serverUnlocked,...data.unlocked_habitats};
-    if(Number.isFinite(Number(data.math_reward_rounds)))serverMathRounds=Math.max(0,Number(data.math_reward_rounds));
-    if(MZ.state?.rewards)MZ.state.rewards.bonusBlindBags=bonusBags;
-    if(MZ.state?.habitats){
-      MZ.state.habitats.badges={...serverBadges};
-      MZ.state.habitats.unlocked={...serverUnlocked};
-      MZ.state.habitats.mathRoundsTotal=serverMathRounds;
-    }
-    MZ.events.dispatchEvent(new CustomEvent("npchange",{detail:{value:balanceValue,cloud:true}}));
-    MZ.events.dispatchEvent(new CustomEvent("rewardchange",{detail:{cloud:true}}));
-    MZ.events.dispatchEvent(new CustomEvent("habitatchange",{detail:{cloud:true}}));
+  const student=()=>MZ.cloudStudent?.currentState?.()?.student||null;
+  function isActive(){return ready&&Boolean(student());}
+  function balance(){return Math.max(0,Number(coneBalance)||0);}
+  function applyBalance(data){
+    if(data&&Number.isFinite(Number(data.balance)))coneBalance=Math.max(0,Number(data.balance));
+    MZ.events.dispatchEvent(new CustomEvent("npchange",{detail:{value:coneBalance,cloud:true}}));
     return data;
   }
-
   async function rpc(name,args={}){
-    const c=client();if(!c||!activeStudent())return {ok:false,reason:"no_student_session"};
-    const r=await c.rpc(name,args);
-    if(r.error)throw r.error;
-    return apply(r.data||{ok:false,reason:"empty_response"});
+    const c=client();if(!c||!student())return {ok:false,reason:"no_student_session"};
+    const r=await c.rpc(name,args);if(r.error)throw r.error;
+    return applyBalance(r.data||{ok:false});
   }
-
   async function sync(){
-    if(!activeStudent()){ready=false;return null;}
-    try{
-      const data=await rpc("student_get_economy");
-      ready=Boolean(data?.ok);
-      if(ready)apply(data);
-      return data;
-    }catch(error){
-      // Migration not installed yet: keep the current local economy running.
-      console.warn("Server economy unavailable; using local fallback:",error);
-      ready=false;
-      return null;
-    }
+    if(!student()){ready=false;return null;}
+    try{const data=await rpc("student_get_cones");ready=Boolean(data?.ok);if(ready)applyBalance(data);return data;}
+    catch(error){console.warn("Kott-synk är inte aktiverad ännu:",error);ready=false;return null;}
   }
-
   function activityKey(activity){
     if(!activity?.gameId)return "";
-    if(activity.gameId==="multiplication"){
-      const table=Number(activity.table);
-      return table>=1&&table<=10?"multiplication:"+table:"";
-    }
+    if(activity.gameId==="multiplication"&&Number.isFinite(Number(activity.table)))return "multiplication:"+Number(activity.table);
     return activity.gameId;
   }
-
-  async function claimMathReward(activity){
-    if(!isActive())return null;
-    const key=activityKey(activity);if(!key)return null;
+  async function claim(activity,result){
+    if(!isActive()||!result?.rewarded)return null;
     try{
-      const data=await rpc("student_claim_math_reward",{p_game_id:activity.gameId,p_activity_key:key});
-      if(data?.granted)await sync();
-      return data;
-    }catch(error){console.warn("Math reward sync:",error);return null;}
+      if(activity?.type==="starter-seed-correct")return await rpc("student_claim_tutorial_cones");
+      const key=activityKey(activity);if(!key)return null;
+      return await rpc("student_claim_math_cones",{p_game_id:activity.gameId,p_activity_key:key});
+    }catch(error){console.warn("Kottbelöning:",error);return null;}
   }
-  async function claimTutorialReward(){
-    try{const data=await rpc("student_claim_tutorial_reward");if(data?.granted)await sync();return data;}
-    catch(error){console.warn(error);return null;}
+  async function spend(kind,itemId=""){
+    if(!isActive())return {ok:false,reason:"not_connected"};
+    try{return await rpc("student_spend_cones",{p_purchase_kind:kind,p_item_id:itemId});}
+    catch(error){console.warn("Kottköp:",error);return {ok:false,reason:"network"};}
   }
-  async function purchase(kind,itemId=""){
+  function rewardText(type,amount){
+    if(type==="cones")return amount+" kottar";
+    if(type==="seedPack")return amount===1?"en fröpåse":amount+" fröpåsar";
+    if(type==="decorBox")return amount===1?"en dekorationslåda":amount+" dekorationslådor";
+    if(type==="blindBag")return amount===1?"en blind bag":amount+" blind bags";
+    if(type==="autumnBox")return amount===1?"en höstlåda":amount+" höstlådor";
+    return "en belöning";
+  }
+  function giveLocalReward(type,amount){
+    const n=Math.max(1,Number(amount)||1);
+    if(type==="seedPack")MZ.rewards?.addSeedPack?.(n);
+    else if(type==="decorBox")MZ.rewards?.addCrate?.(n);
+    else if(type==="blindBag")MZ.rewards?.addBonusBlindBag?.(n);
+    else if(type==="autumnBox")MZ.rewards?.addSeasonalCrate?.("autumn",n);
+    MZ.office?.render?.();MZ.park?.updateShopUI?.();
+  }
+  async function redeem(code){
+    if(!isActive())return {ok:false,reason:"not_connected"};
     try{
-      const data=await rpc("student_purchase",{p_purchase_kind:kind,p_item_id:itemId});
-      if(data?.reason==="insufficient_funds")await sync();
+      const data=await rpc("student_redeem_code",{p_code:String(code||"").trim().toUpperCase()});
+      if(data?.ok&&data.reward_type!=="cones")giveLocalReward(data.reward_type,data.reward_amount);
       return data;
-    }catch(error){console.warn("Purchase sync:",error);return {ok:false,reason:"network"};}
+    }catch(error){console.warn("Redeem code:",error);return {ok:false,reason:"network"};}
   }
-  async function refund(itemId){try{return await rpc("student_refund_recent_purchase",{p_item_id:itemId});}catch(error){console.warn(error);return null;}}
-  async function claimBadge(id){
-    try{
-      const data=await rpc("student_claim_badge",{p_badge_id:id});
-      if(data?.badges)serverBadges={...data.badges};
-      return data;
-    }catch(error){console.warn(error);return null;}
+  function messageFor(data){
+    if(data?.ok)return "🎁 Klart! Du fick "+rewardText(data.reward_type,data.reward_amount)+".";
+    const m={not_connected:"Logga in med din elevkod först.",not_found:"Den koden finns inte för din klass.",disabled:"Den koden är inte aktiv längre.",expired:"Koden har gått ut.",already_redeemed:"Du har redan löst in den här koden.",used_up:"Koden har redan använts maximalt antal gånger.",no_student_session:"Elevkopplingen behöver laddas om."};
+    return m[data?.reason]||"Koden kunde inte lösas in just nu.";
   }
-  async function claimHabitat(id){
-    try{
-      const data=await rpc("student_claim_habitat",{p_habitat_id:id});
-      if(data?.ok&&data.unlocked_habitats)serverUnlocked={...serverUnlocked,...data.unlocked_habitats};
-      if(data?.ok)apply(data);
-      return data;
-    }catch(error){console.warn(error);return {ok:false,reason:"network"};}
+  function bindRedeem(){
+    const input=document.getElementById("redeemCodeInput"),btn=document.getElementById("redeemCodeBtn"),feedback=document.getElementById("redeemCodeFeedback");
+    if(!input||!btn||!feedback)return;
+    const run=async()=>{
+      const code=String(input.value||"").trim();
+      if(!code){feedback.textContent="Skriv en kod först.";feedback.className="feedback bad";return;}
+      btn.disabled=true;feedback.textContent="Kontrollerar kod …";feedback.className="feedback";
+      const data=await redeem(code);feedback.textContent=messageFor(data);feedback.className="feedback "+(data?.ok?"good":"bad");
+      if(data?.ok)input.value="";btn.disabled=false;
+    };
+    btn.addEventListener("click",run);input.addEventListener("keydown",e=>{if(e.key==="Enter")run();});
   }
-  async function claimDailyAssignmentBag(){try{return await rpc("student_claim_daily_assignment_bag");}catch(error){console.warn(error);return null;}}
-  async function claimHomeworkBag(id){try{return await rpc("student_claim_homework_bag",{p_homework_id:id});}catch(error){console.warn(error);return null;}}
-  async function claimQuizBag(id){try{return await rpc("student_claim_quiz_bag",{p_quiz_id:id});}catch(error){console.warn(error);return null;}}
-  async function consumeBonusBag(){
-    try{
-      const data=await rpc("student_consume_bonus_bag");
-      if(data?.ok){bonusOpenToken=1;bonusBags=Math.max(0,Number(data.bonus_blind_bags)||0);if(MZ.state?.rewards)MZ.state.rewards.bonusBlindBags=bonusBags;}
-      return data;
-    }catch(error){console.warn(error);return {ok:false,reason:"network"};}
-  }
-  function takeBonusOpenToken(){if(bonusOpenToken<1)return false;bonusOpenToken=0;return true;}
-
   function init(){
+    bindRedeem();
     MZ.events.addEventListener("mathcomplete",event=>{
       if(!isActive())return;
-      const activity=event.detail?.activity,result=event.detail?.result;
-      const run=async()=>{
-        if(activity?.type==="starter-seed-correct"&&result?.grown&&result?.rewarded)await claimTutorialReward();
-        else if(result?.rewarded)await claimMathReward(activity);
-      };
-      if(MZ.cloudStudent?.afterWrites)MZ.cloudStudent.afterWrites(run).catch(error=>console.warn(error));
-      else run();
+      const run=()=>claim(event.detail?.activity,event.detail?.result);
+      if(MZ.cloudStudent?.afterWrites)MZ.cloudStudent.afterWrites(run).catch(error=>console.warn(error));else run();
     });
   }
-
-  MZ.cloudEconomy={init,sync,isActive,balance,badgeIds,isHabitatUnlocked,mathRewardRounds,claimMathReward,claimTutorialReward,purchase,refund,claimBadge,claimHabitat,claimDailyAssignmentBag,claimHomeworkBag,claimQuizBag,consumeBonusBag,takeBonusOpenToken};
+  MZ.cloudCones={init,sync,isActive,balance,spend,redeem};
 })();
 </script>
+
 
 <script>
 (() => {
@@ -12334,12 +12279,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(first){
         const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
         if(reward.error)throw reward.error;
-        if(MZ.cloudEconomy?.isActive?.()){
-          const secure=await MZ.cloudEconomy.claimQuizBag(activeQuiz.id);
-          rewardGranted=Boolean(secure?.granted);
-        }else if(reward.data?.granted){
-          MZ.rewards.addBonusBlindBag(1);rewardGranted=true;
-        }
+        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);rewardGranted=true;}
         if(rewardGranted)MZ.office?.render?.();
       }
       $("homeworkQuizTest").classList.add("hidden");const result=$("homeworkQuizResult");result.classList.remove("hidden");
@@ -12386,7 +12326,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.Mattezoo.games.scientificNotation.init();
   window.Mattezoo.activity.init();
   window.Mattezoo.cloudStudent.init();
-  window.Mattezoo.cloudEconomy.init();
+  window.Mattezoo.cloudCones.init();
   window.Mattezoo.homeworkQuiz.init();
 });
 
@@ -12487,7 +12427,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <button class="secondary" id="missionOpenJournal" type="button">Visa alla mina framsteg</button>
     </section>
 
-    <p class="mission-local-note">Elevkod, läraruppdrag och mattearbetet synkas via Matteparkens databas. Själva parken, kottarna och dekorationerna sparas lokalt i den här webbläsaren.</p>
+    <p class="mission-local-note">Elevkod, läraruppdrag, mattearbetet och kottarna synkas via Matteparkens databas. Själva parken och dekorationerna sparas fortfarande lokalt i den här webbläsaren.</p>
   </aside>
 </div></section></div>
 <script>(() => {
