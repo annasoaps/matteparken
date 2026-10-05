@@ -14,7 +14,7 @@
 </script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.5.08 Läxflöde och automatisk fortsättning</title>
+<title>Matteparken – v0.5.09 Tydligt läxavslut</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -11851,26 +11851,46 @@ function recordRound(event){
   await ensureStudentConnection();if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");
   const r=await recordAssignmentRound(id,x);
   if(r.data?.ok===false)throw new Error(r.data?.reason||"Omgången kunde inte registreras.");
-  const completedAt=r.data.completed_at||new Date().toISOString();
-  current.progressMap.set(id,{...(current.progressMap.get(id)||{}),completed:r.data.done?1:Math.max(0,Number(r.data.completed)||0),last_active:new Date().toISOString(),updated_at:new Date().toISOString(),completed_at:completedAt});current.student.last_active=new Date().toISOString();
-  if(r.data.done){
+  const serverCompleted=Math.max(0,Number(r.data?.completed)||0),target=Math.max(1,Number(a?.target)||1);
+  const assignmentDone=Boolean(r.data?.done||serverCompleted>=target);
+  const previous=current.progressMap.get(id)||{};
+  const completedAt=assignmentDone?(r.data?.completed_at||new Date().toISOString()):(r.data?.completed_at||previous.completed_at||null);
+  current.progressMap.set(id,{...previous,completed:assignmentDone?Math.max(1,serverCompleted):serverCompleted,last_active:new Date().toISOString(),updated_at:new Date().toISOString(),completed_at:completedAt});current.student.last_active=new Date().toISOString();
+  if(assignmentDone){
     setActiveAssignment(null);
     if(a.homework_id){
       const group=homeworkGroupContaining(a.homework_id);
       const groupStatus=group?homeworkGroupStatus(group):null;
       if(groupStatus?.complete){
         const leader=[...(group.homeworks||[])].sort((x,y)=>String(x.created_at||"").localeCompare(String(y.created_at||"")))[0];
-        const reward=await client().rpc("claim_homework_reward",{p_homework_id:leader?.id||a.homework_id});
-        if(reward.error)throw reward.error;
-        let granted=Boolean(reward.data?.granted);
-        if(MZ.cloudEconomy?.isActive?.()){
-          const secure=await MZ.cloudEconomy.claimHomeworkBag(leader?.id||a.homework_id);
-          granted=Boolean(secure?.granted);
-        }else if(granted){
-          MZ.rewards.addBonusBlindBag(1);
+        const rewardId=leader?.id||a.homework_id;
+        let granted=false;
+        $("#status").textContent="🎉 Hela läxan är klar!";
+        render();MZ.homeworkQuiz?.render?.();
+        try{
+          if(MZ.cloudEconomy?.isActive?.()){
+            const secure=await MZ.cloudEconomy.claimHomeworkBag(rewardId);
+            granted=Boolean(secure?.granted);
+          }else{
+            const reward=await client().rpc("claim_homework_reward",{p_homework_id:rewardId});
+            if(reward.error)throw reward.error;
+            granted=Boolean(reward.data?.granted);
+            if(granted)MZ.rewards.addBonusBlindBag(1);
+          }
+        }catch(rewardError){
+          console.warn("Homework reward sync:",rewardError);
         }
-        if(granted){MZ.office?.render?.();$("#status").textContent="🎉 Hela läxan är klar! En blind bag väntar bland Överraskningar.";}
-        else $("#status").textContent="🎉 Hela läxan är klar!";
+        if(granted){
+          MZ.office?.render?.();
+          $("#status").textContent="🎉 Hela läxan är klar! En blind bag väntar bland Överraskningar.";
+        }else{
+          $("#status").textContent="🎉 Hela läxan är klar!";
+        }
+        render();MZ.homeworkQuiz?.render?.();
+        window.setTimeout(()=>{
+          try{MZ.closeModal("officeModal");}catch{}
+          MZ.missionBoard?.open?.();
+        },650);
       }else{
         const next=groupStatus?.tasks.find(task=>Number(current.progressMap.get(task.id)?.completed??0)<1)||null;
         if(next){
