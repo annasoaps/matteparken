@@ -14,7 +14,7 @@
 </script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matteparken – v0.5.07 Kottar + redeem codes</title>
+<title>Matteparken – v0.5.11 Kottar + redeem codes</title>
 
 <!-- ================================================================
      LÄRARINSTÄLLNINGAR – OBLIGATORISK VECKOTRÄNING
@@ -2280,14 +2280,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 .daily-assignment-overview span{font-size:12px;color:#66573c;font-weight:750}
 #studentHomeworkPaper .student-homework-section{margin:0;padding:0;border:0}
 #studentHomeworkPaper .student-homework-card{grid-template-columns:1fr;align-items:start}
-#studentHomeworkPaper .student-homework-card>div:last-child{display:flex;justify-content:flex-start}
-#studentHomeworkPaper .student-homework-card .primary{width:100%}
+#studentHomeworkPaper .homework-part-list{display:grid;gap:10px;margin-top:8px;width:100%}
+#studentHomeworkPaper .homework-part-list .student-cloud-task{width:100%;box-sizing:border-box}
+#studentHomeworkPaper .homework-part-list .primary{min-width:130px}
 #studentHomeworkPaper .mission-kicker{display:block;margin:0 0 7px}
 #extraParkChallengeCard{background:#e8edda}
 #extraParkChallengeCard .mission-kicker{display:block;margin:0 0 7px}
 @media(max-width:700px){
   .student-switch-top{justify-content:flex-start}
-  #studentHomeworkPaper .student-homework-card .primary{width:auto}
+  #studentHomeworkPaper .homework-part-list .primary{width:auto}
 }
 </style>
 
@@ -7076,13 +7077,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const isTutorialBirdhouse = type === "birdhouse" && !state.onboarding.tutorialComplete;
     catalogOrderPending=true;
     if(MZ.cloudCones?.isActive?.()){
-      const spent=await MZ.cloudCones.spend("catalog",item.type);
-      if(!spent?.ok){
-        catalogOrderPending=false;
-        updateShopUI();
-        $("#status").textContent=spent?.reason==="insufficient_funds"?"Du har inte tillräckligt med kottar.":"Köpet kunde inte genomföras just nu.";
-        return;
-      }
+      const purchase=await MZ.cloudCones.spend("catalog",item.type);
+      if(!purchase?.ok){catalogOrderPending=false;updateShopUI();$("#status").textContent="Köpet kunde inte genomföras.";return;}
     }else{
       storage.setNaturePoints(storage.getNaturePoints()-price);
     }
@@ -7131,8 +7127,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         if(catalogOrderPending || storage.getNaturePoints()<def.price) return;
         catalogOrderPending=true;
         if(MZ.cloudCones?.isActive?.()){
-          const spent=await MZ.cloudCones.spend("seasonal",def.id);
-          if(!spent?.ok){catalogOrderPending=false;updateShopUI();return;}
+          const purchase=await MZ.cloudCones.spend("seasonal",def.id);
+          if(!purchase?.ok){catalogOrderPending=false;updateShopUI();return;}
         }else{
           storage.setNaturePoints(storage.getNaturePoints()-def.price);
         }
@@ -8477,10 +8473,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#buySeedPack").addEventListener("click", async () => {
       if(state.onboarding.seedGrown && !state.onboarding.tutorialComplete && !state.onboarding.tutorialBirdhouseOrdered) return;
       if(catalogOrderPending || storage.getNaturePoints() < config.seedPackPrice) return;
-      const button=$("#buySeedPack");catalogOrderPending=true;
+      const button=$("#buySeedPack"); catalogOrderPending=true;
       if(MZ.cloudCones?.isActive?.()){
-        const spent=await MZ.cloudCones.spend("seedPack","");
-        if(!spent?.ok){catalogOrderPending=false;updateShopUI();return;}
+        const purchase=await MZ.cloudCones.spend("seedPack","");
+        if(!purchase?.ok){catalogOrderPending=false;updateShopUI();return;}
       }else storage.setNaturePoints(storage.getNaturePoints() - config.seedPackPrice);
       MZ.office.queueDelivery({kind:"seedPack",name:"Fröpåse",icon:"🌱"});
       confirmCatalogOrder(button,"Fröpåsen");
@@ -8489,10 +8485,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#buyDecorBox").addEventListener("click", async () => {
       if(state.onboarding.seedGrown && !state.onboarding.tutorialComplete && !state.onboarding.tutorialBirdhouseOrdered) return;
       if(catalogOrderPending || storage.getNaturePoints() < config.decorBoxPrice) return;
-      const button=$("#buyDecorBox");catalogOrderPending=true;
+      const button=$("#buyDecorBox"); catalogOrderPending=true;
       if(MZ.cloudCones?.isActive?.()){
-        const spent=await MZ.cloudCones.spend("decorBox","");
-        if(!spent?.ok){catalogOrderPending=false;updateShopUI();return;}
+        const purchase=await MZ.cloudCones.spend("decorBox","");
+        if(!purchase?.ok){catalogOrderPending=false;updateShopUI();return;}
       }else storage.setNaturePoints(storage.getNaturePoints() - config.decorBoxPrice);
       MZ.office.queueDelivery({kind:"decorBox",name:"Dekorationslåda",icon:"📦"});
       confirmCatalogOrder(button,"Dekorationslådan");
@@ -11553,9 +11549,9 @@ function homeworkSchoolPause(){
  return{blocked:schoolDay&&minutes>=8*60+20&&minutes<14*60};
 }
 function homeworkStatus(hw){
- const tasks=homeworkTasks(hw.id),done=tasks.filter(a=>Number(current?.progressMap?.get(a.id)?.completed)>=1).length;
+ const tasks=homeworkTasks(hw.id),done=tasks.filter(homeworkAssignmentDone).length;
  const complete=tasks.length>0&&done===tasks.length;
- const completedAt=complete?tasks.map(a=>current.progressMap.get(a.id)?.completed_at).filter(Boolean).sort().at(-1)||null:null;
+ const completedAt=complete?tasks.map(homeworkAssignmentCompletedAt).filter(Boolean).sort().at(-1)||null:null;
  const schoolBlocked=!complete&&homeworkSchoolPause().blocked;
  return{tasks,done,total:tasks.length,complete,completedAt,locked:Boolean(hw.opens_at&&Date.now()<new Date(hw.opens_at).getTime()),schoolBlocked,late:Boolean(complete&&hw.due_at&&completedAt&&new Date(completedAt)>new Date(hw.due_at))};
 }
@@ -11596,6 +11592,35 @@ function setSelection(v){v?localStorage.setItem(SELECTION_KEY,JSON.stringify(v))
 function getActiveAssignment(){return localStorage.getItem(ACTIVE_ASSIGNMENT_KEY)||"";}
 function setActiveAssignment(id){id?localStorage.setItem(ACTIVE_ASSIGNMENT_KEY,id):localStorage.removeItem(ACTIVE_ASSIGNMENT_KEY);}
 function feedback(msg="",kind=""){const el=$("#studentLoginFeedback");if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
+
+const HOMEWORK_ASSIGNMENT_STORE_KEY="matteparkenHomeworkAssignments_v1";
+function readHomeworkAssignmentState(){try{const x=JSON.parse(localStorage.getItem(HOMEWORK_ASSIGNMENT_STORE_KEY)||"{}");return x&&typeof x==="object"&&!Array.isArray(x)?x:{};}catch{return {};}}
+function writeHomeworkAssignmentState(data){localStorage.setItem(HOMEWORK_ASSIGNMENT_STORE_KEY,JSON.stringify(data||{}));}
+function homeworkAssignmentBucket(create=false){
+ const who=dailyProfileKey();if(!who)return null;
+ const all=readHomeworkAssignmentState();
+ if(create){
+  all[who]=all[who]&&typeof all[who]==="object"?all[who]:{completed:{}};
+  all[who].completed=all[who].completed&&typeof all[who].completed==="object"?all[who].completed:{};
+  writeHomeworkAssignmentState(all);
+ }
+ return{all,who,bucket:all[who]||null};
+}
+function homeworkAssignmentDone(a){
+ if(!a)return false;
+ if(Number(current?.progressMap?.get(a.id)?.completed)>=1)return true;
+ return Boolean(homeworkAssignmentBucket(false)?.bucket?.completed?.[a.id]);
+}
+function markHomeworkAssignmentDone(id){
+ const x=homeworkAssignmentBucket(true);if(!x||!id)return;
+ x.bucket.completed[id]=new Date().toISOString();
+ x.all[x.who]=x.bucket;
+ writeHomeworkAssignmentState(x.all);
+}
+function homeworkAssignmentCompletedAt(a){
+ const server=current?.progressMap?.get(a?.id)?.completed_at;
+ return server||homeworkAssignmentBucket(false)?.bucket?.completed?.[a?.id]||null;
+}
 
 const DAILY_ASSIGNMENT_STORE_KEY="matteparkenDailyTeacherAssignments_v1";
 function stockholmDateKey(value=new Date()){
@@ -11720,21 +11745,45 @@ function render(){
   if(!hwGroups.length){
     homeworkList.innerHTML='<div class="assignment-empty-cloud">Ingen läxa är aktiv just nu.</div>';
   }else hwGroups.forEach(group=>{
-    const st=homeworkGroupStatus(group),card=document.createElement("div");card.className="student-homework-card"+(st.complete?" done":"")+((st.locked||st.schoolBlocked)?" locked":"");
-    const info=document.createElement("div"),h=document.createElement("h5");h.textContent=(st.complete?"✓ ":"🏠 ")+group.title;info.appendChild(h);
-    const progress=document.createElement("div");progress.className="muted";progress.textContent=st.complete?"Hela läxan är klar":st.done+" av "+st.total+" omgångar klara";info.appendChild(progress);
-    const subject=document.createElement("div");subject.className="round-note";subject.textContent=homeworkGroupSummary(group)||"Matteuppgift";info.appendChild(subject);
+    const st=homeworkGroupStatus(group),card=document.createElement("div");
+    card.className="student-homework-card"+(st.complete?" done":"")+((st.locked||st.schoolBlocked)?" locked":"");
+    const info=document.createElement("div"),h=document.createElement("h5");
+    h.textContent=(st.complete?"✓ ":"🏠 ")+group.title;info.appendChild(h);
+    const progress=document.createElement("div");progress.className="muted";
+    progress.textContent=st.complete?"Hela läxan är klar":st.done+" av "+st.total+" delar klara";info.appendChild(progress);
+    const subject=document.createElement("div");subject.className="round-note";
+    subject.textContent=homeworkGroupSummary(group)||"Matteuppgift";info.appendChild(subject);
     const time=document.createElement("div");time.className="homework-window";
     time.textContent=st.locked?"🔒 Öppnar "+formatMoment(group.opens_at):(group.due_at?"Deadline "+formatMoment(group.due_at)+(st.late?" · klar efter deadline":""):"Ingen deadline");info.appendChild(time);
-    const access=document.createElement("div");access.className="homework-window";access.textContent=st.schoolBlocked?"⏰ Pausad nu · öppnar kl. 14.00":"⏰ Vardagar: före 08.20 eller efter 14.00";info.appendChild(access);
-    const reward=document.createElement("div");reward.className="homework-reward";reward.textContent=st.complete?"🎁 1 blind bag utdelad när hela läxan blev klar":"🎁 Bonus när hela läxan är klar: 1 blind bag";info.appendChild(reward);
-    const actions=document.createElement("div"),btn=document.createElement("button");btn.className="primary";btn.type="button";
-    const next=st.tasks.find(a=>Number(current.progressMap.get(a.id)?.completed ?? 0)<1);
-    btn.disabled=st.locked||st.schoolBlocked||st.complete||!next;
-    btn.textContent=st.complete?"Klar":st.locked?"Inte öppen än":st.schoolBlocked?"Öppnar 14.00":!st.total?"Ladda om läxan":st.done?"Fortsätt läxan":"Starta läxan";
-    if(next){btn.dataset.startAssignment=next.id;btn.dataset.assignmentKind="homework";}
-    else if(!st.locked&&!st.complete){btn.disabled=false;btn.dataset.reloadHomework="1";}
-    actions.appendChild(btn);card.append(info,actions);homeworkList.appendChild(card);
+    const access=document.createElement("div");access.className="homework-window";
+    access.textContent=st.schoolBlocked?"⏰ Pausad nu · öppnar kl. 14.00":"⏰ Vardagar: före 08.20 eller efter 14.00";info.appendChild(access);
+    const reward=document.createElement("div");reward.className="homework-reward";
+    reward.textContent=st.complete?"🎁 Hela läxan är klar":"🎁 Bonus när alla delar är klara: 1 blind bag";info.appendChild(reward);
+
+    const parts=document.createElement("div");parts.className="homework-part-list";
+    if(!st.tasks.length){
+      const empty=document.createElement("div");empty.className="assignment-empty-cloud";empty.textContent="Läxans delar kunde inte hämtas. Ladda om sidan.";
+      parts.appendChild(empty);
+    }else st.tasks.forEach(a=>{
+      const p=current.progressMap.get(a.id)||{completed:0,last_active:null},done=homeworkAssignmentDone(a),pct=done?100:0;
+      const part=document.createElement("div");part.className="student-cloud-task homework-part-card"+(done?" done":"");
+      const partInfo=document.createElement("div"),ph=document.createElement("h4");
+      ph.textContent=(done?"✓ ":"📌 ")+a.title;partInfo.appendChild(ph);
+      const desc=document.createElement("div");desc.className="muted";desc.textContent=a.description||roundDescription(a);partInfo.appendChild(desc);
+      const note=document.createElement("div");note.className="round-note";note.textContent=roundDescription(a);partInfo.appendChild(note);
+      const copy=document.createElement("div");copy.className="assignment-progress-copy";
+      copy.innerHTML="<span>"+(done?"✓ Klar":"○ En hel omgång återstår")+"</span><strong>"+pct+" %</strong>";partInfo.appendChild(copy);
+      const bar=document.createElement("div");bar.className="progress";bar.innerHTML='<div style="width:'+pct+'%"></div>';partInfo.appendChild(bar);
+      const last=document.createElement("div");last.className="assignment-demo-note";
+      last.textContent=done?"Den här delen är klar.":p.last_active?"Senast tränad "+formatLast(p.last_active)+".":"Inte påbörjad.";partInfo.appendChild(last);
+      const actions=document.createElement("div");actions.className="assignment-actions";
+      const btn=document.createElement("button");btn.className="primary";btn.type="button";
+      btn.disabled=st.locked||st.schoolBlocked;
+      btn.textContent=st.locked?"Inte öppen än":st.schoolBlocked?"Öppnar 14.00":done?"Träna igen":"Starta delen";
+      btn.dataset.startAssignment=a.id;btn.dataset.assignmentKind="homework";
+      actions.appendChild(btn);part.append(partInfo,actions);parts.appendChild(part);
+    });
+    card.append(info,parts);homeworkList.appendChild(card);
   });
  }
  const list=$("#studentAssignmentsList");if(!list)return;list.innerHTML="";
@@ -11817,9 +11866,35 @@ function recordQuestion(event){
  writeQueue=writeQueue.then(async()=>{await ensureStudentConnection();if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");let r=await client().rpc("record_math_activity",{p_game_id:d.gameId,p_activity_key:x.key,p_label:x.label});if(r.error)throw r.error;if(r.data?.ok===false&&r.data?.reason==="no_student_session"){await reconnectSaved();r=await client().rpc("record_math_activity",{p_game_id:d.gameId,p_activity_key:x.key,p_label:x.label});if(r.error)throw r.error;}if(r.data?.ok===false)throw new Error(r.data?.reason||"Synkningen misslyckades.");}).catch(error=>{console.error("Supabase activity:",error);$("#status").textContent="☁️ Synkningen tappade kontakten en stund. Matteparken försöker ansluta igen.";window.setTimeout(()=>reconnectSaved(),1500);});
 }
 function matchingRound(a,x){if(!a||!x||a.game_id!==x.gameId||expectedRoundTypes[a.game_id]!==x.type)return false;const t=Number(a.game_config?.table);return !(a.game_id==="multiplication"&&t>=1&&t<=10)||Number(x.table)===t;}
+async function assignmentRoundRpc(id,x,roundType=x.type){
+ return client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:roundType,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});
+}
+async function recordAssignmentRound(id,x){
+ let r=await assignmentRoundRpc(id,x);if(r.error)throw r.error;
+ if(r.data?.ok===false&&r.data?.reason==="no_student_session"){
+  await reconnectSaved();r=await assignmentRoundRpc(id,x);if(r.error)throw r.error;
+ }
+ // Bråk · Decimal · Procent byggdes om från 10-frågorsvarv till 6 kompletta trior.
+ // Äldre Supabase-installationer kan fortfarande validera det gamla round_type-värdet.
+ if(r.data?.ok===false&&x.gameId==="percentConvert"&&x.type==="six-trio-round"){
+  const legacy=await assignmentRoundRpc(id,x,"ten-question-round");
+  if(!legacy.error&&legacy.data?.ok!==false)r=legacy;
+ }
+ return r;
+}
 function recordRound(event){
  const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
- if(a&&!a.homework_id){
+ if(a?.homework_id){
+  markHomeworkAssignmentDone(id);
+  setActiveAssignment(null);
+  const group=homeworkGroupContaining(a.homework_id),localStatus=group?homeworkGroupStatus(group):null;
+  $("#status").textContent=localStatus?.complete?"🎉 Hela läxan är klar!":"✓ "+a.title+" är klar. Välj nästa del i läxan.";
+  render();
+  window.setTimeout(()=>{
+    try{MZ.closeModal("officeModal");}catch{}
+    MZ.missionBoard?.open?.();
+  },450);
+ }else if(a){
   markDailyAssignmentDone(id);
   setActiveAssignment(null);
   const reward=maybeGrantDailyAssignmentReward();
@@ -11828,31 +11903,55 @@ function recordRound(event){
  }
  writeQueue=writeQueue.then(async()=>{
   await ensureStudentConnection();if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");
-  let r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;
-  if(r.data?.ok===false&&r.data?.reason==="no_student_session"){await reconnectSaved();r=await client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:x.type,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});if(r.error)throw r.error;}
+  const r=await recordAssignmentRound(id,x);
   if(r.data?.ok===false)throw new Error(r.data?.reason||"Omgången kunde inte registreras.");
-  const completedAt=r.data.completed_at||new Date().toISOString();
-  current.progressMap.set(id,{...(current.progressMap.get(id)||{}),completed:r.data.done?1:Math.max(0,Number(r.data.completed)||0),last_active:new Date().toISOString(),updated_at:new Date().toISOString(),completed_at:completedAt});current.student.last_active=new Date().toISOString();
-  if(r.data.done){
+  const serverCompleted=Math.max(0,Number(r.data?.completed)||0),target=Math.max(1,Number(a?.target)||1);
+  const assignmentDone=Boolean(r.data?.done||serverCompleted>=target||(a?.homework_id&&homeworkAssignmentDone(a)));
+  const previous=current.progressMap.get(id)||{};
+  const completedAt=assignmentDone?(r.data?.completed_at||homeworkAssignmentCompletedAt(a)||new Date().toISOString()):(r.data?.completed_at||previous.completed_at||null);
+  current.progressMap.set(id,{...previous,completed:assignmentDone?Math.max(1,serverCompleted):serverCompleted,last_active:new Date().toISOString(),updated_at:new Date().toISOString(),completed_at:completedAt});current.student.last_active=new Date().toISOString();
+  if(assignmentDone){
     setActiveAssignment(null);
     if(a.homework_id){
       const group=homeworkGroupContaining(a.homework_id);
       const groupStatus=group?homeworkGroupStatus(group):null;
       if(groupStatus?.complete){
         const leader=[...(group.homeworks||[])].sort((x,y)=>String(x.created_at||"").localeCompare(String(y.created_at||"")))[0];
-        const reward=await client().rpc("claim_homework_reward",{p_homework_id:leader?.id||a.homework_id});
-        if(reward.error)throw reward.error;
-        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();$("#status").textContent="🎉 Hela läxan är klar! En blind bag väntar bland Överraskningar.";}
-        else $("#status").textContent="🎉 Hela läxan är klar!";
+        const rewardId=leader?.id||a.homework_id;
+        let granted=false;
+        try{
+          const reward=await client().rpc("claim_homework_reward",{p_homework_id:rewardId});
+          if(reward.error)throw reward.error;
+          granted=Boolean(reward.data?.granted);
+          if(granted)MZ.rewards.addBonusBlindBag(1);
+        }catch(rewardError){
+          console.warn("Homework reward sync:",rewardError);
+        }
+        if(granted){
+          MZ.office?.render?.();
+          $("#status").textContent="🎉 Hela läxan är klar! En blind bag väntar bland Överraskningar.";
+        }else{
+          $("#status").textContent="🎉 Hela läxan är klar!";
+        }
       }else{
-        $("#status").textContent="🏠 Omgången är klar. Fortsätt med resten av veckoläxan.";
+        $("#status").textContent="✓ "+a.title+" är klar. Välj nästa del i läxan.";
       }
     }else{
       const daily=dailyAssignmentProgress();
       $("#status").textContent=daily.complete?"🎉 Dagens uppdrag är klart!":"✓ Dagens deluppdrag är klart: "+a.title+".";
     }
-  }else if(a.homework_id){$("#status").textContent="📌 Omgången registrerades, men läxan kunde inte markeras klar ännu.";}render();MZ.homeworkQuiz?.render?.();
- }).catch(error=>{console.error("Supabase assignment round:",error);$("#status").textContent=a&&!a.homework_id?"☁️ Dagens del är sparad här, men molnsynkningen tappade kontakten en stund.":"☁️ Omgången kunde inte synkas just nu. Matteparken försöker återansluta.";window.setTimeout(()=>reconnectSaved(),1500);});
+  }
+  render();MZ.homeworkQuiz?.render?.();
+ }).catch(error=>{
+   console.error("Supabase assignment round:",error);
+   if(a?.homework_id){
+     $("#status").textContent="✓ "+a.title+" är klar här. Matteparken försöker synka den till molnet igen.";
+     render();
+   }else{
+     $("#status").textContent="☁️ Dagens del är sparad här, men molnsynkningen tappade kontakten en stund.";
+   }
+   window.setTimeout(()=>reconnectSaved(),1500);
+ });
 }
 
 async function restore(){if(!getSelection()){current=null;render();return;}await reconnectSaved({showFeedback:true});}
@@ -11894,9 +11993,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 (() => {
   "use strict";
   const MZ=window.Mattezoo;
-  let ready=false;
-  let coneBalance=0;
-
+  let ready=false,coneBalance=0;
   const client=()=>MZ.cloudStudent?.getClient?.();
   const student=()=>MZ.cloudStudent?.currentState?.()?.student||null;
   function isActive(){return ready&&Boolean(student());}
@@ -11908,22 +12005,13 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   }
   async function rpc(name,args={}){
     const c=client();if(!c||!student())return {ok:false,reason:"no_student_session"};
-    const r=await c.rpc(name,args);
-    if(r.error)throw r.error;
+    const r=await c.rpc(name,args);if(r.error)throw r.error;
     return applyBalance(r.data||{ok:false});
   }
   async function sync(){
     if(!student()){ready=false;return null;}
-    try{
-      const data=await rpc("student_get_cones");
-      ready=Boolean(data?.ok);
-      if(ready)applyBalance(data);
-      return data;
-    }catch(error){
-      console.warn("Kott-synk är inte aktiverad ännu:",error);
-      ready=false;
-      return null;
-    }
+    try{const data=await rpc("student_get_cones");ready=Boolean(data?.ok);if(ready)applyBalance(data);return data;}
+    catch(error){console.warn("Kott-synk är inte aktiverad ännu:",error);ready=false;return null;}
   }
   function activityKey(activity){
     if(!activity?.gameId)return "";
@@ -11933,24 +12021,15 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   async function claim(activity,result){
     if(!isActive()||!result?.rewarded)return null;
     try{
-      if(activity?.type==="starter-seed-correct"){
-        const data=await rpc("student_claim_tutorial_cones");
-        if(data?.ok)applyBalance(data);
-        return data;
-      }
+      if(activity?.type==="starter-seed-correct")return await rpc("student_claim_tutorial_cones");
       const key=activityKey(activity);if(!key)return null;
-      const data=await rpc("student_claim_math_cones",{p_game_id:activity.gameId,p_activity_key:key});
-      if(data?.ok)applyBalance(data);
-      return data;
+      return await rpc("student_claim_math_cones",{p_game_id:activity.gameId,p_activity_key:key});
     }catch(error){console.warn("Kottbelöning:",error);return null;}
   }
   async function spend(kind,itemId=""){
     if(!isActive())return {ok:false,reason:"not_connected"};
-    try{
-      const data=await rpc("student_spend_cones",{p_purchase_kind:kind,p_item_id:itemId});
-      if(data?.ok)applyBalance(data);
-      return data;
-    }catch(error){console.warn("Kottköp:",error);return {ok:false,reason:"network"};}
+    try{return await rpc("student_spend_cones",{p_purchase_kind:kind,p_item_id:itemId});}
+    catch(error){console.warn("Kottköp:",error);return {ok:false,reason:"network"};}
   }
   function rewardText(type,amount){
     if(type==="cones")return amount+" kottar";
@@ -11966,8 +12045,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     else if(type==="decorBox")MZ.rewards?.addCrate?.(n);
     else if(type==="blindBag")MZ.rewards?.addBonusBlindBag?.(n);
     else if(type==="autumnBox")MZ.rewards?.addSeasonalCrate?.("autumn",n);
-    MZ.office?.render?.();
-    MZ.park?.updateShopUI?.();
+    MZ.office?.render?.();MZ.park?.updateShopUI?.();
   }
   async function redeem(code){
     if(!isActive())return {ok:false,reason:"not_connected"};
@@ -11979,16 +12057,8 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   }
   function messageFor(data){
     if(data?.ok)return "🎁 Klart! Du fick "+rewardText(data.reward_type,data.reward_amount)+".";
-    const messages={
-      not_connected:"Logga in med din elevkod först.",
-      not_found:"Den koden finns inte för din klass.",
-      disabled:"Den koden är inte aktiv längre.",
-      expired:"Koden har gått ut.",
-      already_redeemed:"Du har redan löst in den här koden.",
-      used_up:"Koden har redan använts maximalt antal gånger.",
-      no_student_session:"Elevkopplingen behöver laddas om."
-    };
-    return messages[data?.reason]||"Koden kunde inte lösas in just nu.";
+    const m={not_connected:"Logga in med din elevkod först.",not_found:"Den koden finns inte för din klass.",disabled:"Den koden är inte aktiv längre.",expired:"Koden har gått ut.",already_redeemed:"Du har redan löst in den här koden.",used_up:"Koden har redan använts maximalt antal gånger.",no_student_session:"Elevkopplingen behöver laddas om."};
+    return m[data?.reason]||"Koden kunde inte lösas in just nu.";
   }
   function bindRedeem(){
     const input=document.getElementById("redeemCodeInput"),btn=document.getElementById("redeemCodeBtn"),feedback=document.getElementById("redeemCodeFeedback");
@@ -11997,27 +12067,23 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       const code=String(input.value||"").trim();
       if(!code){feedback.textContent="Skriv en kod först.";feedback.className="feedback bad";return;}
       btn.disabled=true;feedback.textContent="Kontrollerar kod …";feedback.className="feedback";
-      const data=await redeem(code);
-      feedback.textContent=messageFor(data);feedback.className="feedback "+(data?.ok?"good":"bad");
-      if(data?.ok)input.value="";
-      btn.disabled=false;
+      const data=await redeem(code);feedback.textContent=messageFor(data);feedback.className="feedback "+(data?.ok?"good":"bad");
+      if(data?.ok)input.value="";btn.disabled=false;
     };
-    btn.addEventListener("click",run);
-    input.addEventListener("keydown",e=>{if(e.key==="Enter")run();});
+    btn.addEventListener("click",run);input.addEventListener("keydown",e=>{if(e.key==="Enter")run();});
   }
   function init(){
     bindRedeem();
     MZ.events.addEventListener("mathcomplete",event=>{
       if(!isActive())return;
-      const activity=event.detail?.activity,result=event.detail?.result;
-      const run=()=>claim(activity,result);
-      if(MZ.cloudStudent?.afterWrites)MZ.cloudStudent.afterWrites(run).catch(error=>console.warn(error));
-      else run();
+      const run=()=>claim(event.detail?.activity,event.detail?.result);
+      if(MZ.cloudStudent?.afterWrites)MZ.cloudStudent.afterWrites(run).catch(error=>console.warn(error));else run();
     });
   }
   MZ.cloudCones={init,sync,isActive,balance,spend,redeem};
 })();
 </script>
+
 
 <script>
 (() => {
@@ -12213,7 +12279,8 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(first){
         const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
         if(reward.error)throw reward.error;
-        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);MZ.office?.render?.();rewardGranted=true;}
+        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);rewardGranted=true;}
+        if(rewardGranted)MZ.office?.render?.();
       }
       $("homeworkQuizTest").classList.add("hidden");const result=$("homeworkQuizResult");result.classList.remove("hidden");
       result.innerHTML="<h3>Förhöret är klart</h3><p><strong>"+r.data.score+" / "+r.data.total+"</strong></p><p>Det första resultatet är sparat.</p>"+(rewardGranted?"<p>🎁 Du fick en blind bag! Den väntar bland Överraskningar.</p>":"")+"<button class='secondary' id='quizBackToList' type='button'>Till läxförhören</button>";
