@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matteparken · Läraradmin v10</title>
+<title>Matteparken · Läraradmin v11</title>
 <style>
 :root{
   color-scheme:light;
@@ -538,15 +538,22 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       const done=active.filter(a=>assignmentDoneToday(student.id,a.id)).length;
       const total=active.length;const pct=total?Math.round(done/total*100):0;
       const anyProgress=active.some(a=>progressTouchedToday(getProgress(student.id,a.id)));
-      const activeHw=homeworkGroups(homeworks.filter(h=>h.enabled)),hwDone=activeHw.filter(group=>homeworkGroupStatus(student.id,group).complete).length;
+      const activeHw=homeworkGroups(homeworks.filter(h=>h.enabled));
+      const hwStatuses=activeHw.map(group=>homeworkGroupStatus(student.id,group));
+      const hwDone=hwStatuses.reduce((sum,st)=>sum+st.done,0);
+      const hwTotal=hwStatuses.reduce((sum,st)=>sum+st.total,0);
+      const hwPct=hwTotal?Math.round(hwDone/hwTotal*100):0;
+      const hwComplete=activeHw.length===0||(hwTotal>0&&hwDone===hwTotal);
       const activeQ=quizzes.filter(q=>q.enabled),qDone=activeQ.filter(q=>quizAttempt(student.id,q.id)).length;
+      const allComplete=(!total||done===total)&&hwComplete&&qDone===activeQ.length;
+      const hasAnything=Boolean(total||activeHw.length||activeQ.length);
       const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
       tr.innerHTML="<td><strong>"+(Number(student.list_number)||"–")+"</strong></td>"+
         "<td><strong>"+escapeHtml(student.code)+"</strong></td>"+
         "<td><strong>"+done+" / "+total+"</strong><div class='progressbar'><span style='width:"+pct+"%'></span></div></td>"+
-        "<td><strong>"+hwDone+" / "+activeHw.length+"</strong></td>"+
+        "<td><strong>"+hwDone+" / "+hwTotal+"</strong><div class='progressbar'><span style='width:"+hwPct+"%'></span></div></td>"+
         "<td><strong>"+qDone+" / "+activeQ.length+"</strong></td>"+
-        "<td><span class='status "+(total&&done===total&&hwDone===activeHw.length&&qDone===activeQ.length?"done":"")+"'>"+(!total&&!activeHw.length&&!activeQ.length?"Inga aktiva":done===total&&hwDone===activeHw.length&&qDone===activeQ.length?"✓ Allt klart":anyProgress||hwDone||qDone?"Pågår":"Ej startad")+"</span></td>"+
+        "<td><span class='status "+(hasAnything&&allComplete?"done":"")+"'>"+(!hasAnything?"Inga aktiva":allComplete?"✓ Allt klart":anyProgress||hwDone||qDone?"Pågår":"Ej startad")+"</span></td>"+
         "<td>"+formatLast(student.last_active)+"</td>";
       tr.addEventListener("click",()=>{selectedStudentId=student.id;renderStudents();renderDetail();});
       tbody.appendChild(tr);
