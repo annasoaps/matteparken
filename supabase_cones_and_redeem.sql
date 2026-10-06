@@ -68,25 +68,11 @@ revoke all on public.redeem_redemptions from anon, authenticated;
 -- för elevsidans läsning av public.students avgör vilken rad som är elevens.
 create or replace function public.matteparken_current_student_id()
 returns uuid
-language plpgsql
+language sql
 security invoker
+stable
 set search_path = public
-as $
-declare
-  v_student uuid;
-begin
-  if auth.uid() is null then
-    return null;
-  end if;
-
-  select id
-    into v_student
-  from public.students
-  limit 1;
-
-  return v_student;
-end;
-$;
+as 'select id from public.students limit 1';
 
 revoke all on function public.matteparken_current_student_id() from public;
 grant execute on function public.matteparken_current_student_id() to authenticated;
