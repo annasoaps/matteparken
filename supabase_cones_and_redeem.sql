@@ -78,13 +78,14 @@ as 'select id from public.students limit 1';
 -- RLS-policy gäller även när hjälpfunktionen anropas inifrån andra SECURITY
 -- DEFINER-funktioner. Då kan den bara se den studentrad som elevsessionen får se.
 -- PostgreSQL kräver att den nya ägaren tillfälligt har CREATE i schemat.
--- Gör det i samma transaktion och återkalla direkt, så authenticated aldrig
--- lämnas med CREATE-rättighet i public efter att migrationen är klar.
-begin;
-grant create on schema public to authenticated;
-alter function public.matteparken_current_student_id() owner to authenticated;
-revoke create on schema public from authenticated;
-commit;
+-- Gör grant -> ägarbyte -> revoke atomärt i ett enda DO-block.
+do $migration$
+begin
+  execute 'grant create on schema public to authenticated';
+  execute 'alter function public.matteparken_current_student_id() owner to authenticated';
+  execute 'revoke create on schema public from authenticated';
+end
+$migration$;
 
 revoke all on function public.matteparken_current_student_id() from public;
 grant execute on function public.matteparken_current_student_id() to authenticated;
