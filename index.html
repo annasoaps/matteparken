@@ -1173,10 +1173,15 @@ window.MATTEZOO_TEACHER_PLAN = {
 .placed-item.firePit{width:60px;height:52px;display:flex;align-items:flex-end;justify-content:center;overflow:visible}
 .placed-item.firePit:before,.placed-item.firePit:after{content:none}
 .placed-item.firePit .placed-sprite{width:60px;height:52px;object-fit:contain;filter:drop-shadow(0 4px 0 rgba(45,65,45,.09))}
-.placed-item.pumpkins .placed-sprite{width:46px;height:37px;object-fit:contain;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.pumpkinLantern .placed-sprite{width:39px;height:46px;object-fit:contain;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.leafBasket .placed-sprite{width:48px;height:38px;object-fit:contain;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.autumnPot .placed-sprite{width:44px;height:50px;object-fit:contain;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.autumnPot .placed-sprite{width:74px;height:73px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.pumpkins .placed-sprite{width:80px;height:58px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.pumpkinLantern .placed-sprite{width:70px;height:57px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.leafBasket .placed-sprite{width:78px;height:65px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.appleBasket .placed-sprite{width:78px;height:66px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.hayBale .placed-sprite{width:88px;height:55px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.leafPile .placed-sprite{width:84px;height:49px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.boletes .placed-sprite{width:70px;height:56px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.parasolMushroom .placed-sprite{width:58px;height:64px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
 
 .placed-item.firePit .firepit-animation{position:relative;display:block;width:60px;height:52px}
 .placed-item.firePit .firepit-animation::before{content:"";position:absolute;left:50%;top:58%;width:42px;height:28px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle, rgba(255,214,120,.34) 0%, rgba(255,168,60,.18) 45%, rgba(255,120,30,.08) 68%, rgba(255,120,30,0) 100%);pointer-events:none;filter:blur(1px)}
@@ -3623,7 +3628,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   state.parkItems = state.parkItems.filter((item) => item?.type !== "parkSign");
   if(state.inventory && typeof state.inventory === "object") delete state.inventory.parkSign;
   if(!state.inventory || typeof state.inventory !== "object" || Array.isArray(state.inventory)) state.inventory = {};
-  ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot"].forEach((type) => {
+  ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom"].forEach((type) => {
     state.inventory[type] = Math.max(0, Number(state.inventory[type]) || 0);
   });
 
@@ -4353,10 +4358,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     {type:"lakeSign", name:"Sjöns skylt", icon:"🪧", kind:"equipment", source:"decorBox", habitat:"southeast", decorative:true},
 
     // Höstlådan
+    {type:"autumnPot", name:"Höstblomma", icon:"🪴", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
     {type:"pumpkins", name:"Pumpor", icon:"🎃", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
     {type:"pumpkinLantern", name:"Pumpalykta", icon:"🎃", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
     {type:"leafBasket", name:"Lövkorg", icon:"🍂", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
-    {type:"autumnPot", name:"Höstkruka", icon:"🪴", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true}
+    {type:"appleBasket", name:"Äppelkorg", icon:"🍎", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
+    {type:"hayBale", name:"Höbal", icon:"🌾", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
+    {type:"leafPile", name:"Lövhög", icon:"🍂", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
+    {type:"boletes", name:"Soppar", icon:"🍄", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
+    {type:"parasolMushroom", name:"Stolt fjällskivling", icon:"🍄", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true}
   ]);
 
   const habitatOrder = Object.freeze(["southwest","northwest","northeast","southeast"]);
@@ -6141,7 +6151,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     fern:"ormbunke", blueberryBush:"blåbärsris", woodAnemone:"vitsippa", hepatica:"blåsippa", orchid:"skogsorkidé", spruce:"gran", pine:"tall", oak:"ek", heather:"ljung", rockThyme:"backtimjan", mountainShrub:"bergsbuske", reeds:"vass", cattails:"kaveldun", waterLily:"näckros", shoreGrass:"strandgräs"
   }[seed] || "växt");
 
-  const equipmentTypes = ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot"];
+  const equipmentTypes = ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom"];
   const natureTypes = ["daisy","tulip","lavender","sunflower","poppy","cornflower","marigold","fern","blueberryBush","woodAnemone","hepatica","orchid","spruce","pine","oak","heather","rockThyme","mountainShrub","reeds","cattails","waterLily","shoreGrass"];
   const isEquipment = (type) => equipmentTypes.includes(type);
   const isNature = (type) => natureTypes.includes(type);
@@ -6171,10 +6181,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     fishingBucket:{name:"Fiskehink med spön", icon:"🪣"},
     fishingCooler:{name:"Kylbox med spön", icon:"🧊"},
     firePit:{name:"Liten eldstad", icon:"🔥"},
+    autumnPot:{name:"Höstblomma", icon:"🪴"},
     pumpkins:{name:"Pumpor", icon:"🎃"},
     pumpkinLantern:{name:"Pumpalykta", icon:"🎃"},
     leafBasket:{name:"Lövkorg", icon:"🍂"},
-    autumnPot:{name:"Höstkruka", icon:"🪴"}
+    appleBasket:{name:"Äppelkorg", icon:"🍎"},
+    hayBale:{name:"Höbal", icon:"🌾"},
+    leafPile:{name:"Lövhög", icon:"🍂"},
+    boletes:{name:"Soppar", icon:"🍄"},
+    parasolMushroom:{name:"Stolt fjällskivling", icon:"🍄"}
   };
 
   const itemSprites = {
@@ -6263,10 +6278,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     flowerPot: 'assets/asset_079_241df15f88b96072.png'
   });
   Object.assign(itemSprites, {
-    pumpkins:"assets/asset_080_3d19e1bea9e4f60f.png",
-    pumpkinLantern:"assets/asset_081_abb15c329e0853f0.png",
-    leafBasket:"assets/asset_082_be7e6a386df813b2.png",
-    autumnPot:"assets/asset_083_669a5b22ccb3c8e7.png"
+    autumnPot:"assets/autumn/autumn_pot.png",
+    pumpkins:"assets/autumn/pumpkins.png",
+    pumpkinLantern:"assets/autumn/jack_o_lantern.png",
+    leafBasket:"assets/autumn/leaf_basket.png",
+    appleBasket:"assets/autumn/apple_basket.png",
+    hayBale:"assets/autumn/hay_bale.png",
+    leafPile:"assets/autumn/leaf_pile.png",
+    boletes:"assets/autumn/boletes.png",
+    parasolMushroom:"assets/autumn/parasol_mushroom.png"
   });
 
   itemSpriteVariants.lantern = [itemSprites.lantern, 'assets/asset_084_c5c6b94fc8d8b56f.png'];
