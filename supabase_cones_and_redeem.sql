@@ -64,52 +64,15 @@ revoke all on public.redeem_codes from anon, authenticated;
 revoke all on public.redeem_redemptions from anon, authenticated;
 
 -- Hitta den elev som hör till den aktuella anonyma Supabase-sessionen.
--- Funktionen letar efter den UUID-kolumn i students som redan används av Matteparken.
+-- Viktigt: använd SECURITY INVOKER så att samma RLS-regler som redan fungerar
+-- för elevsidans läsning av public.students avgör vilken rad som är elevens.
 create or replace function public.matteparken_current_student_id()
 returns uuid
-language plpgsql
-security definer
+language sql
+security invoker
+stable
 set search_path = public
-as $$
-declare
-  v_uid uuid := auth.uid();
-  v_col text;
-  v_student uuid;
-begin
-  if v_uid is null then
-    return null;
-  end if;
-
-  for v_col in
-    select c.column_name
-    from information_schema.columns c
-    where c.table_schema = 'public'
-      and c.table_name = 'students'
-      and c.data_type = 'uuid'
-      and c.column_name not in ('id','class_id')
-    order by
-      case c.column_name
-        when 'claimed_by' then 1
-        when 'auth_user_id' then 2
-        when 'user_id' then 3
-        when 'claimed_by_user_id' then 4
-        when 'session_user_id' then 5
-        when 'owner_id' then 6
-        else 50
-      end,
-      c.column_name
-  loop
-    execute format('select id from public.students where %I = $1 limit 1', v_col)
-      into v_student
-      using v_uid;
-    if v_student is not null then
-      return v_student;
-    end if;
-  end loop;
-
-  return null;
-end;
-$$;
+as 'select id from public.students limit 1';
 
 revoke all on function public.matteparken_current_student_id() from public;
 grant execute on function public.matteparken_current_student_id() to authenticated;
