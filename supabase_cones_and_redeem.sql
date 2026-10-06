@@ -69,10 +69,15 @@ revoke all on public.redeem_redemptions from anon, authenticated;
 create or replace function public.matteparken_current_student_id()
 returns uuid
 language sql
-security invoker
+security definer
 stable
 set search_path = public
 as 'select id from public.students limit 1';
+
+-- Äg funktionen med rollen authenticated så att students-tabellens befintliga
+-- RLS-policy gäller även när hjälpfunktionen anropas inifrån andra SECURITY
+-- DEFINER-funktioner. Då kan den bara se den studentrad som elevsessionen får se.
+alter function public.matteparken_current_student_id() owner to authenticated;
 
 revoke all on function public.matteparken_current_student_id() from public;
 grant execute on function public.matteparken_current_student_id() to authenticated;
