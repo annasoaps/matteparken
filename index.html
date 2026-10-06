@@ -12034,7 +12034,7 @@ function init(){
  if(homeworkClockTimer)window.clearInterval(homeworkClockTimer);homeworkClockTimer=window.setInterval(()=>{if(current?.student)render();},60*1000);
  render();restore();
 }
-MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,getClient:client,currentState:()=>current,formatMoment,afterWrites:(fn)=>writeQueue.then(fn)};
+MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,getClient:client,currentState:()=>current,formatMoment,afterWrites:(fn)=>writeQueue.then(fn),ensureStudentConnection,reconnectSaved};
 })();
 </script>
 
@@ -12097,16 +12097,27 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     MZ.office?.render?.();MZ.park?.updateShopUI?.();
   }
   async function redeem(code){
-    if(!isActive())return {ok:false,reason:"not_connected"};
     try{
+      if(!student()){
+        await MZ.cloudStudent?.ensureStudentConnection?.();
+      }
+      if(!student())return {ok:false,reason:"not_connected"};
+
       const data=await rpc("student_redeem_code",{p_code:String(code||"").trim().toUpperCase()});
-      if(data?.ok&&data.reward_type!=="cones")giveLocalReward(data.reward_type,data.reward_amount);
+      if(data?.ok){
+        ready=true;
+        applyBalance(data);
+        if(data.reward_type!=="cones")giveLocalReward(data.reward_type,data.reward_amount);
+      }
       return data;
-    }catch(error){console.warn("Redeem code:",error);return {ok:false,reason:"network"};}
+    }catch(error){
+      console.warn("Redeem code:",error);
+      return {ok:false,reason:"network"};
+    }
   }
   function messageFor(data){
     if(data?.ok)return "🎁 Klart! Du fick "+rewardText(data.reward_type,data.reward_amount)+".";
-    const m={not_connected:"Logga in med din elevkod först.",not_found:"Den koden finns inte för din klass.",disabled:"Den koden är inte aktiv längre.",expired:"Koden har gått ut.",already_redeemed:"Du har redan löst in den här koden.",used_up:"Koden har redan använts maximalt antal gånger.",no_student_session:"Elevkopplingen behöver laddas om."};
+    const m={not_connected:"Matteparken hittar ingen aktiv elevkod ännu. Öppna Dagens uppdrag och logga in med elevkoden.",not_found:"Den koden finns inte för din klass.",disabled:"Den koden är inte aktiv längre.",expired:"Koden har gått ut.",already_redeemed:"Du har redan löst in den här koden.",used_up:"Koden har redan använts maximalt antal gånger.",no_student_session:"Elevkopplingen tappade kontakten. Försök igen om en stund.",network:"Kunde inte nå Supabase just nu. Försök igen."};
     return m[data?.reason]||"Koden kunde inte lösas in just nu.";
   }
   function bindRedeem(){
