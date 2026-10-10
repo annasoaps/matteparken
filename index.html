@@ -12362,7 +12362,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     savedAnswers.push({question:q.prompt,answer:String(value),correct_answer:q.display,correct:ok});
     $("quizAnswerInput").disabled=true;$("quizAnswerBtn").disabled=true;
     $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;$("quizFeedback").className="feedback "+(ok?"good":"bad");
-    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Visa resultat":"Nästa fråga";
+    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Vidare till självskattningen":"Nästa fråga";
   }
   function answerSharePart(){
     if(answered||!activeQuiz)return;
@@ -12380,7 +12380,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     $("quizSharePartBtn").disabled=true;
     $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;
     $("quizFeedback").className="feedback "+(ok?"good":"bad");
-    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Visa resultat":"Nästa fråga";
+    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Vidare till självskattningen":"Nästa fråga";
   }
 
   async function next(){
