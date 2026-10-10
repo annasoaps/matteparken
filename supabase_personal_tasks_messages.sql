@@ -101,7 +101,7 @@ end;
 $$;
 
 create or replace function public.teacher_delete_personal_task(p_task_id uuid)
-returns boolean language plpgsql security definer set search_path=public as $
+returns boolean language plpgsql security definer set search_path=public as $$
 declare v_class uuid;
 begin
  select class_id into v_class from public.personal_math_tasks where id=p_task_id;
@@ -111,7 +111,7 @@ begin
  delete from public.personal_math_tasks where id=p_task_id;
  return found;
 end;
-$;
+$$;
 
 create or replace function public.teacher_send_direct_message(p_student_id uuid,p_body text)
 returns jsonb language plpgsql security definer set search_path=public as $$
