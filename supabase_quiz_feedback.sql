@@ -15,12 +15,12 @@ alter table public.quiz_reviews enable row level security;
 revoke all on public.quiz_reviews from anon,authenticated;
 -- Elevens anonyma Supabase-inloggning kopplas via student_sessions.
 create or replace function public.matteparken_is_student(p_student_id uuid)
-returns boolean language sql security definer set search_path=public as $
+returns boolean language sql security definer set search_path=public as $$
  select auth.uid() is not null and exists (
   select 1 from public.student_sessions ss
   where ss.student_id=p_student_id and ss.auth_user_id=auth.uid()
  );
-$;
+$$;
 revoke all on function public.matteparken_is_student(uuid) from public;
 grant execute on function public.matteparken_is_student(uuid) to authenticated;
 
