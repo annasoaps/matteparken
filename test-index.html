@@ -2230,7 +2230,6 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 }
 #missionBoardModal.seed-tutorial-only .mission-board-grid{display:block;max-width:780px;margin:0 auto}
 #missionBoardModal.seed-tutorial-only #studentAssignmentCard,
-#missionBoardModal.seed-tutorial-only #randomAssignmentCard,
 #missionBoardModal.seed-tutorial-only .mission-side{display:none!important}
 #missionBoardModal.seed-tutorial-only .mission-paper-stack{display:block}
 #missionBoardModal.seed-tutorial-only #seedMissionCard{
@@ -12760,7 +12759,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <button class="secondary" id="missionDailyExtra" type="button">Visa parkutmaningen</button>
     </section>
 
-    <section class="mission-paper" id="randomAssignmentCard"><span class="mission-kicker">ETT UPPDRAG FÖR DIG</span><h2 id="randomMissionTitle"></h2><p id="randomMissionDescription"></p><p id="randomMissionProgress" role="status"></p><div class="progress"><div id="randomMissionFill"></div></div><button class="primary" id="startRandomMission" type="button">Starta uppdraget</button><p class="muted">Ett slumpat uppdrag varje dag. Du kan fortsätta där du slutade.</p></section>
     <section class="mission-paper" id="seedMissionCard"><h3>🌱 Hjälp ditt första frö att växa</h3><p id="missionSeedHint">Svara rätt på fem multiplikationsfrågor. Varje rätt svar hjälper fröet att växa.</p><p id="missionSeedProgress"></p><button class="primary" id="missionSeedStart" type="button">Starta första matteuppdraget</button></section>
   </div>
 
@@ -12800,24 +12798,9 @@ document.addEventListener("DOMContentLoaded", () => {
     statistics:['Statistik','openStatistics'],
     scientificNotation:['Grundpotensform','openScientificNotation']
   };
-  const randomGameIds=Object.keys(games).filter(id=>id!=='sharePart');
-  const storeKey='matteparken_randomMissions_v1';
   let returningFocus=null, dateSeen='';
   function today(){return MZ.getLocalDateKey();}
   function current(){return MZ.cloudStudent?.activeStudent?.()||null;}
-  function profile(){const s=current();return s ? s.classId+':'+s.code : 'local-park';}
-  function read(){try{const x=JSON.parse(localStorage.getItem(storeKey)||'{}');return x && typeof x==='object' && !Array.isArray(x)?x:{};}catch{return {};}}
-  function write(data){localStorage.setItem(storeKey,JSON.stringify(data));}
-  function randomMission(){
-    const all=read(),who=profile(),day=today();
-    if(!all[who] || typeof all[who]!=='object')all[who]={};
-    let m=all[who][day];
-    if(!m || !games[m.gameId]){
-      const ids=randomGameIds;
-      m=all[who][day]={gameId:ids[Math.floor(Math.random()*ids.length)],completed:0,target:10};write(all);
-    }
-    return m;
-  }
   function renderWeek(s){
     const days=$('missionWeekDays');if(!days)return;days.replaceChildren();
     const d=new Date(),start=new Date(d.getFullYear(),d.getMonth(),d.getDate());start.setDate(start.getDate()-(start.getDay()+6)%7);
@@ -12839,11 +12822,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const seedTutorial=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     $('missionBoardModal').classList.toggle('seed-tutorial-only',seedTutorial);
     const s=current(),hasDaily=Boolean(s?.assignments?.length);
-    if($('studentAssignmentIntro'))$('studentAssignmentIntro').textContent=s?(hasDaily?'Gör hela dagens uppdrag. I morgon börjar du om från början.':'Du är inloggad. Inget läraruppdrag är aktivt idag, så du får ett slumpat dagsuppdrag.'):'Logga in med klass och elevkod för att se dagens uppdrag.';
-    $('randomAssignmentCard').classList.toggle('hidden',hasDaily);
-    if(!hasDaily){const m=randomMission();$('randomMissionTitle').textContent=games[m.gameId][0];$('randomMissionDescription').textContent=`Lös ${m.target} uppgifter i ${games[m.gameId][0].toLowerCase()}.`;
-      $('randomMissionProgress').textContent=m.completed>=m.target?`✓ Klart! Du har löst ${m.target} uppgifter.`:`${m.completed} av ${m.target} uppgifter klara`;
-      $('randomMissionFill').style.width=Math.min(100,m.completed/m.target*100)+'%';$('startRandomMission').textContent=m.completed>=m.target?'Träna vidare':'Starta uppdraget';}
+    if($('studentAssignmentIntro'))$('studentAssignmentIntro').textContent=s?(hasDaily?'Gör gärna klassens uppdrag. I morgon börjar de om från början.':'Här finns dina personliga uppdrag och klassens uppdrag när läraren har lagt ut dem.'):'Logga in med klass och elevkod för att se dagens uppdrag.';
     const seed=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     $('seedMissionCard').classList.toggle('hidden',!seed);
     $('missionSeedProgress').textContent=`${MZ.state.onboarding.seedQuestCorrect} av ${MZ.config.starterSeedQuestions} rätt. ${MZ.state.onboarding.seedQuestCorrect ? 'Fortsätt, fröet växer!' : 'Din första blomma väntar på dig.'}`;
@@ -12899,14 +12878,9 @@ document.addEventListener("DOMContentLoaded", () => {
     MZ.openModal('officeModal');
     $(button)?.click();
   }
-  function record(event){
-    const s=current();if(s?.assignments?.length){render();return;}
-    const m=randomMission();if(event.detail?.gameId===m.gameId && m.completed<m.target){const all=read();all[profile()][today()].completed+=1;write(all);}render();
-  }
   MZ.missionBoard={open,render,launch};
   document.addEventListener('DOMContentLoaded',()=>{
 
-    $('startRandomMission').addEventListener('click',()=>launch(randomMission().gameId));
     $('missionOpenJournal').addEventListener('click',()=>{MZ.closeModal('missionBoardModal');$('openActivityLog').click();});
     $('journalOpenMissions').addEventListener('click',open);
     $('missionDailyExtra').addEventListener('click',()=>{MZ.closeModal('missionBoardModal');$('dailyQuestBtn').click();});
@@ -12922,7 +12896,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
     $('missionBoardModal').querySelector('[data-close]').addEventListener('click',()=>returningFocus?.focus());
-    MZ.events.addEventListener('mathquestion',record);MZ.events.addEventListener('activitychange',render);MZ.events.addEventListener('mathcomplete',render);
+    MZ.events.addEventListener('activitychange',render);MZ.events.addEventListener('mathcomplete',render);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden&&dateSeen!==today())render();});
     render();
   });
