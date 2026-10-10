@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TEST • Matteparken · Läraradmin v11</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#eef3e8;--paper:#fffdf7;--ink:#294234;--muted:#6d7d70;--line:#cfd9ca;
+  --accent:#557a5b;--accent2:#e5efe0;--warn:#8a5a2b;--good:#2f6c45;--bad:#9b3d3d;
+  --shadow:0 16px 42px rgba(45,65,45,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(#eef4ea,#f7f3e8);color:var(--ink)}
+button,input,select{font:inherit} button{cursor:pointer}.hidden{display:none!important}
+.wrap{max-width:1220px;margin:0 auto;padding:28px 18px 60px}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:22px}.brand-mark{width:54px;height:54px;border-radius:18px;background:#526f4d;color:white;display:grid;place-items:center;font-size:29px;box-shadow:var(--shadow)}
+h1,h2,h3,h4,p{margin-top:0}h1{margin-bottom:4px;font-size:clamp(25px,4vw,38px)}h2{margin-bottom:7px}.muted{color:var(--muted)}.small{font-size:13px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}
+.login-card{max-width:520px;margin:70px auto 0}
+label{display:grid;gap:7px;font-weight:750}input,select{width:100%;padding:11px 12px;border:1px solid #bac8b7;border-radius:12px;background:white;color:var(--ink)}
+input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(--accent)}
+.stack{display:grid;gap:14px}.btn{border:0;border-radius:12px;padding:10px 15px;font-weight:850}.primary{background:var(--accent);color:white}.secondary{background:#edf2e8;color:var(--ink);border:1px solid #cbd6c7}.danger{background:#f6e8e5;color:#7f3535;border:1px solid #e6c6c0}
+.feedback{min-height:22px;font-weight:750;margin-top:9px}.feedback.good{color:var(--good)}.feedback.bad{color:var(--bad)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}.top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.top-actions select{min-width:180px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;background:#e6eee2;font-weight:850}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}.wide-grid{display:grid;grid-template-columns:.85fr 1.4fr;gap:18px;margin-bottom:18px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}.section-head h2{margin-bottom:4px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .wide{grid-column:1/-1}.form-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.toggle{display:flex;align-items:center;gap:8px;font-weight:800}.toggle input{width:auto}
+.assignment-list{display:grid;gap:12px}.assignment-item{border:1px solid #d4dece;border-radius:16px;background:white;padding:15px}.assignment-item.paused{opacity:.7;background:#f5f5f1}
+.assignment-item-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.assignment-item h3{margin:0 0 5px;font-size:17px}.assignment-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.mini-pill{display:inline-flex;padding:5px 8px;border-radius:999px;background:#eef3e9;font-size:12px;font-weight:800}.assignment-buttons{display:flex;gap:7px;flex-wrap:wrap}
+.code-controls{display:grid;grid-template-columns:140px auto;gap:10px;align-items:end}.generated-codes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.code-chip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:900;letter-spacing:.08em;background:#eef3e8;border:1px solid #cbd7c6;border-radius:9px;padding:8px 10px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:660px;background:white}th,td{padding:12px 13px;border-bottom:1px solid #e6ece2;text-align:left}th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#637467;background:#f4f7f0}tbody tr{cursor:pointer}tbody tr:hover{background:#f7faf4}tbody tr.selected{background:#eaf3e5}
+.progressbar{height:8px;border-radius:999px;background:#e6ebe2;overflow:hidden;margin-top:5px}.progressbar span{display:block;height:100%;background:var(--accent)}
+.status{font-weight:850}.status.done{color:var(--good)}
+.detail{margin-top:18px}.detail-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:18px}.activity-list,.student-assignment-detail{display:grid;gap:9px}.activity-row{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;border-radius:12px;background:#f3f7ef}.activity-row span{font-weight:850}
+.student-task{padding:11px 12px;border-radius:12px;background:#f3f7ef}.student-task strong{display:block;margin-bottom:4px}.empty{padding:14px;border-radius:12px;background:#f5f5f1;color:var(--muted)}
+.callout{padding:12px 14px;border-radius:14px;background:#f0f5eb;border:1px solid #d7e1d1;color:#526257;font-size:13px;margin-bottom:13px}
+.schoolwork-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.schoolwork-list{display:grid;gap:10px;margin-top:14px}.schoolwork-item{padding:13px;border:1px solid #d4dece;border-radius:14px;background:#fff}.schoolwork-item.paused{opacity:.68}.schoolwork-item h3{margin:0 0 5px;font-size:16px}.schoolwork-meta{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.schoolwork-actions{display:flex;gap:7px;flex-wrap:wrap}.time-note{font-size:12px;color:var(--muted);margin-top:4px}
+.result-badge{display:inline-flex;padding:5px 8px;border-radius:999px;background:#edf3e8;font-size:12px;font-weight:850}
+.class-manager{display:grid;gap:10px;margin-top:16px}.class-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border:1px solid #d4dece;border-radius:14px;background:#fff}.class-row.archived{opacity:.72;background:#f5f5f1}.class-actions{display:flex;gap:7px;flex-wrap:wrap}.class-row strong{display:block}.invite-card{max-width:520px;margin:70px auto 0}
+@media(max-width:900px){.grid,.wide-grid,.detail-grid,.schoolwork-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.code-controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><div class="brand-mark">🌲</div><div><h1>Matteparken · TEST</h1><div class="muted">Läraradmin · uppdrag · läxa · läxförhör</div></div></div>
+
+  <section id="loginView" class="card login-card">
+    <h2>👩‍🏫 Logga in som lärare</h2>
+    <p class="muted">Använd ditt lärarkonto. Elevkoderna är anonyma och ligger separat från lärarinloggningen.</p>
+    <div class="stack">
+      <label>E-post<input id="email" type="email" autocomplete="username"></label>
+      <label>Lösenord<input id="password" type="password" autocomplete="current-password"></label>
+      <button class="btn primary" id="loginBtn" type="button">Logga in</button>
+    </div>
+    <div class="feedback" id="loginFeedback"></div>
+  </section>
+
+  <section id="invitePasswordView" class="card invite-card hidden">
+    <h2>🔐 Välj ditt lösenord</h2>
+    <p class="muted">Du är inloggad via lärarinbjudan. Välj ett eget lösenord innan du fortsätter till Matteparken.</p>
+    <div class="stack">
+      <label>Nytt lösenord<input id="invitePassword" type="password" autocomplete="new-password" minlength="8"></label>
+      <label>Upprepa lösenord<input id="invitePasswordAgain" type="password" autocomplete="new-password" minlength="8"></label>
+      <button class="btn primary" id="setInvitePasswordBtn" type="button">Spara lösenord</button>
+    </div>
+    <div class="feedback" id="invitePasswordFeedback"></div>
+  </section>
+
+  <main id="adminView" class="hidden">
+    <div class="topbar">
+      <div><span class="pill" id="classPill">Klass</span><div class="muted small" id="refreshText">Inte uppdaterad ännu</div></div>
+      <div class="top-actions">
+        <select id="classSelect" aria-label="Välj klass"></select>
+        <button class="btn primary" id="openTestModeBtn" type="button">🧪 Öppna testläge</button>
+        <button class="btn secondary" id="refreshBtn" type="button">↻ Uppdatera</button>
+        <button class="btn secondary" id="logoutBtn" type="button">Logga ut</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <div class="section-head"><div><h2>🏫 Klasser</h2><p class="muted">Skapa en ny klass och byt sedan klass högst upp.</p></div></div>
+        <div class="form-grid">
+          <label>Klasskod<input id="newClassCode" maxlength="20" placeholder="t.ex. 7A"></label>
+          <label>Namn, valfritt<input id="newClassName" maxlength="80" placeholder="t.ex. Matematik 7A"></label>
+          <div class="wide"><button class="btn primary" id="createClassBtn" type="button">+ Skapa klass</button></div>
+        </div>
+        <div class="feedback" id="classFeedback"></div>
+        <div class="class-manager" id="classManager"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head"><div><h2>🔑 Elevkoder</h2><p class="muted">Skapa anonyma koder till vald klass. Varje kod får ett permanent listnummer i skapelseordning.</p></div></div>
+        <div class="code-controls">
+          <label>Antal<select id="codeCount"><option>1</option><option>5</option><option selected>10</option><option>20</option><option>30</option></select></label>
+          <button class="btn primary" id="generateCodesBtn" type="button">Generera koder</button>
+        </div>
+        <div class="generated-codes" id="generatedCodes"></div>
+        <button class="btn secondary hidden" id="copyCodesBtn" type="button" style="margin-top:10px">Kopiera nummer + koder</button>
+        <div class="feedback" id="codesFeedback"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head"><div><h2>🎟️ Redeem-koder</h2><p class="muted">Skicka en kod till elever i vald klass. Varje elev kan lösa in samma kod högst en gång.</p></div></div>
+        <div class="form-grid">
+          <label>Kod<input id="redeemAdminCode" maxlength="24" placeholder="t.ex. HOSTLOV26" style="text-transform:uppercase"></label>
+          <label>Belöning
+            <select id="redeemRewardType">
+              <option value="cones">Kottar</option>
+              <option value="seedPack">Fröpåse</option>
+              <option value="decorBox">Dekorationslåda</option>
+              <option value="blindBag">Blind bag</option>
+              <option value="autumnBox">Höstlåda</option>
+            </select>
+          </label>
+          <label>Antal<input id="redeemRewardAmount" type="number" min="1" max="1000" value="50"></label>
+          <label>Max användningar, valfritt<input id="redeemMaxUses" type="number" min="1" placeholder="tomt = alla elever"></label>
+          <label class="wide">Går ut, valfritt<input id="redeemExpires" type="datetime-local"></label>
+          <div class="wide"><button class="btn primary" id="createRedeemBtn" type="button">+ Skapa redeem-kod</button></div>
+        </div>
+        <div class="feedback" id="redeemAdminFeedback"></div>
+        <div class="schoolwork-list" id="redeemCodeList"></div>
+      </section>
+    </div>
+
+    <div class="wide-grid">
+      <section class="card">
+        <div class="section-head"><div><h2 id="assignmentFormTitle">➕ Lägg till uppdrag</h2><p class="muted">Varje aktivt uppdrag blir en del av ”Dagens uppdrag” och börjar om varje dag på elevsidan.</p></div></div>
+        <div class="callout">Du kan låta samma uppdrag vara aktivt hela veckan. Elevernas dagsstatus nollställs varje morgon. <strong>Pausa</strong> döljer uppdraget för eleverna men behåller det i Admin; <strong>Ta bort</strong> raderar också uppdragets sparade elevprogress.</div>
+        <div class="form-grid">
+          <label class="wide">Matteområde
+            <select id="gameId">
+              <optgroup label="Multiplikation">
+                <option value="multiplication">Multiplikation · valfri tabell</option>
+                <option value="multiplication:1">1:ans tabell</option><option value="multiplication:2">2:ans tabell</option>
+                <option value="multiplication:3">3:ans tabell</option><option value="multiplication:4">4:ans tabell</option>
+                <option value="multiplication:5">5:ans tabell</option><option value="multiplication:6">6:ans tabell</option>
+                <option value="multiplication:7">7:ans tabell</option><option value="multiplication:8">8:ans tabell</option>
+                <option value="multiplication:9">9:ans tabell</option><option value="multiplication:10">10:ans tabell</option>
+              </optgroup>
+              <optgroup label="Övriga spel">
+                <option value="equations">Ekvationer</option>
+                <option value="pow10">× och ÷ med 10, 100, 1000</option>
+                <option value="fractionDecimal">Bråk ↔ Decimal</option>
+                <option value="fractionArithmetic">Räkna med bråk</option>
+                <option value="percentConvert">Bråk · Decimal · Procent</option>
+                <option value="sharePart">Hur stor andel?</option>
+                <option value="prefixMatch">Prefix – para ihop</option>
+                <option value="unitConvert">Enhetsomvandling</option>
+                <option value="statistics">Statistik</option>
+                <option value="scientificNotation">Grundpotensform</option>
+              </optgroup>
+            </select>
+          </label>
+          <label id="repeatCountLabel">Antal likadana uppdrag<input id="repeatCount" type="number" min="1" max="20" value="1"></label>
+          <label class="toggle"><input id="enabled" type="checkbox" checked> Aktivt · syns för elever</label>
+          <div class="wide form-actions">
+            <button class="btn primary" id="saveAssignmentBtn" type="button">+ Lägg till uppdrag</button>
+            <button class="btn secondary hidden" id="cancelEditBtn" type="button">Avbryt ändring</button>
+          </div>
+        </div>
+        <div class="feedback" id="assignmentFeedback"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head"><div><h2>📌 Dagens uppdrag</h2><p class="muted">Aktiva uppdrag visas för eleverna under ”Dagens uppdrag”. Pausade uppdrag ligger kvar här med sin historik men syns inte för eleverna.</p></div><strong id="assignmentCount">0 uppdrag</strong></div>
+        <div class="assignment-list" id="assignmentList"></div>
+      </section>
+    </div>
+
+    <div class="schoolwork-grid">
+      <section class="card">
+        <div class="section-head"><div><h2>🏠 Läxa</h2><p class="muted">Läxan öppnas först vid vald tid. Varje omgång är fortfarande ett eget uppdrag.</p></div></div>
+        <div class="callout">Hela veckoläxan ger <strong>1 blind bag totalt</strong>. Vill du ha flera matteområden i samma läxa, lägg till dem med samma rubrik, öppningstid och deadline. De samlas automatiskt till en gemensam läxa.</div>
+        <div class="form-grid">
+          <label class="wide">Rubrik<input id="homeworkTitle" value="Veckans läxa" maxlength="80"></label>
+          <label class="wide">Matteområde
+            <select id="homeworkGame">
+              <optgroup label="Multiplikation">
+                <option value="multiplication">Multiplikation · valfri tabell</option>
+                <option value="multiplication:1">1:ans tabell</option><option value="multiplication:2">2:ans tabell</option><option value="multiplication:3">3:ans tabell</option><option value="multiplication:4">4:ans tabell</option><option value="multiplication:5">5:ans tabell</option><option value="multiplication:6">6:ans tabell</option><option value="multiplication:7">7:ans tabell</option><option value="multiplication:8">8:ans tabell</option><option value="multiplication:9">9:ans tabell</option><option value="multiplication:10">10:ans tabell</option>
+              </optgroup>
+              <optgroup label="Övriga spel">
+                <option value="equations">Ekvationer</option><option value="pow10">× och ÷ med 10, 100, 1000</option><option value="fractionDecimal">Bråk ↔ Decimal</option><option value="fractionArithmetic">Räkna med bråk</option><option value="percentConvert">Bråk · Decimal · Procent</option><option value="sharePart">Hur stor andel?</option><option value="prefixMatch">Prefix – para ihop</option><option value="unitConvert">Enhetsomvandling</option><option value="statistics">Statistik</option><option value="scientificNotation">Grundpotensform</option>
+              </optgroup>
+            </select>
+          </label>
+          <label>Antal omgångar<input id="homeworkRounds" type="number" min="1" max="20" value="3"></label>
+          <label class="toggle"><input id="homeworkEnabled" type="checkbox" checked> Aktiv</label>
+          <label>Öppnar<input id="homeworkOpens" type="datetime-local"></label>
+          <label>Deadline<input id="homeworkDue" type="datetime-local"></label>
+          <div class="wide"><button class="btn primary" id="createHomeworkBtn" type="button">+ Lägg till läxa</button></div>
+        </div>
+        <div class="feedback" id="homeworkFeedback"></div>
+        <div class="schoolwork-list" id="homeworkList"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head"><div><h2>📄 Läxförhör</h2><p class="muted">Första genomförandet räknas. Resultatet sparas med tid.</p></div></div>
+        <div class="callout">Förhöret ger <strong>1 blind bag för genomförande</strong>, oavsett resultat.</div>
+        <div class="form-grid">
+          <label class="wide">Rubrik<input id="quizTitle" value="Veckans läxförhör" maxlength="80"></label>
+          <label class="wide">Matteområde
+            <select id="quizGame">
+              <optgroup label="Multiplikation">
+                <option value="multiplication">Multiplikation · blandat</option>
+                <option value="multiplication:1">1:ans tabell</option><option value="multiplication:2">2:ans tabell</option><option value="multiplication:3">3:ans tabell</option><option value="multiplication:4">4:ans tabell</option><option value="multiplication:5">5:ans tabell</option><option value="multiplication:6">6:ans tabell</option><option value="multiplication:7">7:ans tabell</option><option value="multiplication:8">8:ans tabell</option><option value="multiplication:9">9:ans tabell</option><option value="multiplication:10">10:ans tabell</option>
+              </optgroup>
+              <optgroup label="Övriga spel">
+                <option value="equations">Ekvationer</option><option value="pow10">× och ÷ med 10, 100, 1000</option><option value="fractionDecimal">Bråk ↔ Decimal</option><option value="fractionArithmetic">Räkna med bråk</option><option value="percentConvert">Bråk · Decimal · Procent</option><option value="sharePart">Hur stor andel?</option><option value="prefixMatch">Prefix</option><option value="unitConvert">Enhetsomvandling</option><option value="statistics">Statistik</option><option value="scientificNotation">Grundpotensform</option>
+              </optgroup>
+            </select>
+          </label>
+          <label>Antal frågor<input id="quizQuestions" type="number" min="5" max="20" value="10"></label>
+          <label class="toggle"><input id="quizEnabled" type="checkbox" checked> Aktivt</label>
+          <label>Öppnar<input id="quizOpens" type="datetime-local"></label>
+          <label>Deadline<input id="quizDue" type="datetime-local"></label>
+          <div class="wide"><button class="btn primary" id="createQuizBtn" type="button">+ Lägg till läxförhör</button></div>
+        </div>
+        <div class="feedback" id="quizFeedback"></div>
+        <div class="schoolwork-list" id="quizList"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="section-head"><div><h2>🌱 Elevöversikt</h2><p class="muted">Klicka på en elevkod för uppdrag och aktivitet.</p></div><strong id="studentCount">0 elever</strong></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Nr</th><th>Elevkod</th><th>Uppdrag</th><th>Läxa</th><th>Förhör</th><th>Status</th><th>Senast aktiv</th></tr></thead>
+        <tbody id="studentRows"></tbody>
+      </table></div>
+    </section>
+
+    <section class="card detail hidden" id="studentDetail">
+      <div class="section-head">
+        <div><div class="muted small">ELEVAKTIVITET</div><h2 id="detailTitle">Elev</h2><p class="muted" id="detailSubtitle"></p></div>
+        <button class="btn secondary" id="closeDetailBtn" type="button">Stäng</button>
+      </div>
+      <div class="schoolwork-grid" style="margin-bottom:18px">
+        <div><h3>🏠 Läxor</h3><div class="student-assignment-detail" id="detailHomeworks"></div></div>
+        <div><h3>📄 Läxförhör</h3><div class="student-assignment-detail" id="detailQuizzes"></div></div>
+      </div>
+      <div class="detail-grid">
+        <div><h3>Dagens uppdrag</h3><div class="student-assignment-detail" id="detailAssignments"></div></div>
+        <div><h3>Idag · enskilda rätta svar</h3><div class="activity-list" id="todayList"></div></div>
+        <div><h3>Den här veckan · enskilda rätta svar</h3><div class="activity-list" id="weekList"></div></div>
+      </div>
+    </section>
+
+    <div class="feedback" id="globalFeedback"></div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  "use strict";
+  const SUPABASE_URL="https://mjgkkwdgowvxuehiudvj.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
+  const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:"matteparken-admin-auth-v1"}
+  });
+  const $=id=>document.getElementById(id);
+
+  const gameMeta={
+    multiplication:{title:"Multiplikation",round:"En omgång = en hel multiplikationstabell (×1–×10)."},
+    equations:{title:"Ekvationer",round:"En omgång = en färdig slumpad ekvation."},
+    pow10:{title:"× och ÷ med 10, 100, 1000",round:"En omgång = 10 rätt."},
+    fractionDecimal:{title:"Bråk ↔ Decimal",round:"En omgång = hela brädet med 8 par. Brädet räknas även om eleven gjort fel på vägen."},
+    fractionArithmetic:{title:"Räkna med bråk",round:"En omgång = 3 färdiga bråkberäkningar."},
+    percentConvert:{title:"Bråk · Decimal · Procent",round:"En omgång = 6 kompletta trior."},
+    sharePart:{title:"Hur stor andel?",round:"En omgång = 10 uppgifter om delen och det hela."},
+    prefixMatch:{title:"Prefix – para ihop",round:"En omgång = 10 rätt."},
+    unitConvert:{title:"Enhetsomvandling",round:"En omgång = 10 rätt."},
+    statistics:{title:"Statistik",round:"En omgång = 10 rätt."},
+    scientificNotation:{title:"Grundpotensform",round:"En omgång = 10 rätt."}
+  };
+
+  const authUrlText=window.location.search+" "+window.location.hash;
+  const inviteFlow=/type=(invite|recovery)/i.test(authUrlText);
+  let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],quizReviews=[],students=[],progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
+  let refreshTimer=null,lastGeneratedCodes=[];
+
+  function setFeedback(id,msg="",kind=""){const el=$(id);if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
+  function localDateKey(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");return y+"-"+m+"-"+d;}
+  function weekStartKey(){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return localDateKey(d);}
+  function formatLast(value){if(!value)return "–";const d=new Date(value);if(Number.isNaN(d.getTime()))return "–";const now=new Date();return d.toDateString()===now.toDateString()?"idag "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("sv-SE",{day:"numeric",month:"short"});}
+  function progressKey(studentId,assignmentId){return studentId+":"+assignmentId;}
+  function getProgress(studentId,assignmentId){return progressMap.get(progressKey(studentId,assignmentId))||{completed:0,last_active:null,updated_at:null,completed_at:null};}
+  function progressTouchedToday(p){
+    const today=localDateKey();
+    return [p?.completed_at,p?.updated_at,p?.last_active].filter(Boolean).some(value=>{const d=new Date(value);return !Number.isNaN(d.getTime())&&localDateKey(d)===today;});
+  }
+  function assignmentDoneToday(studentId,assignmentId){const p=getProgress(studentId,assignmentId);return Number(p.completed)>=1&&progressTouchedToday(p);}
+  function toIsoOrNull(id){const v=$(id)?.value;return v?new Date(v).toISOString():null;}
+  function formatMoment(v){if(!v)return "–";const d=new Date(v);return d.toLocaleString("sv-SE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}
+  function homeworkTasks(id){return assignments.filter(a=>a.homework_id===id);}
+  function homeworkStatus(studentId,hw){
+    const tasks=homeworkTasks(hw.id),done=tasks.filter(a=>Number(getProgress(studentId,a.id).completed)>=1).length;
+    const complete=tasks.length>0&&done===tasks.length;
+    const completedAt=complete?tasks.map(a=>getProgress(studentId,a.id).completed_at).filter(Boolean).sort().at(-1)||null:null;
+    return{done,total:tasks.length,complete,completedAt,late:Boolean(complete&&hw.due_at&&completedAt&&new Date(completedAt)>new Date(hw.due_at))};
+  }
+  function homeworkGroupKey(hw){return [String(hw?.title||"").trim().toLowerCase(),hw?.opens_at||"",hw?.due_at||""].join("|");}
+  function homeworkGroups(list=homeworks){
+    const map=new Map();
+    (list||[]).forEach(hw=>{
+      const key=homeworkGroupKey(hw);
+      if(!map.has(key))map.set(key,{key,title:hw.title,opens_at:hw.opens_at,due_at:hw.due_at,homeworks:[]});
+      map.get(key).homeworks.push(hw);
+    });
+    return Array.from(map.values());
+  }
+  function homeworkGroupTasks(group){return (group?.homeworks||[]).flatMap(hw=>homeworkTasks(hw.id));}
+  function homeworkGroupStatus(studentId,group){
+    const statuses=(group?.homeworks||[]).map(hw=>homeworkStatus(studentId,hw));
+    const done=statuses.reduce((sum,x)=>sum+x.done,0),total=statuses.reduce((sum,x)=>sum+x.total,0),complete=total>0&&done===total;
+    const completedAt=complete?statuses.map(x=>x.completedAt).filter(Boolean).sort().at(-1)||null:null;
+    return{done,total,complete,completedAt,late:Boolean(complete&&group?.due_at&&completedAt&&new Date(completedAt)>new Date(group.due_at))};
+  }
+  function homeworkGroupSummary(group){
+    const counts=new Map();
+    homeworkGroupTasks(group).forEach(task=>{
+      const table=Number(task?.game_config?.table);
+      const label=task?.game_id==="multiplication"&&table>=1&&table<=10?table+":ans tabell":(gameMeta[task?.game_id]?.title||task?.title||"Matteuppgift");
+      counts.set(label,(counts.get(label)||0)+1);
+    });
+    return Array.from(counts.entries()).map(([label,count])=>label+(count>1?" × "+count:"")).join(" · ");
+  }
+  function quizAttempt(studentId,quizId){return quizAttempts.find(a=>a.student_id===studentId&&a.quiz_id===quizId)||null;}
+  function windowText(item){const parts=[];if(item.opens_at)parts.push("öppnar "+formatMoment(item.opens_at));if(item.due_at)parts.push("senast "+formatMoment(item.due_at));return parts.join(" · ")||"Ingen tidsgräns";}
+
+  function parseGameSelection(value){
+    const [gameId,part]=String(value||"").split(":");
+    const table=gameId==="multiplication"&&part?Number(part):null;
+    const meta=gameMeta[gameId]||{title:gameId,round:"En hel omgång."};
+    if(table>=1&&table<=10){
+      return {gameId,gameConfig:{table},title:"Multiplikation · "+table+":ans tabell",description:"Träna "+table+":ans tabell. En omgång = "+table+"×1 till "+table+"×10."};
+    }
+    return {gameId,gameConfig:{},title:meta.title,description:meta.round};
+  }
+  function assignmentSelection(a){
+    const table=Number(a?.game_config?.table);
+    return a?.game_id==="multiplication"&&table>=1&&table<=10?"multiplication:"+table:(a?.game_id||"scientificNotation");
+  }
+  function roundDescription(a){
+    const table=Number(a?.game_config?.table);
+    if(a?.game_id==="multiplication"&&table>=1&&table<=10)return "En omgång = hela "+table+":ans tabell, ×1–×10.";
+    return gameMeta[a?.game_id]?.round||a?.description||"En hel omgång.";
+  }
+
+  async function login(){
+    setFeedback("loginFeedback","Loggar in …");$("loginBtn").disabled=true;
+    try{const {data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;user=data.user;await enterAdmin();}
+    catch(error){console.error(error);setFeedback("loginFeedback","Kunde inte logga in. Kontrollera e-post och lösenord.","bad");}
+    finally{$("loginBtn").disabled=false;}
+  }
+  async function logout(){await sb.auth.signOut();user=null;classes=[];classId=null;assignments=[];students=[];selectedStudentId=null;if(refreshTimer)clearInterval(refreshTimer);$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden");setFeedback("loginFeedback","Utloggad.","good");}
+
+  async function loadClasses(){
+    const tc=await sb.from("teacher_classes").select("class_id");if(tc.error)throw tc.error;
+    const ids=(tc.data||[]).map(x=>x.class_id);if(!ids.length){classes=[];return;}
+    let cr=await sb.from("classes").select("id,code,name,archived").in("id",ids).order("code");
+    if(cr.error&&String(cr.error.message||"").toLowerCase().includes("archived")){
+      cr=await sb.from("classes").select("id,code,name").in("id",ids).order("code");
+      if(!cr.error)cr.data=(cr.data||[]).map(c=>({...c,archived:false}));
+    }
+    if(cr.error)throw cr.error;classes=cr.data||[];
+  }
+  function activeClasses(){return classes.filter(c=>!c.archived);}
+  function renderClassSelect(){
+    const active=activeClasses();$("classSelect").innerHTML="";
+    active.forEach(c=>{const o=document.createElement("option");o.value=c.id;o.textContent=c.code+(c.name&&c.name!==c.code?" · "+c.name:"");$("classSelect").appendChild(o);});
+    $("classSelect").disabled=!active.length;$("classSelect").value=classId||"";
+  }
+  function renderClassManager(){
+    const box=$("classManager");if(!box)return;box.innerHTML="";
+    if(!classes.length){box.innerHTML='<div class="empty">Du har inga klasser ännu. Skapa din första klass ovan.</div>';return;}
+    classes.forEach(c=>{
+      const row=document.createElement("div");row.className="class-row"+(c.archived?" archived":"");
+      const label=c.name&&c.name!==c.code?escapeHtml(c.code)+" · "+escapeHtml(c.name):escapeHtml(c.code);
+      row.innerHTML="<div><strong>"+label+"</strong><span class='muted small'>"+(c.archived?"Arkiverad":"Aktiv klass")+"</span></div><div class='class-actions'></div>";
+      const actions=row.querySelector(".class-actions");
+      if(!c.archived){
+        const rename=document.createElement("button");rename.className="btn secondary";rename.type="button";rename.textContent="✏️ Byt namn";rename.addEventListener("click",()=>renameClass(c));actions.appendChild(rename);
+        const archive=document.createElement("button");archive.className="btn secondary";archive.type="button";archive.textContent="📦 Arkivera";archive.addEventListener("click",()=>setClassArchived(c,true));actions.appendChild(archive);
+      }else{
+        const restoreBtn=document.createElement("button");restoreBtn.className="btn secondary";restoreBtn.type="button";restoreBtn.textContent="↩ Återställ";restoreBtn.addEventListener("click",()=>setClassArchived(c,false));actions.appendChild(restoreBtn);
+        const del=document.createElement("button");del.className="btn danger";del.type="button";del.textContent="Ta bort permanent";del.addEventListener("click",()=>deleteClassPermanent(c));actions.appendChild(del);
+      }
+      box.appendChild(row);
+    });
+  }
+
+  async function enterAdmin(){
+    $("loginView").classList.add("hidden");$("invitePasswordView").classList.add("hidden");$("adminView").classList.remove("hidden");setFeedback("loginFeedback","");
+    await loadClasses();
+    const active=activeClasses();
+    if(!classId||!active.some(c=>c.id===classId))classId=active[0]?.id||null;
+    renderClassSelect();renderClassManager();
+    if(!active.length){
+      $("classPill").textContent="Ingen aktiv klass";
+      setFeedback("globalFeedback","Skapa din första klass ovan. Du kan sedan lägga till elevkoder och uppdrag.","good");
+    }else{
+      await loadClassData();
+    }
+    if(refreshTimer)clearInterval(refreshTimer);
+    refreshTimer=setInterval(()=>{if(!document.hidden&&classId)loadClassData({silent:true});},20000);
+  }
+
+  async function loadClassData({silent=false}={}){
+    if(!classId)return;if(!silent)setFeedback("globalFeedback","Hämtar data …");
+    try{
+      const [aPromise,hPromise,qPromise]=[
+        sb.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,homework_id,created_at,updated_at").eq("class_id",classId).order("created_at",{ascending:true}),
+        sb.from("homeworks").select("id,class_id,title,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",classId).order("created_at",{ascending:true}),
+        sb.from("quizzes").select("id,class_id,game_id,title,game_config,question_count,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",classId).order("created_at",{ascending:true})
+      ];
+      let sRes=await sb.from("students").select("id,code,list_number,last_active,class_id").eq("class_id",classId).eq("active",true).order("list_number",{ascending:true}).order("code");
+      if(sRes.error && String(sRes.error.message||"").includes("list_number")){
+        sRes=await sb.from("students").select("id,code,last_active,class_id").eq("class_id",classId).eq("active",true).order("code");
+      }
+      const [aRes,hRes,qRes]=await Promise.all([aPromise,hPromise,qPromise]);
+      if(aRes.error)throw aRes.error;if(hRes.error)throw hRes.error;if(qRes.error)throw qRes.error;if(sRes.error)throw sRes.error;
+      assignments=aRes.data||[];homeworks=hRes.data||[];quizzes=qRes.data||[];students=sRes.data||[];
+      students.sort((a,b)=>(Number(a.list_number)||999999)-(Number(b.list_number)||999999)||String(a.code).localeCompare(String(b.code),"sv"));
+      progressMap=new Map();
+
+      const assignmentIds=assignments.map(a=>a.id);
+      if(assignmentIds.length){
+        const pRes=await sb.from("student_assignment_progress").select("student_id,assignment_id,completed,last_active,updated_at,completed_at").in("assignment_id",assignmentIds);
+        if(pRes.error)throw pRes.error;
+        (pRes.data||[]).forEach(p=>progressMap.set(progressKey(p.student_id,p.assignment_id),p));
+      }
+
+      quizAttempts=[];quizReviews=[];const studentIds=students.map(s=>s.id);
+      if(studentIds.length&&quizzes.length){
+        const qa=await sb.from("quiz_attempts").select("student_id,quiz_id,score,total,started_at,completed_at,reward_claimed_at").in("student_id",studentIds).in("quiz_id",quizzes.map(q=>q.id));
+        if(qa.error)throw qa.error;quizAttempts=qa.data||[];
+        const reviews=await sb.rpc("teacher_list_quiz_reviews",{p_class_id:classId});
+        if(!reviews.error&&Array.isArray(reviews.data))quizReviews=reviews.data;
+        else console.warn("Quiz review data unavailable until SQL installed",reviews.error);
+      }
+      activity=[];
+      if(studentIds.length){
+        const act=await sb.from("student_daily_activity").select("student_id,activity_date,activity_key,game_id,label,count,updated_at").in("student_id",studentIds).gte("activity_date",weekStartKey()).lte("activity_date",localDateKey()).order("activity_date",{ascending:false});
+        if(act.error)throw act.error;activity=act.data||[];
+      }
+      const rc=await sb.rpc("teacher_list_redeem_codes",{p_class_id:classId});
+      if(rc.error){
+        console.warn("Redeem-koder är inte aktiverade ännu:",rc.error);
+        redeemCodes=[];
+      }else redeemCodes=rc.data?.ok?(rc.data.codes||[]):[];
+      render();setFeedback("globalFeedback","");$("refreshText").textContent="Senast uppdaterad "+new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"});
+    }catch(error){console.error(error);setFeedback("globalFeedback","Kunde inte hämta lärardata. Om du nyss uppgraderat, kör den nya fleruppdrags-SQL-filen i Supabase.","bad");}
+  }
+
+  function render(){
+    const cls=classes.find(c=>c.id===classId);$("classPill").textContent=cls?"Klass "+cls.code:"Klass";
+    renderAssignments();renderHomeworks();renderQuizzes();renderRedeemCodes();renderStudents();if(selectedStudentId)renderDetail();
+  }
+
+  function redeemRewardLabel(code){
+    const n=Math.max(1,Number(code?.reward_amount)||1);
+    if(code?.reward_type==="cones")return n+" kottar";
+    if(code?.reward_type==="seedPack")return n===1?"1 fröpåse":n+" fröpåsar";
+    if(code?.reward_type==="decorBox")return n===1?"1 dekorationslåda":n+" dekorationslådor";
+    if(code?.reward_type==="blindBag")return n===1?"1 blind bag":n+" blind bags";
+    if(code?.reward_type==="autumnBox")return n===1?"1 höstlåda":n+" höstlådor";
+    return "Belöning";
+  }
+  function renderRedeemCodes(){
+    const box=$("redeemCodeList");if(!box)return;box.innerHTML="";
+    if(!redeemCodes.length){box.innerHTML='<div class="empty">Inga redeem-koder för den här klassen ännu.</div>';return;}
+    redeemCodes.forEach(code=>{
+      const item=document.createElement("div");item.className="schoolwork-item"+(code.enabled?"":" paused");
+      const expiry=code.expires_at?" · går ut "+formatMoment(code.expires_at):"";
+      const uses=Number(code.uses)||0,max=code.max_uses==null?"∞":Number(code.max_uses);
+      item.innerHTML="<h3 style='font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em'>"+escapeHtml(code.code)+"</h3><div class='time-note'>"+escapeHtml(redeemRewardLabel(code))+expiry+"</div><div class='schoolwork-meta'><span class='mini-pill'>använd "+uses+" / "+max+"</span><span class='mini-pill'>"+(code.enabled?"Aktiv":"Avstängd")+"</span></div><div class='schoolwork-actions'><button class='btn secondary redeem-toggle'>"+(code.enabled?"Stäng av":"Aktivera")+"</button></div>";
+      item.querySelector(".redeem-toggle").addEventListener("click",()=>toggleRedeemCode(code));
+      box.appendChild(item);
+    });
+  }
+
+  function renderAssignments(){
+    const normal=assignments.filter(a=>!a.homework_id);
+    $("assignmentCount").textContent=normal.length+" uppdrag";
+    const box=$("assignmentList");box.innerHTML="";
+    if(!normal.length){box.innerHTML='<div class="empty">Inga läraruppdrag ännu. Lägg till det första till vänster.</div>';return;}
+    normal.forEach(a=>{
+      const doneStudents=students.filter(s=>assignmentDoneToday(s.id,a.id)).length;
+      const item=document.createElement("div");item.className="assignment-item"+(a.enabled?"":" paused");
+      item.innerHTML='<div class="assignment-item-head"><div><h3>'+escapeHtml(a.title)+'</h3><div class="muted small">'+escapeHtml(roundDescription(a))+'</div></div><span class="mini-pill">'+(a.enabled?"Aktivt":"Pausat")+'</span></div>'+
+        '<div class="assignment-meta"><span class="mini-pill">🎯 1 hel omgång</span><span class="mini-pill">✓ '+doneStudents+' / '+students.length+' elever klara</span></div>'+
+        '<div class="assignment-buttons"><button class="btn secondary edit-assignment" type="button">Ändra</button><button class="btn secondary toggle-assignment" type="button">'+(a.enabled?"Pausa":"Aktivera")+'</button><button class="btn danger delete-assignment" type="button">Ta bort</button></div>';
+      item.querySelector(".edit-assignment").addEventListener("click",()=>beginEdit(a.id));
+      item.querySelector(".toggle-assignment").addEventListener("click",()=>toggleAssignment(a.id));
+      item.querySelector(".delete-assignment").addEventListener("click",()=>deleteAssignment(a.id));
+      box.appendChild(item);
+    });
+  }
+
+  function renderHomeworks(){
+    const box=$("homeworkList");if(!box)return;box.innerHTML="";
+    const groups=homeworkGroups();
+    if(!groups.length){box.innerHTML='<div class="empty">Ingen läxa skapad ännu.</div>';return;}
+    groups.forEach(group=>{
+      const tasks=homeworkGroupTasks(group),complete=students.filter(st=>homeworkGroupStatus(st.id,group).complete).length;
+      const allEnabled=group.homeworks.every(hw=>hw.enabled),anyEnabled=group.homeworks.some(hw=>hw.enabled);
+      const item=document.createElement("div");item.className="schoolwork-item"+(allEnabled?"":" paused");
+      const partText=group.homeworks.length>1?group.homeworks.length+" delar · ":"";
+      const stateText=allEnabled?"":anyEnabled?" · några delar pausade":" · pausad";
+      item.innerHTML="<h3>"+escapeHtml(group.title)+stateText+"</h3><div class='time-note'>"+escapeHtml(windowText(group))+"</div><div class='time-note' style='margin-top:5px'>"+escapeHtml(homeworkGroupSummary(group))+"</div><div class='schoolwork-meta'><span class='mini-pill'>"+partText+tasks.length+" omgångar</span><span class='mini-pill'>✓ "+complete+" / "+students.length+" klara</span><span class='mini-pill'>🎁 1 blind bag totalt</span></div><div class='schoolwork-actions'><button class='btn secondary hw-toggle'>"+(allEnabled?"Pausa hela":"Aktivera hela")+"</button><button class='btn danger hw-delete'>Ta bort hela</button></div>";
+      item.querySelector(".hw-toggle").addEventListener("click",()=>toggleHomeworkGroup(group));
+      item.querySelector(".hw-delete").addEventListener("click",()=>deleteHomeworkGroup(group));
+      box.appendChild(item);
+    });
+  }
+
+  function renderQuizzes(){
+    const box=$("quizList");if(!box)return;box.innerHTML="";
+    if(!quizzes.length){box.innerHTML='<div class="empty">Inget läxförhör skapat ännu.</div>';return;}
+    quizzes.forEach(q=>{
+      const attempts=quizAttempts.filter(a=>a.quiz_id===q.id),avg=attempts.length?Math.round(attempts.reduce((sum,a)=>sum+Number(a.score)/Math.max(1,Number(a.total))*100,0)/attempts.length):null;
+      const item=document.createElement("div");item.className="schoolwork-item"+(q.enabled?"":" paused");
+      item.innerHTML="<h3>"+escapeHtml(q.title)+"</h3><div class='time-note'>"+escapeHtml(windowText(q))+"</div><div class='schoolwork-meta'><span class='mini-pill'>"+q.question_count+" frågor</span><span class='mini-pill'>✓ "+attempts.length+" / "+students.length+" genomförda</span>"+(avg===null?"":"<span class='mini-pill'>snitt "+avg+" %</span>")+"<span class='mini-pill'>🎁 Blind bag</span></div><div class='schoolwork-actions'><button class='btn secondary quiz-toggle'>"+(q.enabled?"Pausa":"Aktivera")+"</button><button class='btn danger quiz-delete'>Ta bort</button></div>";
+      item.querySelector(".quiz-toggle").addEventListener("click",()=>toggleQuiz(q.id));
+      item.querySelector(".quiz-delete").addEventListener("click",()=>deleteQuiz(q.id));
+      box.appendChild(item);
+    });
+  }
+
+  function renderStudents(){
+    $("studentCount").textContent=students.length+" "+(students.length===1?"elev":"elever");
+    const tbody=$("studentRows");tbody.innerHTML="";const active=assignments.filter(a=>a.enabled&&!a.homework_id);
+    students.forEach(student=>{
+      const done=active.filter(a=>assignmentDoneToday(student.id,a.id)).length;
+      const total=active.length;const pct=total?Math.round(done/total*100):0;
+      const anyProgress=active.some(a=>progressTouchedToday(getProgress(student.id,a.id)));
+      const activeHw=homeworkGroups(homeworks.filter(h=>h.enabled));
+      const hwStatuses=activeHw.map(group=>homeworkGroupStatus(student.id,group));
+      const hwDone=hwStatuses.reduce((sum,st)=>sum+st.done,0);
+      const hwTotal=hwStatuses.reduce((sum,st)=>sum+st.total,0);
+      const hwPct=hwTotal?Math.round(hwDone/hwTotal*100):0;
+      const hwComplete=activeHw.length===0||(hwTotal>0&&hwDone===hwTotal);
+      const activeQ=quizzes.filter(q=>q.enabled),qDone=activeQ.filter(q=>quizAttempt(student.id,q.id)).length;
+      const allComplete=(!total||done===total)&&hwComplete&&qDone===activeQ.length;
+      const hasAnything=Boolean(total||activeHw.length||activeQ.length);
+      const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
+      tr.innerHTML="<td><strong>"+(Number(student.list_number)||"–")+"</strong></td>"+
+        "<td><strong>"+escapeHtml(student.code)+"</strong></td>"+
+        "<td><strong>"+done+" / "+total+"</strong><div class='progressbar'><span style='width:"+pct+"%'></span></div></td>"+
+        "<td><strong>"+hwDone+" / "+hwTotal+"</strong><div class='progressbar'><span style='width:"+hwPct+"%'></span></div></td>"+
+        "<td><strong>"+qDone+" / "+activeQ.length+"</strong></td>"+
+        "<td><span class='status "+(hasAnything&&allComplete?"done":"")+"'>"+(!hasAnything?"Inga aktiva":allComplete?"✓ Allt klart":anyProgress||hwDone||qDone?"Pågår":"Ej startad")+"</span></td>"+
+        "<td>"+formatLast(student.last_active)+"</td>";
+      tr.addEventListener("click",()=>{selectedStudentId=student.id;renderStudents();renderDetail();});
+      tbody.appendChild(tr);
+    });
+  }
+
+  function aggregateFor(studentId,scope){
+    const today=localDateKey();const rows=activity.filter(r=>r.student_id===studentId&&(scope==="today"?r.activity_date===today:true));const map=new Map();
+    rows.forEach(r=>{const old=map.get(r.activity_key)||{label:r.label,count:0};old.count+=Number(r.count)||0;old.label=r.label||old.label;map.set(r.activity_key,old);});
+    return [...map.values()].sort((a,b)=>b.count-a.count||String(a.label).localeCompare(String(b.label),"sv"));
+  }
+  function fillList(id,items){const el=$(id);el.innerHTML="";if(!items.length){el.innerHTML='<div class="empty">Ingen registrerad träning ännu.</div>';return;}items.forEach(item=>{const row=document.createElement("div");row.className="activity-row";row.innerHTML="<strong>"+escapeHtml(item.label)+"</strong><span>"+item.count+"</span>";el.appendChild(row);});}
+  function renderDetail(){
+    const student=students.find(s=>s.id===selectedStudentId);if(!student){$("studentDetail").classList.add("hidden");return;}
+    $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+(student.list_number?"nr "+student.list_number+" · ":"")+student.code;$("detailSubtitle").textContent="Dagens uppdrag räknas om från början varje dag. Aktiviteten visar samtidigt elevens enskilda rätta svar.";
+    const taskBox=$("detailAssignments");taskBox.innerHTML="";
+    const normalAssignments=assignments.filter(a=>!a.homework_id);
+    if(!normalAssignments.length)taskBox.innerHTML='<div class="empty">Inga läraruppdrag.</div>';
+    normalAssignments.forEach(a=>{const p=getProgress(student.id,a.id);const done=assignmentDoneToday(student.id,a.id);const row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(a.title)+(a.enabled?"":" · pausat")+"</strong><div>"+(done?"✓ Klar idag":"○ Inte klar idag")+" · 1 hel omgång</div><div class='progressbar'><span style='width:"+(done?100:0)+"%'></span></div>";taskBox.appendChild(row);});
+    const hwBox=$("detailHomeworks");hwBox.innerHTML="";
+    const hwGroups=homeworkGroups();
+    if(!hwGroups.length)hwBox.innerHTML='<div class="empty">Inga läxor.</div>';
+    hwGroups.forEach(group=>{const st=homeworkGroupStatus(student.id,group),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(group.title)+"</strong><div>"+escapeHtml(homeworkGroupSummary(group))+"</div><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
+    const qBox=$("detailQuizzes");qBox.innerHTML="";
+    if(!quizzes.length)qBox.innerHTML='<div class="empty">Inga läxförhör.</div>';
+    quizzes.forEach(q=>{
+      const a=quizAttempt(student.id,q.id),row=document.createElement("div");row.className="student-task";
+      row.innerHTML="<strong>"+escapeHtml(q.title)+"</strong><div>"+(a?"✓ "+a.score+" / "+a.total+" · "+formatMoment(a.completed_at):"○ Inte genomfört")+"</div>";
+      if(a){
+        const review=quizReviews.find(r=>r.quiz_id===q.id&&r.student_id===student.id);
+        const button=document.createElement("button");button.className="btn secondary";button.style.marginTop="9px";button.textContent="Visa svar och återkoppling";
+        const panel=document.createElement("div");panel.hidden=true;panel.style.cssText="padding:12px;margin-top:9px;background:white;border:1px solid #d4dece;border-radius:12px";
+        button.addEventListener("click",()=>{panel.hidden=!panel.hidden;button.textContent=panel.hidden?"Visa svar och återkoppling":"Dölj svar och återkoppling";});
+        if(Array.isArray(review?.answers)&&review.answers.length){
+          review.answers.forEach((entry,i)=>{const p=document.createElement("p");p.style.cssText="margin:0 0 10px;white-space:pre-wrap";p.textContent=(i+1)+". "+entry.question+"\nElevens svar: "+entry.answer+"\nRätt svar: "+entry.correct_answer+" "+(entry.correct?"✓":"✗");panel.appendChild(p);});
+        }else{const empty=document.createElement("p");empty.className="muted";empty.textContent="Inga detaljsvar sparade ännu. Äldre förhör har bara poäng.";panel.appendChild(empty);}
+        const label=document.createElement("label");label.textContent="Återkoppling till eleven";
+        const input=document.createElement("textarea");input.style.cssText="width:100%;min-height:90px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical";input.maxLength=1500;input.value=review?.teacher_feedback||"";label.appendChild(input);panel.appendChild(label);
+        const status=document.createElement("p");status.className="small muted";status.textContent=review?.teacher_feedback?(review.feedback_read_at?"✓ Eleven har läst återkopplingen.":"Väntar på att eleven ska läsa. "):"";
+        const send=document.createElement("button");send.className="btn primary";send.style.marginTop="9px";send.textContent="Skicka återkoppling";
+        send.addEventListener("click",async()=>{send.disabled=true;status.textContent="Skickar …";try{const result=await sb.rpc("teacher_send_quiz_feedback",{p_quiz_id:q.id,p_student_id:student.id,p_feedback:input.value});if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte spara");status.textContent="✓ Återkopplingen är skickad till anslagstavlan.";await loadClassData({silent:true});}catch(error){console.error(error);status.textContent="Kunde inte skicka. Kontrollera att supabase_quiz_feedback.sql har körts.";}finally{send.disabled=false;}});
+        panel.append(send,status);row.append(button,panel);
+      }
+      qBox.appendChild(row);
+    });
+    fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
+  }
+
+  function beginEdit(id){
+    const a=assignments.find(x=>x.id===id);if(!a)return;editingAssignmentId=id;$("assignmentFormTitle").textContent="✏️ Ändra uppdrag";$("gameId").value=assignmentSelection(a);$("enabled").checked=a.enabled!==false;$("saveAssignmentBtn").textContent="Spara ändring";$("cancelEditBtn").classList.remove("hidden");$("repeatCount").value=1;$("repeatCount").disabled=true;$("repeatCountLabel").classList.add("hidden");setFeedback("assignmentFeedback","");window.scrollTo({top:$("assignmentFormTitle").getBoundingClientRect().top+window.scrollY-30,behavior:"smooth"});
+  }
+  function cancelEdit(){editingAssignmentId=null;$("assignmentFormTitle").textContent="➕ Lägg till uppdrag";$("saveAssignmentBtn").textContent="+ Lägg till uppdrag";$("cancelEditBtn").classList.add("hidden");$("repeatCount").value=1;$("repeatCount").disabled=false;$("repeatCountLabel").classList.remove("hidden");$("enabled").checked=true;setFeedback("assignmentFeedback","");}
+
+  async function saveAssignment(){
+    if(!classId)return;const selected=parseGameSelection($("gameId").value);const enabled=$("enabled").checked;
+    const repeats=editingAssignmentId?1:Math.max(1,Math.min(20,Number($("repeatCount").value)||1));
+    $("saveAssignmentBtn").disabled=true;setFeedback("assignmentFeedback","Sparar …");
+    try{
+      if(editingAssignmentId){
+        const res=await sb.rpc("teacher_update_assignment",{
+          p_assignment_id:editingAssignmentId,p_game_id:selected.gameId,p_title:selected.title,p_description:selected.description,p_target:1,p_enabled:enabled,p_game_config:selected.gameConfig
+        });
+        if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara");
+        setFeedback("assignmentFeedback","Uppdraget är ändrat.","good");
+      }else{
+        for(let i=1;i<=repeats;i++){
+          const title=repeats>1?selected.title+" · omgång "+i:selected.title;
+          const res=await sb.rpc("teacher_create_assignment",{
+            p_class_id:classId,p_game_id:selected.gameId,p_title:title,p_description:selected.description,p_target:1,p_enabled:enabled,p_game_config:selected.gameConfig
+          });
+          if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara");
+        }
+        setFeedback("assignmentFeedback",repeats===1?"Uppdraget är tillagt.":repeats+" separata uppdrag är tillagda.","good");
+      }
+      editingAssignmentId=null;$("assignmentFormTitle").textContent="➕ Lägg till uppdrag";$("saveAssignmentBtn").textContent="+ Lägg till uppdrag";$("cancelEditBtn").classList.add("hidden");$("repeatCount").value=1;$("repeatCount").disabled=false;$("repeatCountLabel").classList.remove("hidden");$("enabled").checked=true;await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("assignmentFeedback","Kunde inte spara. Kör den nya fleruppdrags-SQL-filen i Supabase först.","bad");}
+    finally{$("saveAssignmentBtn").disabled=false;}
+  }
+  async function toggleAssignment(id){
+    const a=assignments.find(x=>x.id===id);if(!a)return;
+    const res=await sb.rpc("teacher_update_assignment",{p_assignment_id:a.id,p_game_id:a.game_id,p_title:a.title,p_description:a.description,p_target:1,p_enabled:!a.enabled,p_game_config:a.game_config||{}});
+    if(res.error||!res.data?.ok){setFeedback("globalFeedback","Kunde inte ändra uppdraget.","bad");return;}await loadClassData({silent:true});
+  }
+  async function deleteAssignment(id){
+    const a=assignments.find(x=>x.id===id);if(!a)return;
+    if(!window.confirm('Ta bort uppdraget "'+a.title+'"? Detta är permanent och elevprogress för just detta uppdrag tas också bort. Om du bara vill dölja det för eleverna, välj Pausa i stället.'))return;
+    const res=await sb.rpc("teacher_delete_assignment",{p_assignment_id:id});if(res.error||!res.data?.ok){setFeedback("globalFeedback","Kunde inte ta bort uppdraget.","bad");return;}
+    if(editingAssignmentId===id)cancelEdit();await loadClassData({silent:true});
+  }
+
+  async function createHomework(){
+    if(!classId)return;const selected=parseGameSelection($("homeworkGame").value),rounds=Math.max(1,Math.min(20,Number($("homeworkRounds").value)||1));
+    $("createHomeworkBtn").disabled=true;setFeedback("homeworkFeedback","Sparar läxa …");
+    try{
+      const res=await sb.rpc("teacher_create_homework",{p_class_id:classId,p_title:$("homeworkTitle").value.trim()||"Veckans läxa",p_game_id:selected.gameId,p_assignment_title:selected.title,p_description:selected.description,p_game_config:selected.gameConfig,p_rounds:rounds,p_opens_at:toIsoOrNull("homeworkOpens"),p_due_at:toIsoOrNull("homeworkDue"),p_enabled:$("homeworkEnabled").checked});
+      if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte skapa läxan");
+      setFeedback("homeworkFeedback","Läxan är skapad. Eleverna får en blind bag när alla omgångar är klara.","good");await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("homeworkFeedback","Kunde inte skapa läxan. Kör SQL-filen för Läxa + läxförhör först.","bad");}
+    finally{$("createHomeworkBtn").disabled=false;}
+  }
+  async function toggleHomework(id){const h=homeworks.find(x=>x.id===id);if(!h)return;const r=await sb.rpc("teacher_set_homework_enabled",{p_homework_id:id,p_enabled:!h.enabled});if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ändra läxan.","bad");return;}await loadClassData({silent:true});}
+  async function deleteHomework(id){const h=homeworks.find(x=>x.id===id);if(!h||!confirm('Ta bort läxan "'+h.title+'"?'))return;const r=await sb.rpc("teacher_delete_homework",{p_homework_id:id});if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ta bort läxan.","bad");return;}await loadClassData({silent:true});}
+  async function toggleHomeworkGroup(group){
+    if(!group?.homeworks?.length)return;
+    const next=!group.homeworks.every(hw=>hw.enabled);
+    for(const hw of group.homeworks){
+      const r=await sb.rpc("teacher_set_homework_enabled",{p_homework_id:hw.id,p_enabled:next});
+      if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ändra hela läxan.","bad");return;}
+    }
+    await loadClassData({silent:true});
+  }
+  async function deleteHomeworkGroup(group){
+    if(!group?.homeworks?.length||!confirm('Ta bort hela läxan "'+group.title+'" med alla delar?'))return;
+    for(const hw of group.homeworks){
+      const r=await sb.rpc("teacher_delete_homework",{p_homework_id:hw.id});
+      if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ta bort hela läxan.","bad");return;}
+    }
+    await loadClassData({silent:true});
+  }
+
+  async function createQuiz(){
+    if(!classId)return;const selected=parseGameSelection($("quizGame").value),questions=Math.max(5,Math.min(20,Number($("quizQuestions").value)||10));
+    $("createQuizBtn").disabled=true;setFeedback("quizFeedback","Sparar läxförhör …");
+    try{
+      const r=await sb.rpc("teacher_create_quiz",{p_class_id:classId,p_game_id:selected.gameId,p_title:$("quizTitle").value.trim()||"Veckans läxförhör",p_game_config:selected.gameConfig,p_question_count:questions,p_opens_at:toIsoOrNull("quizOpens"),p_due_at:toIsoOrNull("quizDue"),p_enabled:$("quizEnabled").checked});
+      if(r.error)throw r.error;if(!r.data?.ok)throw new Error(r.data?.reason||"Kunde inte skapa förhöret");
+      setFeedback("quizFeedback","Läxförhöret är skapat. Första genomförandet räknas.","good");await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("quizFeedback","Kunde inte skapa läxförhöret. Kör SQL-filen för Läxa + läxförhör först.","bad");}
+    finally{$("createQuizBtn").disabled=false;}
+  }
+  async function toggleQuiz(id){const q=quizzes.find(x=>x.id===id);if(!q)return;const r=await sb.rpc("teacher_set_quiz_enabled",{p_quiz_id:id,p_enabled:!q.enabled});if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ändra läxförhöret.","bad");return;}await loadClassData({silent:true});}
+  async function deleteQuiz(id){const q=quizzes.find(x=>x.id===id);if(!q||!confirm('Ta bort läxförhöret "'+q.title+'"?'))return;const r=await sb.rpc("teacher_delete_quiz",{p_quiz_id:id});if(r.error||!r.data?.ok){setFeedback("globalFeedback","Kunde inte ta bort läxförhöret.","bad");return;}await loadClassData({silent:true});}
+
+
+  async function createRedeemCode(){
+    if(!classId){setFeedback("redeemAdminFeedback","Välj eller skapa en klass först.","bad");return;}
+    const code=String($("redeemAdminCode").value||"").trim().toUpperCase().replace(/\s+/g,"");
+    const type=$("redeemRewardType").value;
+    let amount=Math.max(1,Number($("redeemRewardAmount").value)||1);
+    if(type!=="cones")amount=Math.min(amount,10);
+    const maxRaw=String($("redeemMaxUses").value||"").trim();
+    const maxUses=maxRaw?Math.max(1,Number(maxRaw)||1):null;
+    const expires=$("redeemExpires").value?new Date($("redeemExpires").value).toISOString():null;
+    if(!code){setFeedback("redeemAdminFeedback","Skriv en kod först.","bad");return;}
+    $("createRedeemBtn").disabled=true;setFeedback("redeemAdminFeedback","Skapar kod …");
+    try{
+      const r=await sb.rpc("teacher_create_redeem_code",{p_class_id:classId,p_code:code,p_reward_type:type,p_reward_amount:amount,p_max_uses:maxUses,p_expires_at:expires});
+      if(r.error)throw r.error;
+      if(!r.data?.ok){
+        const msg=r.data?.reason==="code_exists"?"Den koden finns redan.":r.data?.reason==="invalid_code"?"Använd 4–24 bokstäver, siffror, _ eller -.":"Kunde inte skapa koden.";
+        throw new Error(msg);
+      }
+      $("redeemAdminCode").value="";$("redeemMaxUses").value="";$("redeemExpires").value="";
+      setFeedback("redeemAdminFeedback","Koden "+r.data.code+" är skapad.","good");
+      await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("redeemAdminFeedback",error?.message||"Kunde inte skapa redeem-koden. Kör supabase_cones_and_redeem.sql först.","bad");}
+    finally{$("createRedeemBtn").disabled=false;}
+  }
+  async function toggleRedeemCode(code){
+    try{
+      const r=await sb.rpc("teacher_set_redeem_code_enabled",{p_code_id:code.id,p_enabled:!code.enabled});
+      if(r.error)throw r.error;
+      if(!r.data?.ok)throw new Error(r.data?.reason||"Kunde inte ändra koden.");
+      await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("redeemAdminFeedback",error?.message||"Kunde inte ändra koden.","bad");}
+  }
+  function syncRedeemAmount(){
+    const type=$("redeemRewardType").value;
+    const input=$("redeemRewardAmount");
+    if(type==="cones"){input.max="1000";if(Number(input.value)<=10)input.value="50";}
+    else{input.max="10";if(Number(input.value)>10||Number(input.value)<1)input.value="1";}
+  }
+
+  async function createClass(){
+    const code=String($("newClassCode").value||"").trim().toUpperCase(),name=String($("newClassName").value||"").trim();if(!code){setFeedback("classFeedback","Skriv en klasskod, till exempel 7A.","bad");return;}
+    $("createClassBtn").disabled=true;setFeedback("classFeedback","Skapar klass …");
+    try{const res=await sb.rpc("teacher_create_class",{p_code:code,p_name:name});if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason==="class_exists"?"Den klasskoden finns redan.":res.data?.reason||"Kunde inte skapa klass");await loadClasses();classId=res.data.class_id;renderClassSelect();renderClassManager();$("newClassCode").value="";$("newClassName").value="";selectedStudentId=null;setFeedback("classFeedback","Klassen "+res.data.code+" är skapad.","good");await loadClassData({silent:true});}
+    catch(error){console.error(error);setFeedback("classFeedback",error?.message||"Kunde inte skapa klassen.","bad");}
+    finally{$("createClassBtn").disabled=false;}
+  }
+
+  async function renameClass(c){
+    const code=prompt("Ny klasskod, till exempel 9B:",c.code||"");if(code===null)return;
+    const cleanCode=String(code).trim().toUpperCase();if(!cleanCode){setFeedback("classFeedback","Klasskoden får inte vara tom.","bad");return;}
+    const name=prompt("Namn på klassen (valfritt):",c.name||"");if(name===null)return;
+    setFeedback("classFeedback","Sparar klassnamn …");
+    const res=await sb.rpc("teacher_update_class",{p_class_id:c.id,p_code:cleanCode,p_name:String(name).trim()});
+    if(res.error||!res.data?.ok){console.error(res.error||res.data);setFeedback("classFeedback","Kunde inte byta namn. Kör SQL-filen supabase_class_management.sql i Supabase först.","bad");return;}
+    await loadClasses();renderClassSelect();renderClassManager();render();setFeedback("classFeedback","Klassen heter nu "+cleanCode+".","good");
+  }
+  async function setClassArchived(c,archived){
+    if(archived&&!confirm('Arkivera "'+c.code+'"? Klassen försvinner från den vanliga klassväljaren, men all elevdata sparas.'))return;
+    const res=await sb.rpc("teacher_set_class_archived",{p_class_id:c.id,p_archived:archived});
+    if(res.error||!res.data?.ok){console.error(res.error||res.data);setFeedback("classFeedback","Kunde inte "+(archived?"arkivera":"återställa")+" klassen. Kör SQL-filen supabase_class_management.sql i Supabase först.","bad");return;}
+    if(archived&&classId===c.id)classId=null;
+    await loadClasses();const active=activeClasses();if(!classId||!active.some(x=>x.id===classId))classId=active[0]?.id||null;
+    renderClassSelect();renderClassManager();selectedStudentId=null;
+    if(classId)await loadClassData({silent:true});else{$("classPill").textContent="Ingen aktiv klass";setFeedback("globalFeedback","Alla klasser är arkiverade. Du kan återställa en klass eller skapa en ny.","good");}
+    setFeedback("classFeedback",archived?"Klassen är arkiverad. All data finns kvar.":"Klassen är aktiv igen.","good");
+  }
+  async function deleteClassPermanent(c){
+    if(!c.archived){setFeedback("classFeedback","Arkivera klassen innan den tas bort permanent.","bad");return;}
+    const typed=prompt('Permanent borttagning kan inte ångras. Skriv klasskoden "'+c.code+'" för att fortsätta:');
+    if(String(typed||"").trim().toUpperCase()!==String(c.code||"").trim().toUpperCase())return;
+    const res=await sb.rpc("teacher_delete_class",{p_class_id:c.id});
+    if(res.error||!res.data?.ok){
+      console.error(res.error||res.data);
+      const reason=res.data?.reason;
+      setFeedback("classFeedback",reason==="class_has_data"?"Klassen innehåller data som databasen inte tillåter att radera automatiskt. Låt den vara arkiverad i stället.":"Kunde inte ta bort klassen permanent.","bad");return;
+    }
+    await loadClasses();renderClassSelect();renderClassManager();setFeedback("classFeedback","Klassen är permanent borttagen.","good");
+  }
+  async function generateCodes(){
+    if(!classId)return;const count=Math.max(1,Math.min(40,Number($("codeCount").value)||1));$("generateCodesBtn").disabled=true;setFeedback("codesFeedback","Genererar koder …");
+    try{
+      const res=await sb.rpc("teacher_generate_student_codes",{p_class_id:classId,p_count:count});if(res.error)throw res.error;if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte skapa elevkoder");
+      if(Array.isArray(res.data.students)){
+        lastGeneratedCodes=res.data.students.map(x=>({list_number:Number(x.list_number)||null,code:String(x.code||"")}));
+      }else{
+        lastGeneratedCodes=(Array.isArray(res.data.codes)?res.data.codes:[]).map(code=>({list_number:null,code:String(code)}));
+      }
+      $("generatedCodes").innerHTML="";
+      lastGeneratedCodes.forEach(item=>{const chip=document.createElement("span");chip.className="code-chip";chip.textContent=(item.list_number?item.list_number+" · ":"")+item.code;$("generatedCodes").appendChild(chip);});
+      $("copyCodesBtn").classList.toggle("hidden",!lastGeneratedCodes.length);
+      setFeedback("codesFeedback",lastGeneratedCodes.length+" nya elevkoder skapade"+(lastGeneratedCodes.some(x=>x.list_number)?" med permanenta listnummer.":". Kör listnummer-SQL för permanenta nummer."),"good");
+      await loadClassData({silent:true});
+    }
+    catch(error){console.error(error);setFeedback("codesFeedback","Kunde inte generera elevkoder.","bad");}
+    finally{$("generateCodesBtn").disabled=false;}
+  }
+  async function copyCodes(){
+    if(!lastGeneratedCodes.length)return;
+    const text=lastGeneratedCodes.map(item=>(item.list_number?item.list_number+"\t":"")+item.code).join("\n");
+    try{await navigator.clipboard.writeText(text);setFeedback("codesFeedback","Nummer och koder är kopierade.","good");}
+    catch{setFeedback("codesFeedback","Kunde inte kopiera automatiskt. Markera koderna ovan.","bad");}
+  }
+
+  function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+  function openTeacherTestMode(){
+    const url=new URL("index.html",window.location.href);
+    url.searchParams.set("teacher-test","1");
+    window.open(url.toString(),"_blank","noopener");
+  }
+  async function setInvitePassword(){
+    const p=$("invitePassword").value,p2=$("invitePasswordAgain").value;
+    if(p.length<8){setFeedback("invitePasswordFeedback","Välj minst 8 tecken.","bad");return;}
+    if(p!==p2){setFeedback("invitePasswordFeedback","Lösenorden är inte likadana.","bad");return;}
+    $("setInvitePasswordBtn").disabled=true;setFeedback("invitePasswordFeedback","Sparar …");
+    try{
+      const {data,error}=await sb.auth.updateUser({password:p});if(error)throw error;user=data.user||user;
+      history.replaceState({},document.title,location.pathname);
+      setFeedback("invitePasswordFeedback","Lösenordet är sparat.","good");await enterAdmin();
+    }catch(error){console.error(error);setFeedback("invitePasswordFeedback","Kunde inte spara lösenordet. Öppna den senaste inbjudningslänken igen och försök på nytt.","bad");}
+    finally{$("setInvitePasswordBtn").disabled=false;}
+  }
+  async function restore(){
+    const {data,error}=await sb.auth.getSession();if(error){console.error(error);return;}
+    if(data?.session?.user){
+      user=data.session.user;
+      if(inviteFlow){
+        $("loginView").classList.add("hidden");$("adminView").classList.add("hidden");$("invitePasswordView").classList.remove("hidden");return;
+      }
+      await enterAdmin();
+    }
+  }
+
+  $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("setInvitePasswordBtn").addEventListener("click",setInvitePassword);$("invitePasswordAgain").addEventListener("keydown",e=>{if(e.key==="Enter")setInvitePassword();});$("logoutBtn").addEventListener("click",logout);$("openTestModeBtn").addEventListener("click",openTeacherTestMode);$("refreshBtn").addEventListener("click",()=>loadClassData());
+  $("saveAssignmentBtn").addEventListener("click",saveAssignment);$("cancelEditBtn").addEventListener("click",cancelEdit);$("createClassBtn").addEventListener("click",createClass);$("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
+  $("generateCodesBtn").addEventListener("click",generateCodes);$("copyCodesBtn").addEventListener("click",copyCodes);$("createHomeworkBtn").addEventListener("click",createHomework);$("createQuizBtn").addEventListener("click",createQuiz);$("createRedeemBtn").addEventListener("click",createRedeemCode);$("redeemAdminCode").addEventListener("keydown",e=>{if(e.key==="Enter")createRedeemCode();});$("redeemRewardType").addEventListener("change",syncRedeemAmount);$("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;$("studentDetail").classList.add("hidden");renderStudents();});
+  $("classSelect").addEventListener("change",async()=>{classId=$("classSelect").value;selectedStudentId=null;editingAssignmentId=null;cancelEdit();await loadClassData();});
+  restore();
+})();
+</script>
+</body>
+</html>
