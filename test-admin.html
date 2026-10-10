@@ -593,6 +593,23 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         if(Array.isArray(review?.answers)&&review.answers.length){
           review.answers.forEach((entry,i)=>{const p=document.createElement("p");p.style.cssText="margin:0 0 10px;white-space:pre-wrap";p.textContent=(i+1)+". "+entry.question+"\nElevens svar: "+entry.answer+"\nRätt svar: "+entry.correct_answer+" "+(entry.correct?"✓":"✗");panel.appendChild(p);});
         }else{const empty=document.createElement("p");empty.className="muted";empty.textContent="Inga detaljsvar sparade ännu. Äldre förhör har bara poäng.";panel.appendChild(empty);}
+        // Elevens självskattning visas bredvid resultaten utan att påverka poängen.
+        const reflection=review?.self_assessment;
+        const reflectionBox=document.createElement("div");reflectionBox.style.cssText="background:#edf3e8;border:1px solid #cfdbc9;border-radius:10px;padding:12px;margin:14px 0";
+        const reflectionTitle=document.createElement("strong");reflectionTitle.textContent="🌱 Min mattevecka";reflectionBox.appendChild(reflectionTitle);
+        if(reflection && typeof reflection==="object"){
+          const confidenceLabels={more_practice:"Jag behöver mycket mer träning",unsure:"Jag känner mig fortfarande lite osäker",quite_sure:"Jag känner mig ganska säker",very_sure:"Jag känner mig mycket säker"};
+          const effortLabels={not_satisfied:"Inte så nöjd",quite_satisfied:"Ganska nöjd",satisfied:"Nöjd",very_satisfied:"Mycket nöjd"};
+          const factorLabels={understood:"Jag förstod uppgifterna bra",focus:"Jag kunde koncentrera mig",friend:"Jag fick hjälp av en kompis",teacher:"Jag fick hjälp av läraren",peace:"Jag hade bra arbetsro",sleep:"Jag var trött eller hade sovit dåligt",food:"Jag hade inte ätit ordentligt",distracted:"Jag hade svårt att koncentrera mig",noise:"Det var svårt att få arbetsro",computer:"Jag blev distraherad av datorn",difficulty:"Jag tyckte att uppgifterna var svåra"};
+          const addItem=(title,value)=>{const p=document.createElement("p");p.style.cssText="margin:9px 0;white-space:pre-wrap";const b=document.createElement("b");b.textContent=title+" ";p.append(b,document.createTextNode(value));reflectionBox.appendChild(p);};
+          addItem("Säkerhet:",confidenceLabels[reflection.confidence]||"Ej angivet");
+          addItem("Arbetsinsats:",effortLabels[reflection.effort]||"Ej angivet");
+          addItem("Det som påverkade:",Array.isArray(reflection.factors)?reflection.factors.map(x=>factorLabels[x]||"Annat").join("\n• ").replace(/^/,"• "):"Ej angivet");
+          addItem("Elevens tips till sig själv:",String(reflection.tip||""));
+        }else{
+          const empty=document.createElement("p");empty.className="small muted";empty.textContent="Ingen självskattning inskickad för det här förhöret.";reflectionBox.appendChild(empty);
+        }
+        panel.appendChild(reflectionBox);
         const label=document.createElement("label");label.textContent="Återkoppling till eleven";
         const input=document.createElement("textarea");input.style.cssText="width:100%;min-height:90px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical";input.maxLength=1500;input.value=review?.teacher_feedback||"";label.appendChild(input);panel.appendChild(label);
         const status=document.createElement("p");status.className="small muted";status.textContent=review?.teacher_feedback?(review.feedback_read_at?"✓ Eleven har läst återkopplingen.":"Väntar på att eleven ska läsa. "):"";
