@@ -244,6 +244,25 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         <div><h3>🏠 Läxor</h3><div class="student-assignment-detail" id="detailHomeworks"></div></div>
         <div><h3>📄 Läxförhör</h3><div class="student-assignment-detail" id="detailQuizzes"></div></div>
       </div>
+      <div class="schoolwork-grid" style="margin-bottom:18px">
+        <div>
+          <h3>🎯 Personliga uppdrag</h3>
+          <p class="small muted">Frivilliga uppdrag bara för den här eleven. De ligger ovanför klassens Dagens uppdrag och börjar inte om varje dag.</p>
+          <label>Matteområde <select id="personalTaskGame" style="width:100%"></select></label>
+          <label>Antal omgångar <input id="personalTaskCount" type="number" min="1" max="20" value="1" style="width:90px"></label>
+          <button class="btn primary" id="createPersonalTaskBtn" type="button">+ Ge personligt uppdrag</button>
+          <div class="feedback" id="personalTaskFeedback"></div>
+          <div class="student-assignment-detail" id="personalTaskList"></div>
+        </div>
+        <div>
+          <h3>💌 Personliga meddelanden</h3>
+          <p class="small muted">Meddelandet visas överst på elevens anslagstavla i Parkkontoret.</p>
+          <label>Återkoppling eller meddelande<textarea id="directTeacherMessage" maxlength="1200" rows="4" style="width:100%;padding:10px;border-radius:10px;border:1px solid #bac8b7;font:inherit;resize:vertical" placeholder="Skriv ett meddelande till eleven …"></textarea></label>
+          <button class="btn primary" id="sendDirectMessageBtn" type="button">Skicka meddelande</button>
+          <div class="feedback" id="directMessageFeedback"></div>
+          <div class="student-assignment-detail" id="directMessageHistory"></div>
+        </div>
+      </div>
       <div class="detail-grid">
         <div><h3>Dagens uppdrag</h3><div class="student-assignment-detail" id="detailAssignments"></div></div>
         <div><h3>Idag · enskilda rätta svar</h3><div class="activity-list" id="todayList"></div></div>
@@ -282,7 +301,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 
   const authUrlText=window.location.search+" "+window.location.hash;
   const inviteFlow=/type=(invite|recovery)/i.test(authUrlText);
-  let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],quizReviews=[],students=[],progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
+  let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],quizReviews=[],personalItems={tasks:[],messages:[]},students=[],progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
   let refreshTimer=null,lastGeneratedCodes=[];
 
   function setFeedback(id,msg="",kind=""){const el=$(id);if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
@@ -437,13 +456,22 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         (pRes.data||[]).forEach(p=>progressMap.set(progressKey(p.student_id,p.assignment_id),p));
       }
 
-      quizAttempts=[];quizReviews=[];const studentIds=students.map(s=>s.id);
+      quizAttempts=[];quizReviews=[];personalItems={tasks:[],messages:[]};const studentIds=students.map(s=>s.id);
       if(studentIds.length&&quizzes.length){
         const qa=await sb.from("quiz_attempts").select("student_id,quiz_id,score,total,started_at,completed_at,reward_claimed_at").in("student_id",studentIds).in("quiz_id",quizzes.map(q=>q.id));
         if(qa.error)throw qa.error;quizAttempts=qa.data||[];
         const reviews=await sb.rpc("teacher_list_quiz_reviews",{p_class_id:classId});
         if(!reviews.error&&Array.isArray(reviews.data))quizReviews=reviews.data;
         else console.warn("Quiz review data unavailable until SQL installed",reviews.error);
+      }
+      if(studentIds.length){
+        const personal=await sb.rpc("teacher_list_personal_items",{p_class_id:classId});
+        if(!personal.error&&personal.data){
+          personalItems={
+            tasks:Array.isArray(personal.data.tasks)?personal.data.tasks:[],
+            messages:Array.isArray(personal.data.messages)?personal.data.messages:[]
+          };
+        }else console.warn("Personal items unavailable until SQL is installed:",personal.error);
       }
       activity=[];
       if(studentIds.length){
@@ -619,7 +647,76 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       }
       qBox.appendChild(row);
     });
-    fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
+    renderPersonalDetail(student);fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
+  }
+
+
+  function renderPersonalDetail(student){
+    const taskBox=$("personalTaskList"),messageBox=$("directMessageHistory");
+    if(!taskBox||!messageBox)return;
+    taskBox.replaceChildren();messageBox.replaceChildren();
+    const tasks=(personalItems.tasks||[]).filter(a=>a.student_id===student.id);
+    if(!tasks.length){const p=document.createElement("p");p.className="muted small";p.textContent="Inga personliga uppdrag ännu.";taskBox.appendChild(p);}
+    tasks.forEach(a=>{
+      const row=document.createElement("div");row.className="student-task";
+      const label=document.createElement("strong");label.textContent=a.title;row.appendChild(label);
+      const progress=document.createElement("p");progress.className="small";progress.textContent=a.completed+" av "+a.target+" omgångar"+(Number(a.completed)>=Number(a.target)?" · ✓ Klart":a.enabled?" · Aktivt":" · Pausat");row.appendChild(progress);
+      const btn=document.createElement("button");btn.className="btn secondary";btn.type="button";btn.textContent=a.enabled?"Pausa uppdraget":"Aktivera igen";
+      btn.addEventListener("click",async()=>{
+        btn.disabled=true;
+        try{
+          const r=await sb.rpc("teacher_set_personal_task_enabled",{p_task_id:a.id,p_enabled:!a.enabled});
+          if(r.error||r.data!==true)throw r.error||new Error("Ändringen sparades inte.");
+          setFeedback("personalTaskFeedback",a.enabled?"Uppdraget pausades.":"Uppdraget aktiverades.","good");
+          await loadClassData({silent:true});
+        }catch(e){console.error(e);setFeedback("personalTaskFeedback","Kunde inte ändra uppdraget.","bad");}
+        finally{btn.disabled=false;}
+      });
+      row.appendChild(btn);taskBox.appendChild(row);
+    });
+    const messages=(personalItems.messages||[]).filter(m=>m.student_id===student.id);
+    if(!messages.length){const p=document.createElement("p");p.className="muted small";p.textContent="Inga fristående meddelanden skickade ännu.";messageBox.appendChild(p);}
+    messages.forEach(m=>{
+      const row=document.createElement("div");row.className="student-task";
+      const date=document.createElement("strong");date.textContent=formatMoment(m.created_at)+(m.read_at?" · ✓ Läst":" · ○ Oläst");
+      const body=document.createElement("p");body.style.cssText="white-space:pre-wrap;margin:5px 0";body.textContent=m.body;
+      row.append(date,body);messageBox.appendChild(row);
+    });
+  }
+
+  async function sendPersonalTask(){
+    if(!selectedStudentId)return;
+    const selection=parseGameSelection($("personalTaskGame").value);
+    const count=Number($("personalTaskCount").value);
+    if(!Number.isInteger(count)||count<1||count>20){setFeedback("personalTaskFeedback","Välj 1 till 20 omgångar.","bad");return;}
+    const button=$("createPersonalTaskBtn");button.disabled=true;
+    setFeedback("personalTaskFeedback","Sparar uppdraget …");
+    try{
+      const res=await sb.rpc("teacher_create_personal_task",{
+        p_student_id:selectedStudentId,p_game_id:selection.gameId,
+        p_title:selection.title,p_game_config:selection.gameConfig,p_target:count
+      });
+      if(res.error||res.data?.ok!==true)throw res.error||new Error(res.data?.reason);
+      setFeedback("personalTaskFeedback","Uppdraget skickades till eleven.","good");
+      await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("personalTaskFeedback","Kunde inte skicka uppdraget. Kontrollera att SQL-tillägget är installerat.","bad");}
+    finally{button.disabled=false;}
+  }
+
+  async function sendDirectMessage(){
+    if(!selectedStudentId)return;
+    const message=$("directTeacherMessage").value.trim();
+    if(!message){setFeedback("directMessageFeedback","Skriv ett meddelande först.","bad");return;}
+    const button=$("sendDirectMessageBtn");button.disabled=true;
+    setFeedback("directMessageFeedback","Skickar …");
+    try{
+      const res=await sb.rpc("teacher_send_direct_message",{p_student_id:selectedStudentId,p_body:message});
+      if(res.error||res.data?.ok!==true)throw res.error||new Error(res.data?.reason);
+      $("directTeacherMessage").value="";
+      setFeedback("directMessageFeedback","✓ Meddelandet är skickat till anslagstavlan.","good");
+      await loadClassData({silent:true});
+    }catch(error){console.error(error);setFeedback("directMessageFeedback","Kunde inte skicka meddelandet. Kontrollera SQL-tillägget.","bad");}
+    finally{button.disabled=false;}
   }
 
   function beginEdit(id){
@@ -841,7 +938,12 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
   }
 
   $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("setInvitePasswordBtn").addEventListener("click",setInvitePassword);$("invitePasswordAgain").addEventListener("keydown",e=>{if(e.key==="Enter")setInvitePassword();});$("logoutBtn").addEventListener("click",logout);$("openTestModeBtn").addEventListener("click",openTeacherTestMode);$("refreshBtn").addEventListener("click",()=>loadClassData());
-  $("saveAssignmentBtn").addEventListener("click",saveAssignment);$("cancelEditBtn").addEventListener("click",cancelEdit);$("createClassBtn").addEventListener("click",createClass);$("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
+  $("saveAssignmentBtn").addEventListener("click",saveAssignment);
+    const personalGame=$("personalTaskGame"),classGame=$("gameId");
+    personalGame.innerHTML=classGame.innerHTML;
+    personalGame.value="multiplication";
+    $("createPersonalTaskBtn").addEventListener("click",sendPersonalTask);
+    $("sendDirectMessageBtn").addEventListener("click",sendDirectMessage);$("cancelEditBtn").addEventListener("click",cancelEdit);$("createClassBtn").addEventListener("click",createClass);$("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
   $("generateCodesBtn").addEventListener("click",generateCodes);$("copyCodesBtn").addEventListener("click",copyCodes);$("createHomeworkBtn").addEventListener("click",createHomework);$("createQuizBtn").addEventListener("click",createQuiz);$("createRedeemBtn").addEventListener("click",createRedeemCode);$("redeemAdminCode").addEventListener("keydown",e=>{if(e.key==="Enter")createRedeemCode();});$("redeemRewardType").addEventListener("change",syncRedeemAmount);$("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;$("studentDetail").classList.add("hidden");renderStudents();});
   $("classSelect").addEventListener("change",async()=>{classId=$("classSelect").value;selectedStudentId=null;editingAssignmentId=null;cancelEdit();await loadClassData();});
   restore();
