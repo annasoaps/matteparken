@@ -2154,12 +2154,26 @@ button.office-fixture:focus-visible{outline:4px solid #fff4a6;outline-offset:4px
 
 
 /* v0.4.73 – Läxa + läxförhör */
+.quiz-reflection{display:grid;gap:16px;text-align:left;margin-top:10px}
+.quiz-reflection-group{border:1px solid #cfbf9c;border-radius:10px;background:#fffaf0;padding:14px}
+.quiz-reflection-group h3{font:750 17px/1.4 Georgia,serif;color:#3b513c;margin:0 0 10px}
+.quiz-reflection-group p{margin:0 0 10px;color:#656e5c;font-size:13px}
+.quiz-reflection-options{display:grid;gap:7px}
+.quiz-reflection-option{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border:1px solid #dcd0b5;background:#fffdf8;border-radius:8px;cursor:pointer;font-weight:650;font-size:14px}
+.quiz-reflection-option:has(input:checked){background:#e9f3e6;border-color:#829d78}
+.quiz-reflection-option input{width:18px;height:18px;flex:0 0 auto;margin:2px 0 0;accent-color:#496b47}
+.quiz-reflection-subhead{font-size:13px;font-weight:850;margin:12px 0 7px;color:#526a49}
+.quiz-reflection textarea{width:100%;min-height:82px;border:2px solid #b8ad8e;border-radius:9px;background:#fffdf6;color:#26352d;padding:11px;font:inherit;resize:vertical;box-sizing:border-box}
+.quiz-reflection-actions{display:flex;justify-content:flex-end;gap:12px;align-items:center;flex-wrap:wrap}
+.quiz-reflection-error{font-weight:750;color:#a04a36;min-height:20px}
+
 .student-homework-section{margin:15px 0 4px;padding-top:13px;border-top:2px dashed #c7b994}.student-homework-section h4{margin:0 0 9px;font:700 16px Georgia,serif;color:#4c4436}
 .student-homework-list{display:grid;gap:10px}.student-homework-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:2px solid #c8b78e;border-radius:8px;background:#fffaf0}.student-homework-card.done{background:#eef5e9;border-color:#9bad85}.student-homework-card.locked{opacity:.72;background:#f1eee5}.student-homework-card h5{margin:0 0 4px;font-size:15px}.homework-window{font-size:11px;color:#72766d;margin-top:5px}.homework-reward{font-size:11px;font-weight:850;color:#6a5331;margin-top:5px}
 .office-homework-quiz{position:absolute;z-index:7;left:17.2%;top:58.5%;width:13.5%;height:15.5%;border:0;background:transparent url("assets/homework_quiz_stack.webp") center/contain no-repeat;cursor:pointer;filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24));transition:transform .14s ease,filter .14s ease}
 .office-homework-quiz.has-quiz{animation:quizPaperGlow 2.2s ease-in-out infinite}.office-homework-quiz:focus-visible{outline:4px solid #fff4a6;outline-offset:3px;border-radius:10px}.office-homework-quiz:hover{transform:translateY(-3px) scale(1.025)}
 @keyframes quizPaperGlow{0%,100%{filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24))}50%{filter:drop-shadow(0 0 10px rgba(255,226,113,.95))}}
-#homeworkQuizModal{z-index:140}#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-share-part{display:none}.quiz-share-part.open{display:block}.quiz-share-part-visual{display:flex;justify-content:center;margin:4px auto 16px}.quiz-share-part-grid{display:grid;gap:3px;width:min(100%,360px)}.quiz-share-part-cell{aspect-ratio:1/1;border:1px solid #9e987f;border-radius:2px;background:#fffdf5}.quiz-share-part-cell.filled{background:#dc7449;border-color:#a95031}.quiz-share-part-answers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px;margin:0 auto}.quiz-share-part-answers label{display:flex;flex-direction:column;gap:6px;font-weight:850;text-align:center}.quiz-share-part-answers input{min-height:46px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:8px 10px;font:inherit;font-size:18px;text-align:center}.quiz-share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:5px;width:96px;margin:auto}.quiz-share-part-fraction .line{background:#405441}.quiz-share-part-percent{display:flex;align-items:center;gap:7px}.quiz-share-part-percent input{min-width:0;width:100%}.quiz-share-part-percent strong{font-size:21px}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
+#homeworkQuizModal{z-index:140}#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-share-part{display:none}.quiz-share-part.open{display:block}.quiz-share-part-visual{display:flex;justify-content:center;margin:4px auto 16px}.quiz-share-part-grid{display:grid;gap:3px;width:min(100%,360px)}.quiz-share-part-cell{aspect-ratio:1/1;border:1px solid #9e987f;border-radius:2px;background:#fffdf5}.quiz-share-part-cell.filled{background:#dc7449;border-color:#a95031}.quiz-share-part-answers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px;margin:0 auto}.quiz-share-part-answers label{display:flex;flex-direction:column;gap:6px;font-weight:850;text-align:center}.quiz-share-part-answers input{min-height:46px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:8px 10px;font:inherit;font-size:18px;text-align:center}.quiz-share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:5px;width:96px;margin:auto}.quiz-share-part-fraction .line{background:#405441}.quiz-share-part-percent{display:flex;align-items:center;gap:7px}.quiz-share-part-percent input{min-width:0;width:100%}.quiz-share-part-percent strong{font-size:21px}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}
+.quiz-result h3{font-size:25px;color:#345d3d;margin:8px 0 12px}.quiz-result p{line-height:1.5}.quiz-result-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}.quiz-result-actions .primary{font-size:16px;padding:13px 18px}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
 @media(max-width:720px){.student-homework-card,.quiz-list-item{grid-template-columns:1fr}.office-homework-quiz{left:17.2%;top:58.5%;width:13.5%;height:15.5%}.quiz-share-part-answers{grid-template-columns:1fr;max-width:210px}}
 </style>
 <style>
@@ -6764,6 +6778,28 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#seedChoices button")?.focus();
   }
 
+  async function renderQuizFeedbackNotes(){
+    const panel=document.getElementById("quizFeedbackNotes");if(!panel)return;
+    const student=MZ.cloudStudent?.activeStudent?.();panel.replaceChildren();panel.style.display="none";if(!student)return;
+    try{
+      const result=await MZ.cloudStudent.getClient().rpc("student_list_quiz_feedback");
+      if(result.error)throw result.error;
+      const entries=Array.isArray(result.data)?result.data:[];if(!entries.length)return;
+      panel.style.display="block";const heading=document.createElement("strong");heading.textContent="💌 Återkoppling från din lärare";panel.appendChild(heading);
+      entries.forEach(entry=>{
+        const note=document.createElement("details");note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
+        const title=document.createElement("summary");title.style.cursor="pointer";title.textContent=(entry.feedback_read_at?"":"● ")+entry.title;note.appendChild(title);
+        const body=document.createElement("p");body.style.whiteSpace="pre-wrap";body.textContent=entry.teacher_feedback;note.appendChild(body);
+        if(Array.isArray(entry.answers)&&entry.answers.length){
+          const review=document.createElement("details");const summary=document.createElement("summary");summary.textContent="Se mina svar";review.appendChild(summary);
+          entry.answers.forEach((a,i)=>{const p=document.createElement("p");p.style.fontSize="14px";p.textContent=(i+1)+". "+a.question+" | Mitt svar: "+a.answer+" | Rätt: "+a.correct_answer+(a.correct?" ✓":" ✗");review.appendChild(p);});note.appendChild(review);
+        }
+        note.addEventListener("toggle",async()=>{if(note.open&&!entry.feedback_read_at){const rr=await MZ.cloudStudent.getClient().rpc("student_mark_quiz_feedback_read",{p_quiz_id:entry.quiz_id});if(!rr.error&&rr.data){entry.feedback_read_at=new Date().toISOString();title.textContent=entry.title;}}});
+        panel.appendChild(note);
+      });
+    }catch(error){console.warn("Feedback could not be loaded",error);}
+  }
+  MZ.renderQuizFeedbackNotes=renderQuizFeedbackNotes;
   function renderBoardMessage(){
     syncWelcomeBoard();
     const controls = $("#boardControls");
@@ -8463,7 +8499,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       if(event.target.closest("#boardBtn, #boardModal")) return;
       if(event.target.closest(".game")){ event.preventDefault(); event.stopImmediatePropagation(); }
     }, true);
-    $("#boardBtn").addEventListener("click", () => { renderBoardMessage(); MZ.openModal("boardModal"); });
+    $("#boardBtn").addEventListener("click", () => { renderBoardMessage(); MZ.openModal("boardModal"); renderQuizFeedbackNotes(); });
     $("#boardKeyGift")?.addEventListener("click",takeWelcomeKey);
     $("#boardSeedGift")?.addEventListener("click",takeWelcomeSeedBag);
     [["#boardKeyGift",takeWelcomeKey],["#boardSeedGift",takeWelcomeSeedBag]].forEach(([selector,action])=>{
@@ -12169,7 +12205,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 (() => {
   "use strict";
   const MZ=window.Mattezoo,$=id=>document.getElementById(id);
-  let activeQuiz=null,questions=[],index=0,score=0,answered=false,startedAt=null;
+  let activeQuiz=null,questions=[],index=0,score=0,answered=false,startedAt=null,savedAnswers=[];
 
   const rand=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
   const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;};
@@ -12272,7 +12308,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 
   function renderList(){
     const list=$("homeworkQuizList"),test=$("homeworkQuizTest"),result=$("homeworkQuizResult");if(!list)return;
-    test.classList.add("hidden");result.classList.add("hidden");list.classList.remove("hidden");list.innerHTML="";
+    test.classList.add("hidden");result.classList.add("hidden");$("homeworkQuizReflection").classList.add("hidden");list.classList.remove("hidden");list.innerHTML="";
     const c=current();
     if(!c?.student){list.innerHTML='<div class="assignment-empty-cloud">Logga in med klass och elevkod på anslagstavlan först.</div>';return;}
     const qs=availableQuizzes();
@@ -12293,7 +12329,10 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 
   function startQuiz(id){
     const q=availableQuizzes().find(x=>x.id===id);if(!q||attemptFor(id)||isLocked(q))return;
-    activeQuiz=q;questions=Array.from({length:q.question_count},()=>makeQuestion(q.game_id,q.game_config||{}));index=0;score=0;answered=false;startedAt=new Date().toISOString();
+    activeQuiz=q;questions=Array.from({length:q.question_count},()=>makeQuestion(q.game_id,q.game_config||{}));index=0;score=0;answered=false;savedAnswers=[];startedAt=new Date().toISOString();
+    document.querySelectorAll('#homeworkQuizReflection input').forEach(input=>input.checked=false);
+    $("quizReflectionTip").value="";$("quizReflectionFeedback").textContent="";$("quizReflectionSubmit").disabled=false;
+    $("homeworkQuizReflection").classList.add("hidden");
     $("homeworkQuizList").classList.add("hidden");$("homeworkQuizResult").classList.add("hidden");$("homeworkQuizTest").classList.remove("hidden");$("quizTestTitle").textContent=q.title;showQuestion();
   }
 
@@ -12320,9 +12359,10 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     if(answered||!activeQuiz)return;
     const q=questions[index],value=$("quizAnswerInput").value;if(!String(value).trim())return;
     answered=true;const ok=check(q,value);if(ok)score++;
+    savedAnswers.push({question:q.prompt,answer:String(value),correct_answer:q.display,correct:ok});
     $("quizAnswerInput").disabled=true;$("quizAnswerBtn").disabled=true;
     $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;$("quizFeedback").className="feedback "+(ok?"good":"bad");
-    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Visa resultat":"Nästa fråga";
+    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Vidare till självskattningen":"Nästa fråga";
   }
   function answerSharePart(){
     if(answered||!activeQuiz)return;
@@ -12335,39 +12375,133 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     const percentOK=Math.abs(pct-q.percent)<1e-8;
     const ok=fractionOK&&decimalOK&&percentOK;
     if(ok)score++;
+    savedAnswers.push({question:q.prompt,answer:`${$("quizShareNum").value}/${$("quizShareDen").value} · ${$("quizShareDecimal").value} · ${$("quizSharePercent").value}%`,correct_answer:q.display,correct:ok});
     ["quizShareNum","quizShareDen","quizShareDecimal","quizSharePercent"].forEach(id=>$(id).disabled=true);
     $("quizSharePartBtn").disabled=true;
     $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;
     $("quizFeedback").className="feedback "+(ok?"good":"bad");
-    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Visa resultat":"Nästa fråga";
+    $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Vidare till självskattningen":"Nästa fråga";
   }
 
   async function next(){
     if(!answered)return;
     if(index<questions.length-1){index++;showQuestion();return;}
-    await finish();
+    showReflection();
   }
 
-  async function finish(){
-    $("quizNextBtn").disabled=true;
+  function showReflection(){
+    $("homeworkQuizTest").classList.add("hidden");
+    $("homeworkQuizReflection").classList.remove("hidden");
+    $("quizReflectionSubmit").disabled=false;
+    $("quizReflectionFeedback").textContent="";
+    $("homeworkQuizModal").querySelector(".modal").scrollTop=0;
+  }
+
+  function submitReflection(){
+    const confidence=document.querySelector('#homeworkQuizReflection input[name="quizConfidence"]:checked')?.value;
+    const effort=document.querySelector('#homeworkQuizReflection input[name="quizEffort"]:checked')?.value;
+    const factors=[...document.querySelectorAll('#homeworkQuizReflection input[name="quizFactor"]:checked')].map(x=>x.value);
+    const tip=$("quizReflectionTip").value.trim();
+    if(!confidence||!effort||!factors.length||!tip){
+      $("quizReflectionFeedback").textContent="Svara på alla fyra frågorna innan du lämnar in.";
+      return;
+    }
+    $("quizReflectionFeedback").textContent="";
+    finish({confidence,effort,factors,tip});
+  }
+
+  async function finish(selfAssessment){
+    const submitButton=$("quizReflectionSubmit");
+    submitButton.disabled=true;
+    $("quizReflectionFeedback").textContent="Sparar ditt läxförhör …";
     try{
       const c=MZ.cloudStudent.getClient();
-      const r=await c.rpc("submit_quiz_attempt",{p_quiz_id:activeQuiz.id,p_score:score,p_total:questions.length,p_started_at:startedAt});
-      if(r.error)throw r.error;if(r.data?.ok===false)throw new Error(r.data?.reason||"Kunde inte spara resultatet.");
+      const r=await c.rpc("submit_quiz_attempt",{
+        p_quiz_id:activeQuiz.id,p_score:score,p_total:questions.length,p_started_at:startedAt
+      });
+      if(r.error)throw r.error;
+      if(r.data?.ok===false)throw new Error(r.data?.reason||"Kunde inte spara resultatet.");
+
       const first=Boolean(r.data?.first);
-      let rewardGranted=false;
+      let answersStored=false,reflectionStored=false;
+      try{
+        const detail=await c.rpc("student_save_quiz_review",{p_quiz_id:activeQuiz.id,p_answers:savedAnswers});
+        answersStored=!detail.error&&detail.data?.ok===true;
+        if(!answersStored)console.warn("Quiz answers were not saved",detail.error||detail.data);
+      }catch(error){console.warn("Quiz answers could not be saved",error);}
+      try{
+        const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:activeQuiz.id,p_assessment:selfAssessment});
+        reflectionStored=!response.error&&response.data?.ok===true;
+        if(!reflectionStored)console.warn("Quiz self-assessment not saved",response.error||response.data);
+      }catch(error){console.warn("Quiz self-assessment could not be saved",error);}
+
+      // Visa bekräftelsen direkt när inlämningen är registrerad.
+      // Eleven ska aldrig behöva skrolla förbi det gamla formuläret för att hitta den.
+      $("quizReflectionFeedback").textContent="";
+      $("homeworkQuizTest").classList.add("hidden");
+      $("homeworkQuizReflection").classList.add("hidden");
+      $("homeworkQuizList").classList.add("hidden");
+      const result=$("homeworkQuizResult");
+      result.classList.remove("hidden");
+      const fullySaved=answersStored&&reflectionStored;
+      result.innerHTML=
+        "<h3>"+(fullySaved?"✅ Klart och inlämnat!":"✅ Läxförhöret är inlämnat")+"</h3>"+
+        "<p>Matteförhöret är sparat.</p>"+
+        "<p><strong>"+Number(r.data.score)+" av "+Number(r.data.total)+" rätt</strong></p>"+
+        (fullySaved?"<p>Din lärare kan nu se dina svar och din självskattning.</p>":"")+
+        (answersStored?"":"<p>⚠️ Dina detaljerade mattesvar kunde inte sparas för lärargranskning. Kontakta din lärare.</p>")+
+        (reflectionStored?"":"<p id='quizReflectionRetryMessage'>⚠️ Din självskattning sparades inte. Du kan försöka igen.</p><button class='secondary' id='quizReflectionRetry' type='button'>Försök spara självskattningen igen</button>")+
+        (first?"<p id='quizRewardStatus' class='muted'>🎁 Kontrollerar din blind bag …</p>":"")+
+        "<div class='quiz-result-actions'><button class='primary' id='quizCloseAfterSubmit' type='button'>Stäng och gå tillbaka till Parkkontoret</button></div>";
+
+      const modal=$("homeworkQuizModal").querySelector(".modal");
+      if(modal)modal.scrollTop=0;
+      result.querySelector("#quizCloseAfterSubmit").addEventListener("click",()=>{
+        MZ.closeModal("homeworkQuizModal");
+        MZ.office?.render?.();
+      });
+      result.querySelector("#quizCloseAfterSubmit").focus();
+
+      result.querySelector("#quizReflectionRetry")?.addEventListener("click",async()=>{
+        const retry=result.querySelector("#quizReflectionRetry");
+        retry.disabled=true;
+        try{
+          const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:activeQuiz.id,p_assessment:selfAssessment});
+          if(response.error||response.data?.ok!==true)throw response.error||new Error("Save failed");
+          retry.remove();
+          result.querySelector("#quizReflectionRetryMessage").textContent="✓ Din självskattning är också sparad.";
+        }catch(error){
+          console.warn("Quiz self-assessment retry",error);
+          retry.disabled=false;
+          result.querySelector("#quizReflectionRetryMessage").textContent="Kunde inte spara självskattningen ännu. Försök igen eller meddela läraren.";
+        }
+      });
+
+      // Belöning och uppdatering av listan får inte hålla kvar en redan sparad inlämning.
       if(first){
-        const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
-        if(reward.error)throw reward.error;
-        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);rewardGranted=true;}
-        if(rewardGranted)MZ.office?.render?.();
+        const rewardNote=result.querySelector("#quizRewardStatus");
+        void (async()=>{
+          try{
+            const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
+            if(reward.error)throw reward.error;
+            if(reward.data?.granted){
+              MZ.rewards.addBonusBlindBag(1);
+              MZ.office?.render?.();
+              rewardNote.textContent="🎁 Du fick en blind bag! Den väntar bland Överraskningar.";
+            }else rewardNote.remove();
+          }catch(error){
+            console.warn("Quiz reward status",error);
+            rewardNote.textContent="🎁 Belöningen kunde inte kontrolleras just nu.";
+          }
+        })();
       }
-      $("homeworkQuizTest").classList.add("hidden");const result=$("homeworkQuizResult");result.classList.remove("hidden");
-      result.innerHTML="<h3>Förhöret är klart</h3><p><strong>"+r.data.score+" / "+r.data.total+"</strong></p><p>Det första resultatet är sparat.</p>"+(rewardGranted?"<p>🎁 Du fick en blind bag! Den väntar bland Överraskningar.</p>":"")+"<button class='secondary' id='quizBackToList' type='button'>Till läxförhören</button>";
-      result.querySelector("#quizBackToList").addEventListener("click",async()=>{await MZ.cloudStudent.readCloudState();renderList();});
-      await MZ.cloudStudent.readCloudState();renderPaper();
+      void MZ.cloudStudent.readCloudState()
+        .then(()=>renderPaper())
+        .catch(error=>console.warn("Quiz list refresh",error));
     }catch(error){
-      console.error("Quiz submit:",error);$("quizFeedback").textContent="Kunde inte spara resultatet just nu. Försök igen."; $("quizFeedback").className="feedback bad";$("quizNextBtn").disabled=false;
+      console.error("Quiz submit:",error);
+      $("quizReflectionFeedback").textContent="Kunde inte bekräfta inlämningen. Försök igen.";
+      submitButton.disabled=false;
     }
   }
 
@@ -12378,6 +12512,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     $("quizSharePartBtn")?.addEventListener("click",answerSharePart);
     ["quizShareNum","quizShareDen","quizShareDecimal","quizSharePercent"].forEach(id=>$(id)?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!answered)answerSharePart();}));
     $("quizNextBtn")?.addEventListener("click",next);
+    $("quizReflectionSubmit")?.addEventListener("click",submitReflection);
     renderPaper();
   }
 
@@ -12438,6 +12573,47 @@ document.addEventListener("DOMContentLoaded", () => {
   <div class="feedback" id="quizFeedback" style="text-align:center;min-height:26px;margin-top:10px"></div>
   <div class="assignment-actions" style="margin-top:10px"><button class="secondary hidden" id="quizNextBtn" type="button">Nästa fråga</button></div>
 </div>
+
+<div id="homeworkQuizReflection" class="quiz-test-card hidden">
+  <div class="quiz-test-head"><strong>🌱 Min mattevecka</strong><span>Avslutning</span></div>
+  <p class="muted">Du är klar med mattefrågorna! Tänk tillbaka på din vecka. Här finns inga rätt eller fel, och svaren påverkar inte dina poäng.</p>
+  <div class="quiz-reflection">
+    <section class="quiz-reflection-group"><h3>1. Hur säker känner du dig på veckans arbetsområde?</h3><div class="quiz-reflection-options">
+    <label class="quiz-reflection-option"><input type="radio" name="quizConfidence" value="more_practice"><span>Jag behöver mycket mer träning</span></label>
+<label class="quiz-reflection-option"><input type="radio" name="quizConfidence" value="unsure"><span>Jag känner mig fortfarande lite osäker</span></label>
+<label class="quiz-reflection-option"><input type="radio" name="quizConfidence" value="quite_sure"><span>Jag känner mig ganska säker</span></label>
+<label class="quiz-reflection-option"><input type="radio" name="quizConfidence" value="very_sure"><span>Jag känner mig mycket säker</span></label>
+    </div></section>
+    <section class="quiz-reflection-group"><h3>2. Hur nöjd är du med din arbetsinsats på mattelektionerna den här veckan?</h3><div class="quiz-reflection-options">
+    <label class="quiz-reflection-option"><input type="radio" name="quizEffort" value="not_satisfied"><span>Inte så nöjd</span></label>
+<label class="quiz-reflection-option"><input type="radio" name="quizEffort" value="quite_satisfied"><span>Ganska nöjd</span></label>
+<label class="quiz-reflection-option"><input type="radio" name="quizEffort" value="satisfied"><span>Nöjd</span></label>
+<label class="quiz-reflection-option"><input type="radio" name="quizEffort" value="very_satisfied"><span>Mycket nöjd</span></label>
+    </div></section>
+    <section class="quiz-reflection-group"><h3>3. Vad påverkade ditt arbete i matematik den här veckan?</h3>
+      <p>Välj gärna flera, både sådant som hjälpte och sådant som gjorde det svårare.</p>
+      <div class="quiz-reflection-subhead">☀️ Det här hjälpte mig</div><div class="quiz-reflection-options">
+      <label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="understood"><span>Jag förstod uppgifterna bra</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="focus"><span>Jag kunde koncentrera mig</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="friend"><span>Jag fick hjälp av en kompis</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="teacher"><span>Jag fick hjälp av läraren</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="peace"><span>Jag hade bra arbetsro</span></label>
+      </div><div class="quiz-reflection-subhead">☁️ Det här gjorde det svårare</div><div class="quiz-reflection-options">
+      <label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="sleep"><span>Jag var trött eller hade sovit dåligt</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="food"><span>Jag hade inte ätit ordentligt</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="distracted"><span>Jag hade svårt att koncentrera mig</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="noise"><span>Det var svårt att få arbetsro</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="computer"><span>Jag blev distraherad av datorn (spel, Youtube m.m.)</span></label>
+<label class="quiz-reflection-option"><input type="checkbox" name="quizFactor" value="difficulty"><span>Jag tyckte att uppgifterna var svåra</span></label>
+      </div>
+    </section>
+    <section class="quiz-reflection-group"><h3>4. Ge dig själv ett tips inför nästa vecka. Vad skulle kunna göra din mattevecka ännu bättre?</h3>
+      <textarea id="quizReflectionTip" maxlength="300" placeholder="Nästa vecka ska jag försöka att..." aria-label="Mitt tips till mig själv"></textarea>
+    </section>
+  </div>
+  <p class="quiz-reflection-error" id="quizReflectionFeedback" role="status"></p>
+  <div class="quiz-reflection-actions"><button class="primary" type="button" id="quizReflectionSubmit">Lämna in läxförhöret</button></div>
+</div>
 <div id="homeworkQuizResult" class="quiz-result hidden"></div>
 </section>
 </div>
@@ -12446,6 +12622,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <section class="modal mission-noticeboard" role="dialog" aria-modal="true" aria-labelledby="missionBoardTitle" tabindex="-1">
 <button class="close" data-close="missionBoardModal" aria-label="Stäng dagens uppdrag">×</button>
 <div class="board-plaque" id="missionBoardTitle">DAGENS UPPDRAG<span>MATTEPARKEN · PARKKONTORET</span></div>
+<div id="quizFeedbackNotes" style="display:none;margin:12px 0 18px;padding:14px;background:#fff4d8;border:3px solid #a67e50;border-radius:8px"></div>
 <div class="mission-board-grid">
   <div class="mission-paper-stack">
     <section class="card assignment-card" id="studentAssignmentCard">
@@ -12576,10 +12753,12 @@ document.addEventListener("DOMContentLoaded", () => {
     $('missionSeedStart').textContent=MZ.state.onboarding.seedQuestCorrect ? 'Fortsätt matteuppdraget' : 'Starta första matteuppdraget';
     if(!seedTutorial) renderWeek(s);
     dateSeen=today();
+    if($('missionBoardModal').classList.contains('open')) MZ.renderQuizFeedbackNotes?.();
   }
   function open(){
     if(!MZ.state.onboarding.bagOpened)return;
     returningFocus=document.activeElement;render();MZ.openModal('missionBoardModal');
+    MZ.renderQuizFeedbackNotes?.();
     const tutorialSeed=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     const panel=$('missionBoardModal').querySelector('.mission-noticeboard');
     panel.scrollTop=0;

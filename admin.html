@@ -282,7 +282,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 
   const authUrlText=window.location.search+" "+window.location.hash;
   const inviteFlow=/type=(invite|recovery)/i.test(authUrlText);
-  let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],students=[],progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
+  let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],quizReviews=[],students=[],progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
   let refreshTimer=null,lastGeneratedCodes=[];
 
   function setFeedback(id,msg="",kind=""){const el=$(id);if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
@@ -437,10 +437,13 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         (pRes.data||[]).forEach(p=>progressMap.set(progressKey(p.student_id,p.assignment_id),p));
       }
 
-      quizAttempts=[];const studentIds=students.map(s=>s.id);
+      quizAttempts=[];quizReviews=[];const studentIds=students.map(s=>s.id);
       if(studentIds.length&&quizzes.length){
         const qa=await sb.from("quiz_attempts").select("student_id,quiz_id,score,total,started_at,completed_at,reward_claimed_at").in("student_id",studentIds).in("quiz_id",quizzes.map(q=>q.id));
         if(qa.error)throw qa.error;quizAttempts=qa.data||[];
+        const reviews=await sb.rpc("teacher_list_quiz_reviews",{p_class_id:classId});
+        if(!reviews.error&&Array.isArray(reviews.data))quizReviews=reviews.data;
+        else console.warn("Quiz review data unavailable until SQL installed",reviews.error);
       }
       activity=[];
       if(studentIds.length){
@@ -579,7 +582,43 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     hwGroups.forEach(group=>{const st=homeworkGroupStatus(student.id,group),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(group.title)+"</strong><div>"+escapeHtml(homeworkGroupSummary(group))+"</div><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
     const qBox=$("detailQuizzes");qBox.innerHTML="";
     if(!quizzes.length)qBox.innerHTML='<div class="empty">Inga läxförhör.</div>';
-    quizzes.forEach(q=>{const a=quizAttempt(student.id,q.id),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(q.title)+"</strong><div>"+(a?"✓ "+a.score+" / "+a.total+" · "+formatMoment(a.completed_at):"○ Inte genomfört")+"</div>";qBox.appendChild(row);});
+    quizzes.forEach(q=>{
+      const a=quizAttempt(student.id,q.id),row=document.createElement("div");row.className="student-task";
+      row.innerHTML="<strong>"+escapeHtml(q.title)+"</strong><div>"+(a?"✓ "+a.score+" / "+a.total+" · "+formatMoment(a.completed_at):"○ Inte genomfört")+"</div>";
+      if(a){
+        const review=quizReviews.find(r=>r.quiz_id===q.id&&r.student_id===student.id);
+        const button=document.createElement("button");button.className="btn secondary";button.style.marginTop="9px";button.textContent="Visa svar och återkoppling";
+        const panel=document.createElement("div");panel.hidden=true;panel.style.cssText="padding:12px;margin-top:9px;background:white;border:1px solid #d4dece;border-radius:12px";
+        button.addEventListener("click",()=>{panel.hidden=!panel.hidden;button.textContent=panel.hidden?"Visa svar och återkoppling":"Dölj svar och återkoppling";});
+        if(Array.isArray(review?.answers)&&review.answers.length){
+          review.answers.forEach((entry,i)=>{const p=document.createElement("p");p.style.cssText="margin:0 0 10px;white-space:pre-wrap";p.textContent=(i+1)+". "+entry.question+"\nElevens svar: "+entry.answer+"\nRätt svar: "+entry.correct_answer+" "+(entry.correct?"✓":"✗");panel.appendChild(p);});
+        }else{const empty=document.createElement("p");empty.className="muted";empty.textContent="Inga detaljsvar sparade ännu. Äldre förhör har bara poäng.";panel.appendChild(empty);}
+        // Elevens självskattning visas bredvid resultaten utan att påverka poängen.
+        const reflection=review?.self_assessment;
+        const reflectionBox=document.createElement("div");reflectionBox.style.cssText="background:#edf3e8;border:1px solid #cfdbc9;border-radius:10px;padding:12px;margin:14px 0";
+        const reflectionTitle=document.createElement("strong");reflectionTitle.textContent="🌱 Min mattevecka";reflectionBox.appendChild(reflectionTitle);
+        if(reflection && typeof reflection==="object"){
+          const confidenceLabels={more_practice:"Jag behöver mycket mer träning",unsure:"Jag känner mig fortfarande lite osäker",quite_sure:"Jag känner mig ganska säker",very_sure:"Jag känner mig mycket säker"};
+          const effortLabels={not_satisfied:"Inte så nöjd",quite_satisfied:"Ganska nöjd",satisfied:"Nöjd",very_satisfied:"Mycket nöjd"};
+          const factorLabels={understood:"Jag förstod uppgifterna bra",focus:"Jag kunde koncentrera mig",friend:"Jag fick hjälp av en kompis",teacher:"Jag fick hjälp av läraren",peace:"Jag hade bra arbetsro",sleep:"Jag var trött eller hade sovit dåligt",food:"Jag hade inte ätit ordentligt",distracted:"Jag hade svårt att koncentrera mig",noise:"Det var svårt att få arbetsro",computer:"Jag blev distraherad av datorn",difficulty:"Jag tyckte att uppgifterna var svåra"};
+          const addItem=(title,value)=>{const p=document.createElement("p");p.style.cssText="margin:9px 0;white-space:pre-wrap";const b=document.createElement("b");b.textContent=title+" ";p.append(b,document.createTextNode(value));reflectionBox.appendChild(p);};
+          addItem("Säkerhet:",confidenceLabels[reflection.confidence]||"Ej angivet");
+          addItem("Arbetsinsats:",effortLabels[reflection.effort]||"Ej angivet");
+          addItem("Det som påverkade:",Array.isArray(reflection.factors)?reflection.factors.map(x=>factorLabels[x]||"Annat").join("\n• ").replace(/^/,"• "):"Ej angivet");
+          addItem("Elevens tips till sig själv:",String(reflection.tip||""));
+        }else{
+          const empty=document.createElement("p");empty.className="small muted";empty.textContent="Ingen självskattning inskickad för det här förhöret.";reflectionBox.appendChild(empty);
+        }
+        panel.appendChild(reflectionBox);
+        const label=document.createElement("label");label.textContent="Återkoppling till eleven";
+        const input=document.createElement("textarea");input.style.cssText="width:100%;min-height:90px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical";input.maxLength=1500;input.value=review?.teacher_feedback||"";label.appendChild(input);panel.appendChild(label);
+        const status=document.createElement("p");status.className="small muted";status.textContent=review?.teacher_feedback?(review.feedback_read_at?"✓ Eleven har läst återkopplingen.":"Väntar på att eleven ska läsa. "):"";
+        const send=document.createElement("button");send.className="btn primary";send.style.marginTop="9px";send.textContent="Skicka återkoppling";
+        send.addEventListener("click",async()=>{send.disabled=true;status.textContent="Skickar …";try{const result=await sb.rpc("teacher_send_quiz_feedback",{p_quiz_id:q.id,p_student_id:student.id,p_feedback:input.value});if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte spara");status.textContent="✓ Återkopplingen är skickad till anslagstavlan.";await loadClassData({silent:true});}catch(error){console.error(error);status.textContent="Kunde inte skicka. Kontrollera att supabase_quiz_feedback.sql har körts.";}finally{send.disabled=false;}});
+        panel.append(send,status);row.append(button,panel);
+      }
+      qBox.appendChild(row);
+    });
     fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
   }
 
