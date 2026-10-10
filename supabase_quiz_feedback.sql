@@ -13,17 +13,14 @@ create table if not exists public.quiz_reviews (
 );
 alter table public.quiz_reviews enable row level security;
 revoke all on public.quiz_reviews from anon,authenticated;
--- Anpassar sig till kolumnnamnet som används för anonym elev-inloggning.
+-- Elevens anonyma Supabase-inloggning kopplas via student_sessions.
 create or replace function public.matteparken_is_student(p_student_id uuid)
-returns boolean language sql security definer set search_path=public as $$
- select exists (
-  select 1 from public.students s where s.id=p_student_id and
-   (to_jsonb(s)->>'auth_user_id'=auth.uid()::text or
-    to_jsonb(s)->>'user_id'=auth.uid()::text or
-    to_jsonb(s)->>'claimed_by'=auth.uid()::text or
-    to_jsonb(s)->>'owner_id'=auth.uid()::text)
+returns boolean language sql security definer set search_path=public as $
+ select auth.uid() is not null and exists (
+  select 1 from public.student_sessions ss
+  where ss.student_id=p_student_id and ss.auth_user_id=auth.uid()
  );
-$$;
+$;
 revoke all on function public.matteparken_is_student(uuid) from public;
 grant execute on function public.matteparken_is_student(uuid) to authenticated;
 
