@@ -586,7 +586,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         "<td><strong>"+qDone+" / "+activeQ.length+"</strong></td>"+
         "<td><span class='status "+(hasAnything&&allComplete?"done":"")+"'>"+(!hasAnything?"Inga aktiva":allComplete?"✓ Allt klart":anyProgress||hwDone||qDone?"Pågår":"Ej startad")+"</span></td>"+
         "<td>"+formatLast(student.last_active)+"</td>";
-      tr.addEventListener("click",()=>{selectedStudentId=student.id;renderStudents();renderDetail();});
+      tr.addEventListener("click",()=>{if(selectedStudentId!==student.id){$("directTeacherMessage").value="";setFeedback("directMessageFeedback","");setFeedback("personalTaskFeedback","");}selectedStudentId=student.id;renderStudents();renderDetail();});
       tbody.appendChild(tr);
     });
   }
@@ -672,7 +672,20 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         }catch(e){console.error(e);setFeedback("personalTaskFeedback","Kunde inte ändra uppdraget.","bad");}
         finally{btn.disabled=false;}
       });
-      row.appendChild(btn);taskBox.appendChild(row);
+      row.appendChild(btn);
+      const remove=document.createElement("button");remove.type="button";remove.className="btn danger";remove.style.marginLeft="8px";remove.textContent="Ta bort";
+      remove.addEventListener("click",async()=>{
+        if(!window.confirm('Ta bort det personliga uppdraget "'+a.title+'"? Elevens framsteg för just detta uppdrag tas också bort.'))return;
+        remove.disabled=true;
+        try{
+          const res=await sb.rpc("teacher_delete_personal_task",{p_task_id:a.id});
+          if(res.error||res.data!==true)throw res.error||new Error("Kunde inte radera");
+          setFeedback("personalTaskFeedback","Det personliga uppdraget är borttaget.","good");
+          await loadClassData({silent:true});
+        }catch(error){console.error(error);setFeedback("personalTaskFeedback","Det gick inte att ta bort uppdraget.","bad");}
+        finally{remove.disabled=false;}
+      });
+      row.appendChild(remove);taskBox.appendChild(row);
     });
     const messages=(personalItems.messages||[]).filter(m=>m.student_id===student.id);
     if(!messages.length){const p=document.createElement("p");p.className="muted small";p.textContent="Inga fristående meddelanden skickade ännu.";messageBox.appendChild(p);}
