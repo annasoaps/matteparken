@@ -12883,7 +12883,10 @@ document.addEventListener("DOMContentLoaded", () => {
     $('missionSeedStart').textContent=MZ.state.onboarding.seedQuestCorrect ? 'Fortsätt matteuppdraget' : 'Starta första matteuppdraget';
     if(!seedTutorial) renderWeek(s);
     dateSeen=today();
-    if($('missionBoardModal').classList.contains('open')) MZ.renderQuizFeedbackNotes?.();
+    if($('missionBoardModal').classList.contains('open')){
+      MZ.renderQuizFeedbackNotes?.();
+      MZ.renderDirectTeacherNotes?.();
+    }
   }
   function open(){
     if(!MZ.state.onboarding.bagOpened)return;
