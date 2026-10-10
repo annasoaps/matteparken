@@ -2472,7 +2472,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   <div class="modal-backdrop" id="boardModal">
     <section class="modal noticeboard" role="dialog" aria-modal="true" aria-labelledby="boardHeadline">
       <button class="close" data-close="boardModal" aria-label="Stäng anslagstavlan">×</button>
-      <div class="board-plaque">MATTEPARKEN <span>• Anslagstavlan •</span></div><div class="board-layout">
+      <div class="board-plaque">MATTEPARKEN <span>• Anslagstavlan •</span></div><div id="quizFeedbackNotes" style="display:none;margin:12px 0 18px;padding:14px;background:#fff4d8;border:3px solid #a67e50;border-radius:8px"></div><div class="board-layout">
       <div class="paper-note">
         <h2 id="boardHeadline">Någon har sett spår i den västra skogen.</h2>
         <div id="boardBody" style="margin-top:14px">De är små och leder in mellan träden. Kanske trivs någon ny i parken?</div>
@@ -6764,6 +6764,27 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#seedChoices button")?.focus();
   }
 
+  async function renderQuizFeedbackNotes(){
+    const panel=document.getElementById("quizFeedbackNotes");if(!panel)return;
+    const student=MZ.cloudStudent?.activeStudent?.();panel.replaceChildren();panel.style.display="none";if(!student)return;
+    try{
+      const result=await MZ.cloudStudent.getClient().rpc("student_list_quiz_feedback");
+      if(result.error)throw result.error;
+      const entries=Array.isArray(result.data)?result.data:[];if(!entries.length)return;
+      panel.style.display="block";const heading=document.createElement("strong");heading.textContent="💌 Återkoppling från din lärare";panel.appendChild(heading);
+      entries.forEach(entry=>{
+        const note=document.createElement("details");note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
+        const title=document.createElement("summary");title.style.cursor="pointer";title.textContent=(entry.feedback_read_at?"":"● ")+entry.title;note.appendChild(title);
+        const body=document.createElement("p");body.style.whiteSpace="pre-wrap";body.textContent=entry.teacher_feedback;note.appendChild(body);
+        if(Array.isArray(entry.answers)&&entry.answers.length){
+          const review=document.createElement("details");const summary=document.createElement("summary");summary.textContent="Se mina svar";review.appendChild(summary);
+          entry.answers.forEach((a,i)=>{const p=document.createElement("p");p.style.fontSize="14px";p.textContent=(i+1)+". "+a.question+" | Mitt svar: "+a.answer+" | Rätt: "+a.correct_answer+(a.correct?" ✓":" ✗");review.appendChild(p);});note.appendChild(review);
+        }
+        note.addEventListener("toggle",async()=>{if(note.open&&!entry.feedback_read_at){const rr=await MZ.cloudStudent.getClient().rpc("student_mark_quiz_feedback_read",{p_quiz_id:entry.quiz_id});if(!rr.error&&rr.data){entry.feedback_read_at=new Date().toISOString();title.textContent=entry.title;}}});
+        panel.appendChild(note);
+      });
+    }catch(error){console.warn("Feedback could not be loaded",error);}
+  }
   function renderBoardMessage(){
     syncWelcomeBoard();
     const controls = $("#boardControls");
@@ -8463,7 +8484,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       if(event.target.closest("#boardBtn, #boardModal")) return;
       if(event.target.closest(".game")){ event.preventDefault(); event.stopImmediatePropagation(); }
     }, true);
-    $("#boardBtn").addEventListener("click", () => { renderBoardMessage(); MZ.openModal("boardModal"); });
+    $("#boardBtn").addEventListener("click", () => { renderBoardMessage(); MZ.openModal("boardModal"); renderQuizFeedbackNotes(); });
     $("#boardKeyGift")?.addEventListener("click",takeWelcomeKey);
     $("#boardSeedGift")?.addEventListener("click",takeWelcomeSeedBag);
     [["#boardKeyGift",takeWelcomeKey],["#boardSeedGift",takeWelcomeSeedBag]].forEach(([selector,action])=>{
@@ -12169,7 +12190,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 (() => {
   "use strict";
   const MZ=window.Mattezoo,$=id=>document.getElementById(id);
-  let activeQuiz=null,questions=[],index=0,score=0,answered=false,startedAt=null;
+  let activeQuiz=null,questions=[],index=0,score=0,answered=false,startedAt=null,savedAnswers=[];
 
   const rand=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
   const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;};
@@ -12293,7 +12314,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 
   function startQuiz(id){
     const q=availableQuizzes().find(x=>x.id===id);if(!q||attemptFor(id)||isLocked(q))return;
-    activeQuiz=q;questions=Array.from({length:q.question_count},()=>makeQuestion(q.game_id,q.game_config||{}));index=0;score=0;answered=false;startedAt=new Date().toISOString();
+    activeQuiz=q;questions=Array.from({length:q.question_count},()=>makeQuestion(q.game_id,q.game_config||{}));index=0;score=0;answered=false;savedAnswers=[];startedAt=new Date().toISOString();
     $("homeworkQuizList").classList.add("hidden");$("homeworkQuizResult").classList.add("hidden");$("homeworkQuizTest").classList.remove("hidden");$("quizTestTitle").textContent=q.title;showQuestion();
   }
 
@@ -12320,6 +12341,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     if(answered||!activeQuiz)return;
     const q=questions[index],value=$("quizAnswerInput").value;if(!String(value).trim())return;
     answered=true;const ok=check(q,value);if(ok)score++;
+    savedAnswers.push({question:q.prompt,answer:String(value),correct_answer:q.display,correct:ok});
     $("quizAnswerInput").disabled=true;$("quizAnswerBtn").disabled=true;
     $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;$("quizFeedback").className="feedback "+(ok?"good":"bad");
     $("quizNextBtn").classList.remove("hidden");$("quizNextBtn").textContent=index===questions.length-1?"Visa resultat":"Nästa fråga";
@@ -12335,6 +12357,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     const percentOK=Math.abs(pct-q.percent)<1e-8;
     const ok=fractionOK&&decimalOK&&percentOK;
     if(ok)score++;
+    savedAnswers.push({question:q.prompt,answer:`${$("quizShareNum").value}/${$("quizShareDen").value} · ${$("quizShareDecimal").value} · ${$("quizSharePercent").value}%`,correct_answer:q.display,correct:ok});
     ["quizShareNum","quizShareDen","quizShareDecimal","quizSharePercent"].forEach(id=>$(id).disabled=true);
     $("quizSharePartBtn").disabled=true;
     $("quizFeedback").textContent=ok?"Rätt!":"Inte riktigt. Rätt svar: "+q.display;
@@ -12355,6 +12378,8 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       const r=await c.rpc("submit_quiz_attempt",{p_quiz_id:activeQuiz.id,p_score:score,p_total:questions.length,p_started_at:startedAt});
       if(r.error)throw r.error;if(r.data?.ok===false)throw new Error(r.data?.reason||"Kunde inte spara resultatet.");
       const first=Boolean(r.data?.first);
+      let answersStored=true;
+      if(first){const detail=await c.rpc("student_save_quiz_review",{p_quiz_id:activeQuiz.id,p_answers:savedAnswers});if(detail.error||detail.data?.ok!==true){answersStored=false;console.warn("Quiz answers were not saved",detail.error||detail.data);}}
       let rewardGranted=false;
       if(first){
         const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
@@ -12363,7 +12388,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
         if(rewardGranted)MZ.office?.render?.();
       }
       $("homeworkQuizTest").classList.add("hidden");const result=$("homeworkQuizResult");result.classList.remove("hidden");
-      result.innerHTML="<h3>Förhöret är klart</h3><p><strong>"+r.data.score+" / "+r.data.total+"</strong></p><p>Det första resultatet är sparat.</p>"+(rewardGranted?"<p>🎁 Du fick en blind bag! Den väntar bland Överraskningar.</p>":"")+"<button class='secondary' id='quizBackToList' type='button'>Till läxförhören</button>";
+      result.innerHTML="<h3>Förhöret är klart</h3><p><strong>"+r.data.score+" / "+r.data.total+"</strong></p><p>Det första resultatet är sparat.</p>"+(rewardGranted?"<p>🎁 Du fick en blind bag! Den väntar bland Överraskningar.</p>":"")+(answersStored?"":"<p>⚠️ Dina svar kunde inte sparas för lärargranskning. Kontakta din lärare.</p>")+"<button class='secondary' id='quizBackToList' type='button'>Till läxförhören</button>";
       result.querySelector("#quizBackToList").addEventListener("click",async()=>{await MZ.cloudStudent.readCloudState();renderList();});
       await MZ.cloudStudent.readCloudState();renderPaper();
     }catch(error){
