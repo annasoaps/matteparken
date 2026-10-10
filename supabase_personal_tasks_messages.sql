@@ -102,6 +102,19 @@ begin
 end;
 $$;
 
+create or replace function public.teacher_delete_personal_task(p_task_id uuid)
+returns boolean language plpgsql security definer set search_path=public as $
+declare v_class uuid;
+begin
+ select class_id into v_class from public.personal_math_tasks where id=p_task_id;
+ if v_class is null or auth.uid() is null or not public.matteparken_teacher_owns_class(v_class) then
+  raise exception 'Access denied';
+ end if;
+ delete from public.personal_math_tasks where id=p_task_id;
+ return found;
+end;
+$;
+
 create or replace function public.teacher_send_direct_message(p_student_id uuid,p_body text)
 returns jsonb language plpgsql security definer set search_path=public as $$
 declare v_class uuid; v_id uuid;
@@ -199,6 +212,7 @@ revoke all on function public.teacher_list_personal_items(uuid) from public;
 revoke all on function public.teacher_create_personal_task(uuid,text,text,jsonb,integer) from public;
 revoke all on function public.teacher_set_personal_task_enabled(uuid,boolean) from public;
 revoke all on function public.teacher_send_direct_message(uuid,text) from public;
+revoke all on function public.teacher_delete_personal_task(uuid) from public;
 revoke all on function public.student_list_personal_tasks() from public;
 revoke all on function public.student_record_personal_round(uuid,text,text,integer) from public;
 revoke all on function public.student_list_direct_messages() from public;
@@ -208,6 +222,7 @@ grant execute on function public.teacher_list_personal_items(uuid),
  public.teacher_create_personal_task(uuid,text,text,jsonb,integer),
  public.teacher_set_personal_task_enabled(uuid,boolean),
  public.teacher_send_direct_message(uuid,text),
+ public.teacher_delete_personal_task(uuid),
  public.student_list_personal_tasks(),
  public.student_record_personal_round(uuid,text,text,integer),
  public.student_list_direct_messages(),
