@@ -69,7 +69,7 @@ begin
   insert into public.quiz_reviews(quiz_id, student_id, answers, self_assessment)
   values(p_quiz_id, v_student_id, '[]'::jsonb, p_assessment)
   on conflict (quiz_id, student_id) do update
-    set self_assessment = coalesce(public.quiz_reviews.self_assessment, excluded.self_assessment);
+    set self_assessment = coalesce(quiz_reviews.self_assessment, excluded.self_assessment);
 
   return jsonb_build_object('ok', true);
 end;
