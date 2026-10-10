@@ -6783,25 +6783,86 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#seedChoices button")?.focus();
   }
 
+  let quizFeedbackFetchSequence=0;
   async function renderQuizFeedbackNotes(){
-    const panel=document.getElementById("quizFeedbackNotes");if(!panel)return;
-    const student=MZ.cloudStudent?.activeStudent?.();panel.replaceChildren();panel.style.display="none";if(!student)return;
+    const sequence=++quizFeedbackFetchSequence;
+    const panel=document.getElementById("quizFeedbackNotes");
+    const previousCard=document.getElementById("previousQuizFeedbackCard");
+    const previousList=document.getElementById("previousQuizFeedbackList");
+    const previousCount=document.getElementById("previousQuizFeedbackCount");
+    if(!panel||!previousCard||!previousList||!previousCount)return;
+    panel.replaceChildren();
+    panel.style.display="none";
+    previousList.replaceChildren();
+    previousCard.style.display="none";
+    const student=MZ.cloudStudent?.activeStudent?.();
+    if(!student)return;
+    const studentId=student.student?.id;
     try{
       const result=await MZ.cloudStudent.getClient().rpc("student_list_quiz_feedback");
       if(result.error)throw result.error;
-      const entries=Array.isArray(result.data)?result.data:[];if(!entries.length)return;
-      panel.style.display="block";const heading=document.createElement("strong");heading.textContent="💌 Återkoppling från din lärare";panel.appendChild(heading);
-      entries.forEach(entry=>{
-        const note=document.createElement("details");note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
-        const title=document.createElement("summary");title.style.cursor="pointer";title.textContent=(entry.feedback_read_at?"":"● ")+entry.title;note.appendChild(title);
-        const body=document.createElement("p");body.style.whiteSpace="pre-wrap";body.textContent=entry.teacher_feedback;note.appendChild(body);
+      if(sequence!==quizFeedbackFetchSequence ||
+         studentId!==MZ.cloudStudent?.activeStudent?.()?.student?.id)return;
+      const entries=Array.isArray(result.data)?result.data:[];
+      const unread=entries.filter(x=>!x.feedback_read_at);
+      const old=entries.filter(x=>Boolean(x.feedback_read_at));
+      if(unread.length){
+        panel.style.display="block";
+        const heading=document.createElement("strong");
+        heading.textContent="📄 Ny återkoppling på läxförhör";
+        panel.appendChild(heading);
+      }
+      const buildNote=(entry,alreadyRead)=>{
+        const note=document.createElement("details");
+        note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
+        const title=document.createElement("summary");
+        title.style.cursor="pointer";
+        title.textContent=(alreadyRead?"":"● ")+entry.title;
+        const body=document.createElement("p");
+        body.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere";
+        body.textContent=entry.teacher_feedback;
+        note.append(title,body);
         if(Array.isArray(entry.answers)&&entry.answers.length){
-          const review=document.createElement("details");const summary=document.createElement("summary");summary.textContent="Se mina svar";review.appendChild(summary);
-          entry.answers.forEach((a,i)=>{const p=document.createElement("p");p.style.fontSize="14px";p.textContent=(i+1)+". "+a.question+" | Mitt svar: "+a.answer+" | Rätt: "+a.correct_answer+(a.correct?" ✓":" ✗");review.appendChild(p);});note.appendChild(review);
+          const answers=document.createElement("details");
+          const summary=document.createElement("summary");summary.textContent="Se mina svar";
+          answers.appendChild(summary);
+          entry.answers.forEach((a,i)=>{
+            const p=document.createElement("p");
+            p.style.cssText="font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere";
+            p.textContent=(i+1)+". "+a.question+" | Mitt svar: "+a.answer+" | Rätt: "+a.correct_answer+(a.correct?" ✓":" ✗");
+            answers.appendChild(p);
+          });
+          note.appendChild(answers);
         }
-        note.addEventListener("toggle",async()=>{if(note.open&&!entry.feedback_read_at){const rr=await MZ.cloudStudent.getClient().rpc("student_mark_quiz_feedback_read",{p_quiz_id:entry.quiz_id});if(!rr.error&&rr.data){entry.feedback_read_at=new Date().toISOString();title.textContent=entry.title;}}});
-        panel.appendChild(note);
-      });
+        if(!alreadyRead){
+          let savingRead=false;
+          note.addEventListener("toggle",async()=>{
+            if(!note.open){
+              if(entry.feedback_read_at)void renderQuizFeedbackNotes();
+              return;
+            }
+            if(entry.feedback_read_at||savingRead)return;
+            savingRead=true;
+            try{
+              const res=await MZ.cloudStudent.getClient().rpc("student_mark_quiz_feedback_read",{p_quiz_id:entry.quiz_id});
+              if(res.error||res.data!==true)throw res.error||new Error("Kunde inte markera återkopplingen som läst");
+              entry.feedback_read_at=new Date().toISOString();
+              title.textContent=entry.title;
+              // Eleven ska kunna läsa klart innan återkopplingen flyttas.
+              if(!note.open)void renderQuizFeedbackNotes();
+            }catch(error){
+              console.warn("Quiz feedback read receipt",error);
+            }finally{savingRead=false;}
+          });
+        }
+        return note;
+      };
+      unread.forEach(entry=>panel.appendChild(buildNote(entry,false)));
+      if(old.length){
+        previousCard.style.display="";
+        previousCount.textContent="("+old.length+")";
+        old.forEach(entry=>previousList.appendChild(buildNote(entry,true)));
+      }
     }catch(error){console.warn("Feedback could not be loaded",error);}
   }
   let teacherMessageFetchSequence=0;
@@ -12867,6 +12928,15 @@ document.addEventListener("DOMContentLoaded", () => {
           📬 Tidigare meddelanden <span id="previousTeacherMessageCount" style="font-size:14px"></span>
         </summary>
         <div id="previousTeacherMessagesList"></div>
+      </details>
+    </section>
+
+    <section class="mission-paper" id="previousQuizFeedbackCard" style="display:none">
+      <details id="previousQuizFeedback">
+        <summary style="cursor:pointer;font-weight:800;font-size:19px;color:#425b3d">
+          📄 Tidigare återkoppling <span id="previousQuizFeedbackCount" style="font-size:14px"></span>
+        </summary>
+        <div id="previousQuizFeedbackList"></div>
       </details>
     </section>
 
