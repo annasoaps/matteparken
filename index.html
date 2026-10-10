@@ -3811,7 +3811,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     },
 
     setNaturePoints(value){
-      if(MZ.cloudCones?.isActive?.()) return MZ.cloudCones.balance();
+      if(MZ.cloudCones?.isActive?.()){
+        if(MZ.teacherTest?.enabled && MZ.cloudCones?.setTestBalance) return MZ.cloudCones.setTestBalance(value);
+        return MZ.cloudCones.balance();
+      }
       const safeValue = Math.max(0, Number(value) || 0);
       localStorage.setItem(MZ.keys.naturePoints, String(safeValue));
       MZ.events.dispatchEvent(new CustomEvent("npchange", {detail:{value:safeValue}}));
@@ -3819,7 +3822,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     },
 
     addNaturePoints(amount){
-      if(MZ.cloudCones?.isActive?.()) return MZ.cloudCones.balance();
+      if(MZ.cloudCones?.isActive?.()){
+        if(MZ.teacherTest?.enabled && MZ.cloudCones?.addTestCones) return MZ.cloudCones.addTestCones(amount);
+        return MZ.cloudCones.balance();
+      }
       return this.setNaturePoints(this.getNaturePoints() + amount);
     },
 
@@ -12098,14 +12104,30 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 (() => {
   "use strict";
   const MZ=window.Mattezoo;
-  let ready=false,coneBalance=0;
+  let ready=false,coneBalance=0,testConeBalance=0;
   const client=()=>MZ.cloudStudent?.getClient?.();
   const student=()=>MZ.cloudStudent?.currentState?.()?.student||null;
+  const inTeacherTest=()=>Boolean(MZ.teacherTest?.enabled);
   function isActive(){return ready&&Boolean(student());}
-  function balance(){return Math.max(0,Number(coneBalance)||0);}
+  function balance(){return Math.max(0,Number(inTeacherTest()?testConeBalance:coneBalance)||0);}
+  function emitBalance(extra={}){
+    const value=balance();
+    MZ.events.dispatchEvent(new CustomEvent("npchange",{detail:{value,cloud:true,...extra}}));
+    return value;
+  }
+  function setTestBalance(value){
+    if(!inTeacherTest())return balance();
+    testConeBalance=Math.max(0,Number(value)||0);
+    emitBalance({test:true});
+    return testConeBalance;
+  }
+  function addTestCones(amount){
+    if(!inTeacherTest())return balance();
+    return setTestBalance(testConeBalance+(Number(amount)||0));
+  }
   function applyBalance(data){
     if(data&&Number.isFinite(Number(data.balance)))coneBalance=Math.max(0,Number(data.balance));
-    MZ.events.dispatchEvent(new CustomEvent("npchange",{detail:{value:coneBalance,cloud:true}}));
+    emitBalance(inTeacherTest()?{test:true}:{});
     return data;
   }
   async function rpc(name,args={}){
@@ -12125,14 +12147,29 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   }
   async function claim(activity,result){
     if(!isActive()||!result?.rewarded)return null;
+    if(inTeacherTest())return {ok:true,balance:balance(),test:true};
     try{
       if(activity?.type==="starter-seed-correct")return await rpc("student_claim_tutorial_cones");
       const key=activityKey(activity);if(!key)return null;
       return await rpc("student_claim_math_cones",{p_game_id:activity.gameId,p_activity_key:key});
     }catch(error){console.warn("Kottbelöning:",error);return null;}
   }
+  function testPurchasePrice(kind,itemId=""){
+    if(kind==="seedPack")return Math.max(0,Number(MZ.config?.seedPackPrice)||0);
+    if(kind==="decorBox")return Math.max(0,Number(MZ.config?.decorBoxPrice)||0);
+    if(kind==="catalog")return Math.max(0,Number(MZ.rewards?.findItem?.(itemId)?.catalogPrice)||0);
+    if(kind==="seasonal")return Math.max(0,Number(MZ.rewards?.seasonalCrateDefinitions?.[itemId]?.price)||0);
+    return 0;
+  }
   async function spend(kind,itemId=""){
     if(!isActive())return {ok:false,reason:"not_connected"};
+    if(inTeacherTest()){
+      const price=testPurchasePrice(kind,itemId);
+      if(price<1)return {ok:false,reason:"unknown_purchase",balance:balance(),test:true};
+      if(balance()<price)return {ok:false,reason:"insufficient_cones",balance:balance(),test:true};
+      setTestBalance(testConeBalance-price);
+      return {ok:true,balance:balance(),test:true};
+    }
     try{return await rpc("student_spend_cones",{p_purchase_kind:kind,p_item_id:itemId});}
     catch(error){console.warn("Kottköp:",error);return {ok:false,reason:"network"};}
   }
@@ -12196,7 +12233,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(MZ.cloudStudent?.afterWrites)MZ.cloudStudent.afterWrites(run).catch(error=>console.warn(error));else run();
     });
   }
-  MZ.cloudCones={init,sync,isActive,balance,spend,redeem};
+  MZ.cloudCones={init,sync,isActive,balance,spend,redeem,setTestBalance,addTestCones};
 })();
 </script>
 
