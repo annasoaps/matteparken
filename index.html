@@ -2472,7 +2472,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   <div class="modal-backdrop" id="boardModal">
     <section class="modal noticeboard" role="dialog" aria-modal="true" aria-labelledby="boardHeadline">
       <button class="close" data-close="boardModal" aria-label="Stäng anslagstavlan">×</button>
-      <div class="board-plaque">MATTEPARKEN <span>• Anslagstavlan •</span></div><div id="quizFeedbackNotes" style="display:none;margin:12px 0 18px;padding:14px;background:#fff4d8;border:3px solid #a67e50;border-radius:8px"></div><div class="board-layout">
+      <div class="board-plaque">MATTEPARKEN <span>• Anslagstavlan •</span></div><div class="board-layout">
       <div class="paper-note">
         <h2 id="boardHeadline">Någon har sett spår i den västra skogen.</h2>
         <div id="boardBody" style="margin-top:14px">De är små och leder in mellan träden. Kanske trivs någon ny i parken?</div>
@@ -6785,6 +6785,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       });
     }catch(error){console.warn("Feedback could not be loaded",error);}
   }
+  MZ.renderQuizFeedbackNotes=renderQuizFeedbackNotes;
   function renderBoardMessage(){
     syncWelcomeBoard();
     const controls = $("#boardControls");
@@ -12471,6 +12472,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <section class="modal mission-noticeboard" role="dialog" aria-modal="true" aria-labelledby="missionBoardTitle" tabindex="-1">
 <button class="close" data-close="missionBoardModal" aria-label="Stäng dagens uppdrag">×</button>
 <div class="board-plaque" id="missionBoardTitle">DAGENS UPPDRAG<span>MATTEPARKEN · PARKKONTORET</span></div>
+<div id="quizFeedbackNotes" style="display:none;margin:12px 0 18px;padding:14px;background:#fff4d8;border:3px solid #a67e50;border-radius:8px"></div>
 <div class="mission-board-grid">
   <div class="mission-paper-stack">
     <section class="card assignment-card" id="studentAssignmentCard">
@@ -12601,10 +12603,12 @@ document.addEventListener("DOMContentLoaded", () => {
     $('missionSeedStart').textContent=MZ.state.onboarding.seedQuestCorrect ? 'Fortsätt matteuppdraget' : 'Starta första matteuppdraget';
     if(!seedTutorial) renderWeek(s);
     dateSeen=today();
+    if($('missionBoardModal').classList.contains('open')) MZ.renderQuizFeedbackNotes?.();
   }
   function open(){
     if(!MZ.state.onboarding.bagOpened)return;
     returningFocus=document.activeElement;render();MZ.openModal('missionBoardModal');
+    MZ.renderQuizFeedbackNotes?.();
     const tutorialSeed=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     const panel=$('missionBoardModal').querySelector('.mission-noticeboard');
     panel.scrollTop=0;
