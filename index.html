@@ -2172,7 +2172,8 @@ button.office-fixture:focus-visible{outline:4px solid #fff4a6;outline-offset:4px
 .office-homework-quiz{position:absolute;z-index:7;left:17.2%;top:58.5%;width:13.5%;height:15.5%;border:0;background:transparent url("assets/homework_quiz_stack.webp") center/contain no-repeat;cursor:pointer;filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24));transition:transform .14s ease,filter .14s ease}
 .office-homework-quiz.has-quiz{animation:quizPaperGlow 2.2s ease-in-out infinite}.office-homework-quiz:focus-visible{outline:4px solid #fff4a6;outline-offset:3px;border-radius:10px}.office-homework-quiz:hover{transform:translateY(-3px) scale(1.025)}
 @keyframes quizPaperGlow{0%,100%{filter:drop-shadow(2px 4px 2px rgba(30,24,18,.24))}50%{filter:drop-shadow(0 0 10px rgba(255,226,113,.95))}}
-#homeworkQuizModal{z-index:140}#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-share-part{display:none}.quiz-share-part.open{display:block}.quiz-share-part-visual{display:flex;justify-content:center;margin:4px auto 16px}.quiz-share-part-grid{display:grid;gap:3px;width:min(100%,360px)}.quiz-share-part-cell{aspect-ratio:1/1;border:1px solid #9e987f;border-radius:2px;background:#fffdf5}.quiz-share-part-cell.filled{background:#dc7449;border-color:#a95031}.quiz-share-part-answers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px;margin:0 auto}.quiz-share-part-answers label{display:flex;flex-direction:column;gap:6px;font-weight:850;text-align:center}.quiz-share-part-answers input{min-height:46px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:8px 10px;font:inherit;font-size:18px;text-align:center}.quiz-share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:5px;width:96px;margin:auto}.quiz-share-part-fraction .line{background:#405441}.quiz-share-part-percent{display:flex;align-items:center;gap:7px}.quiz-share-part-percent input{min-width:0;width:100%}.quiz-share-part-percent strong{font-size:21px}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
+#homeworkQuizModal{z-index:140}#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-share-part{display:none}.quiz-share-part.open{display:block}.quiz-share-part-visual{display:flex;justify-content:center;margin:4px auto 16px}.quiz-share-part-grid{display:grid;gap:3px;width:min(100%,360px)}.quiz-share-part-cell{aspect-ratio:1/1;border:1px solid #9e987f;border-radius:2px;background:#fffdf5}.quiz-share-part-cell.filled{background:#dc7449;border-color:#a95031}.quiz-share-part-answers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px;margin:0 auto}.quiz-share-part-answers label{display:flex;flex-direction:column;gap:6px;font-weight:850;text-align:center}.quiz-share-part-answers input{min-height:46px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:8px 10px;font:inherit;font-size:18px;text-align:center}.quiz-share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:5px;width:96px;margin:auto}.quiz-share-part-fraction .line{background:#405441}.quiz-share-part-percent{display:flex;align-items:center;gap:7px}.quiz-share-part-percent input{min-width:0;width:100%}.quiz-share-part-percent strong{font-size:21px}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}
+.quiz-result h3{font-size:25px;color:#345d3d;margin:8px 0 12px}.quiz-result p{line-height:1.5}.quiz-result-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}.quiz-result-actions .primary{font-size:16px;padding:13px 18px}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
 @media(max-width:720px){.student-homework-card,.quiz-list-item{grid-template-columns:1fr}.office-homework-quiz{left:17.2%;top:58.5%;width:13.5%;height:15.5%}.quiz-share-part-answers{grid-template-columns:1fr;max-width:210px}}
 </style>
 <style>
@@ -12410,40 +12411,97 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   }
 
   async function finish(selfAssessment){
-    $("quizReflectionSubmit").disabled=true;
+    const submitButton=$("quizReflectionSubmit");
+    submitButton.disabled=true;
     $("quizReflectionFeedback").textContent="Sparar ditt läxförhör …";
     try{
       const c=MZ.cloudStudent.getClient();
-      const r=await c.rpc("submit_quiz_attempt",{p_quiz_id:activeQuiz.id,p_score:score,p_total:questions.length,p_started_at:startedAt});
-      if(r.error)throw r.error;if(r.data?.ok===false)throw new Error(r.data?.reason||"Kunde inte spara resultatet.");
+      const r=await c.rpc("submit_quiz_attempt",{
+        p_quiz_id:activeQuiz.id,p_score:score,p_total:questions.length,p_started_at:startedAt
+      });
+      if(r.error)throw r.error;
+      if(r.data?.ok===false)throw new Error(r.data?.reason||"Kunde inte spara resultatet.");
+
       const first=Boolean(r.data?.first);
-      let answersStored=true;
-      if(first){const detail=await c.rpc("student_save_quiz_review",{p_quiz_id:activeQuiz.id,p_answers:savedAnswers});if(detail.error||detail.data?.ok!==true){answersStored=false;console.warn("Quiz answers were not saved",detail.error||detail.data);}}
-      let reflectionStored=!first;
-      if(first){
+      let answersStored=false,reflectionStored=false;
+      try{
+        const detail=await c.rpc("student_save_quiz_review",{p_quiz_id:activeQuiz.id,p_answers:savedAnswers});
+        answersStored=!detail.error&&detail.data?.ok===true;
+        if(!answersStored)console.warn("Quiz answers were not saved",detail.error||detail.data);
+      }catch(error){console.warn("Quiz answers could not be saved",error);}
+      try{
         const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:activeQuiz.id,p_assessment:selfAssessment});
         reflectionStored=!response.error&&response.data?.ok===true;
         if(!reflectionStored)console.warn("Quiz self-assessment not saved",response.error||response.data);
-      }
-      let rewardGranted=false;
-      if(first){
-        const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
-        if(reward.error)throw reward.error;
-        if(reward.data?.granted){MZ.rewards.addBonusBlindBag(1);rewardGranted=true;}
-        if(rewardGranted)MZ.office?.render?.();
-      }
-      $("homeworkQuizTest").classList.add("hidden");const result=$("homeworkQuizResult");result.classList.remove("hidden");
-      result.innerHTML="<h3>Förhöret är klart</h3><p><strong>"+r.data.score+" / "+r.data.total+"</strong></p><p>Det första resultatet är sparat.</p>"+(rewardGranted?"<p>🎁 Du fick en blind bag! Den väntar bland Överraskningar.</p>":"")+(answersStored?"":"<p>⚠️ Dina svar kunde inte sparas för lärargranskning. Kontakta din lärare.</p>")+(reflectionStored?"":"<p id='quizReflectionRetryMessage'>⚠️ Självskattningen sparades inte. Försök igen.</p><button class='secondary' id='quizReflectionRetry' type='button'>Försök spara självskattningen igen</button>")+"<button class='secondary' id='quizBackToList' type='button'>Till läxförhören</button>";
-      result.querySelector("#quizBackToList").addEventListener("click",async()=>{await MZ.cloudStudent.readCloudState();renderList();});
-      result.querySelector("#quizReflectionRetry")?.addEventListener("click",async()=>{
-        const retry=$("quizReflectionRetry");retry.disabled=true;
-        const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:activeQuiz.id,p_assessment:selfAssessment});
-        if(!response.error&&response.data?.ok===true){retry.remove();$("quizReflectionRetryMessage").textContent="✓ Självskattningen är sparad.";}
-        else {retry.disabled=false;$("quizReflectionRetryMessage").textContent="Kunde inte spara ännu. Försök igen eller meddela läraren.";}
+      }catch(error){console.warn("Quiz self-assessment could not be saved",error);}
+
+      // Visa bekräftelsen direkt när inlämningen är registrerad.
+      // Eleven ska aldrig behöva skrolla förbi det gamla formuläret för att hitta den.
+      $("quizReflectionFeedback").textContent="";
+      $("homeworkQuizTest").classList.add("hidden");
+      $("homeworkQuizReflection").classList.add("hidden");
+      $("homeworkQuizList").classList.add("hidden");
+      const result=$("homeworkQuizResult");
+      result.classList.remove("hidden");
+      const fullySaved=answersStored&&reflectionStored;
+      result.innerHTML=
+        "<h3>"+(fullySaved?"✅ Klart och inlämnat!":"✅ Läxförhöret är inlämnat")+"</h3>"+
+        "<p>Matteförhöret är sparat.</p>"+
+        "<p><strong>"+Number(r.data.score)+" av "+Number(r.data.total)+" rätt</strong></p>"+
+        (fullySaved?"<p>Din lärare kan nu se dina svar och din självskattning.</p>":"")+
+        (answersStored?"":"<p>⚠️ Dina detaljerade mattesvar kunde inte sparas för lärargranskning. Kontakta din lärare.</p>")+
+        (reflectionStored?"":"<p id='quizReflectionRetryMessage'>⚠️ Din självskattning sparades inte. Du kan försöka igen.</p><button class='secondary' id='quizReflectionRetry' type='button'>Försök spara självskattningen igen</button>")+
+        (first?"<p id='quizRewardStatus' class='muted'>🎁 Kontrollerar din blind bag …</p>":"")+
+        "<div class='quiz-result-actions'><button class='primary' id='quizCloseAfterSubmit' type='button'>Stäng och gå tillbaka till Parkkontoret</button></div>";
+
+      const modal=$("homeworkQuizModal").querySelector(".modal");
+      if(modal)modal.scrollTop=0;
+      result.querySelector("#quizCloseAfterSubmit").addEventListener("click",()=>{
+        MZ.closeModal("homeworkQuizModal");
+        MZ.office?.render?.();
       });
-      await MZ.cloudStudent.readCloudState();renderPaper();
+      result.querySelector("#quizCloseAfterSubmit").focus();
+
+      result.querySelector("#quizReflectionRetry")?.addEventListener("click",async()=>{
+        const retry=result.querySelector("#quizReflectionRetry");
+        retry.disabled=true;
+        try{
+          const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:activeQuiz.id,p_assessment:selfAssessment});
+          if(response.error||response.data?.ok!==true)throw response.error||new Error("Save failed");
+          retry.remove();
+          result.querySelector("#quizReflectionRetryMessage").textContent="✓ Din självskattning är också sparad.";
+        }catch(error){
+          console.warn("Quiz self-assessment retry",error);
+          retry.disabled=false;
+          result.querySelector("#quizReflectionRetryMessage").textContent="Kunde inte spara självskattningen ännu. Försök igen eller meddela läraren.";
+        }
+      });
+
+      // Belöning och uppdatering av listan får inte hålla kvar en redan sparad inlämning.
+      if(first){
+        const rewardNote=result.querySelector("#quizRewardStatus");
+        void (async()=>{
+          try{
+            const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
+            if(reward.error)throw reward.error;
+            if(reward.data?.granted){
+              MZ.rewards.addBonusBlindBag(1);
+              MZ.office?.render?.();
+              rewardNote.textContent="🎁 Du fick en blind bag! Den väntar bland Överraskningar.";
+            }else rewardNote.remove();
+          }catch(error){
+            console.warn("Quiz reward status",error);
+            rewardNote.textContent="🎁 Belöningen kunde inte kontrolleras just nu.";
+          }
+        })();
+      }
+      void MZ.cloudStudent.readCloudState()
+        .then(()=>renderPaper())
+        .catch(error=>console.warn("Quiz list refresh",error));
     }catch(error){
-      console.error("Quiz submit:",error);$("quizReflectionFeedback").textContent="Kunde inte spara läxförhöret just nu. Försök igen."; $("quizReflectionSubmit").disabled=false;
+      console.error("Quiz submit:",error);
+      $("quizReflectionFeedback").textContent="Kunde inte bekräfta inlämningen. Försök igen.";
+      submitButton.disabled=false;
     }
   }
 
