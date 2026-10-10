@@ -1,7 +1,5 @@
 -- Matteparken: individuella uppdrag och privata lärarmeddelanden.
 -- Kör efter tidigare quiz-feedback-skript. Befintliga uppdrag och kottar ändras inte.
-create extension if not exists pgcrypto;
-
 create table if not exists public.personal_math_tasks (
  id uuid primary key default gen_random_uuid(),
  class_id uuid not null references public.classes(id) on delete cascade,
