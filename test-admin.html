@@ -693,7 +693,27 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       const row=document.createElement("div");row.className="student-task";
       const date=document.createElement("strong");date.textContent=formatMoment(m.created_at)+(m.read_at?" · ✓ Läst":" · ○ Oläst");
       const body=document.createElement("p");body.style.cssText="white-space:pre-wrap;margin:5px 0";body.textContent=m.body;
-      row.append(date,body);messageBox.appendChild(row);
+      const remove=document.createElement("button");
+      remove.type="button";
+      remove.className="btn danger";
+      remove.textContent="Radera meddelandet";
+      remove.addEventListener("click",async()=>{
+        if(!window.confirm("Radera det här meddelandet permanent? Eleven kommer inte längre att kunna se det."))return;
+        remove.disabled=true;
+        try{
+          const res=await sb.rpc("teacher_delete_direct_message",{p_message_id:m.id});
+          if(res.error||res.data!==true)throw res.error||new Error("Meddelandet kunde inte raderas");
+          setFeedback("directMessageFeedback","Meddelandet är raderat.","good");
+          personalItems.messages=(personalItems.messages||[]).filter(x=>x.id!==m.id);
+          // Uppdatera vyn direkt, utan att invänta nästa automatiska synkning.
+          const student=students.find(x=>x.id===selectedStudentId);
+          if(student)renderPersonalDetail(student);
+        }catch(error){
+          console.error("Delete direct message",error);
+          setFeedback("directMessageFeedback","Det gick inte att radera. Kontrollera att SQL-tillägget är installerat.","bad");
+        }finally{remove.disabled=false;}
+      });
+      row.append(date,body,remove);messageBox.appendChild(row);
     });
   }
 
