@@ -6799,6 +6799,37 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       });
     }catch(error){console.warn("Feedback could not be loaded",error);}
   }
+  async function renderDirectTeacherNotes(){
+    const panel=document.getElementById("teacherMessageNotes");
+    if(!panel)return;
+    panel.replaceChildren();panel.style.display="none";
+    if(!MZ.cloudStudent?.activeStudent?.())return;
+    try{
+      const result=await MZ.cloudStudent.getClient().rpc("student_list_direct_messages");
+      if(result.error)throw result.error;
+      const entries=Array.isArray(result.data)?result.data:[];
+      if(!entries.length)return;
+      panel.style.display="block";
+      const header=document.createElement("strong");header.textContent="💌 Meddelanden från din lärare";panel.appendChild(header);
+      for(const entry of entries){
+        const note=document.createElement("details");note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
+        const heading=document.createElement("summary");heading.style.cursor="pointer";
+        const date=entry.created_at?new Date(entry.created_at).toLocaleDateString("sv-SE",{day:"numeric",month:"short"}):"";
+        heading.textContent=(entry.read_at?"":"● ")+"Personligt meddelande · "+date;
+        const body=document.createElement("p");body.style.whiteSpace="pre-wrap";body.textContent=entry.body;
+        note.append(heading,body);
+        note.addEventListener("toggle",async()=>{
+          if(!note.open||entry.read_at)return;
+          try{
+            const r=await MZ.cloudStudent.getClient().rpc("student_mark_direct_message_read",{p_message_id:entry.id});
+            if(!r.error&&r.data===true){entry.read_at=new Date().toISOString();heading.textContent="Personligt meddelande · "+date;}
+          }catch(error){console.warn("Message read receipt",error);}
+        });
+        panel.appendChild(note);
+      }
+    }catch(error){console.warn("Teacher messages unavailable",error);}
+  }
+  MZ.renderDirectTeacherNotes=renderDirectTeacherNotes;
   MZ.renderQuizFeedbackNotes=renderQuizFeedbackNotes;
   function renderBoardMessage(){
     syncWelcomeBoard();
@@ -11738,11 +11769,12 @@ async function readCloudState(){
  if(sr.error)throw sr.error;
  if(!sr.data){current=null;render();return null;}
  const student=sr.data;
- const [cr,ar,hr,qr]=await Promise.all([
+ const [cr,ar,hr,qr,personalResult]=await Promise.all([
   c.from("classes").select("id,code,name").eq("id",student.class_id).maybeSingle(),
   c.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,homework_id,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
   c.from("homeworks").select("id,class_id,title,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
-  c.from("quizzes").select("id,class_id,game_id,title,game_config,question_count,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true})
+  c.from("quizzes").select("id,class_id,game_id,title,game_config,question_count,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
+  c.rpc("student_list_personal_tasks")
  ]);
  if(cr.error)throw cr.error;if(ar.error)throw ar.error;if(hr.error)throw hr.error;if(qr.error)throw qr.error;
  const allAssignments=ar.data||[],assignments=allAssignments.filter(a=>!a.homework_id),homeworks=hr.data||[],quizzes=qr.data||[],progressMap=new Map(),ids=allAssignments.map(x=>x.id);
@@ -11755,8 +11787,10 @@ async function readCloudState(){
   const qa=await c.from("quiz_attempts").select("quiz_id,score,total,started_at,completed_at,reward_claimed_at").eq("student_id",student.id).in("quiz_id",quizzes.map(q=>q.id));
   if(qa.error)throw qa.error;quizAttempts=qa.data||[];
  }
- current={classInfo:cr.data,student,assignments,allAssignments,homeworks,quizzes,quizAttempts,progressMap};
- const active=getActiveAssignment();if(active&&!allAssignments.some(x=>x.id===active))setActiveAssignment(null);
+ const personalTasks=personalResult.error?[]:(Array.isArray(personalResult.data)?personalResult.data:[]);
+ if(personalResult.error)console.warn("Personliga uppdrag är inte aktiverade ännu:",personalResult.error);
+ current={classInfo:cr.data,student,assignments,allAssignments,homeworks,quizzes,quizAttempts,progressMap,personalTasks};
+ const active=getActiveAssignment();if(active&&![...allAssignments,...personalTasks].some(x=>x.id===active))setActiveAssignment(null);
  await syncLocalHomeworkCompletions();
  if(MZ.cloudCones?.sync)await MZ.cloudCones.sync();
  render();MZ.homeworkQuiz?.render?.();return current;
@@ -11765,6 +11799,7 @@ function activeStudent(){
  if(!current?.student)return null;
  return{classId:current.classInfo?.code||getSelection()?.classId||"",code:current.student.code,displayName:cleanDisplayName(getSelection()?.displayName||""),student:current.student,
   assignments:(current.assignments||[]).map(a=>({...a,gameId:a.game_id,progress:current.progressMap.get(a.id)||{completed:0,last_active:null,completed_at:null}})),
+  personalTasks:current.personalTasks||[],
   homeworks:(current.homeworks||[]).map(h=>({...h,status:homeworkStatus(h)})),
   quizzes:(current.quizzes||[]).map(q=>({...q,attempt:(current.quizAttempts||[]).find(a=>a.quiz_id===q.id)||null}))
  };
@@ -11785,6 +11820,7 @@ function render(){
  $("#studentLoginPanel")?.classList.toggle("hidden",loggedIn);
  $("#studentAssignmentsPanel")?.classList.toggle("hidden",!loggedIn);
  $("#studentHomeworkPaper")?.classList.toggle("hidden",!loggedIn);
+ $("#personalStudentPanel")?.style.setProperty("display",loggedIn&&current?.personalTasks?.length?"block":"none");
  if(!loggedIn){
   if($("#studentIdentityPill"))$("#studentIdentityPill").textContent="Inte inloggad";
   if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent="Dagens uppdrag";
@@ -11843,6 +11879,7 @@ function render(){
     card.append(info,parts);homeworkList.appendChild(card);
   });
  }
+ renderPersonalStudentTasks();
  const list=$("#studentAssignmentsList");if(!list)return;list.innerHTML="";
  if(!current.assignments.length){
   list.innerHTML='<div class="assignment-empty-cloud">🌿 Inget läraruppdrag är aktivt idag.</div>';
@@ -11880,9 +11917,37 @@ function startFeedback(message="",kind=""){
  const el=$("#studentStartFeedback");
  if(el){el.textContent=message;el.className="feedback"+(kind?" "+kind:"");}
 }
+
+function renderPersonalStudentTasks(){
+ const panel=$("#personalStudentPanel"),list=$("#personalStudentTaskList");
+ if(!panel||!list)return;
+ const tasks=current?.personalTasks||[];
+ panel.style.display=tasks.length?"block":"none";list.replaceChildren();
+ tasks.forEach(a=>{
+  const completed=Math.max(0,Number(a.completed)||0),target=Math.max(1,Number(a.target)||1),done=completed>=target;
+  const card=document.createElement("div");card.className="student-cloud-task"+(done?" done":"");
+  const info=document.createElement("div"),title=document.createElement("h4");title.textContent=(done?"✓ ":"🎯 ")+a.title;
+  const p=document.createElement("p");p.className="muted";p.textContent=done?"Bra jobbat! Din lärare kan se att du är klar.":"Ett frivilligt uppdrag bara för dig.";
+  const count=document.createElement("div");count.className="round-note";count.textContent=completed+" av "+target+" omgångar klara";
+  const bar=document.createElement("div");bar.className="progress";
+  const fill=document.createElement("div");fill.style.width=Math.min(100,Math.round(completed/target*100))+"%";bar.appendChild(fill);
+  info.append(title,p,count,bar);
+  const actions=document.createElement("div");actions.className="assignment-actions";
+  const button=document.createElement("button");button.className="primary";button.type="button";
+  button.textContent=done?"Träna igen":"Starta mitt uppdrag";
+  if(done){button.disabled=true;button.textContent="✓ Klart";}
+  else{button.dataset.startAssignment=a.id;button.dataset.assignmentKind="personal";}
+  actions.appendChild(button);
+  card.append(info,actions);list.appendChild(card);
+ });
+}
+
 function startAssignment(id){
- const a=current?.allAssignments?.find(x=>x.id===id);
+ const a=current?.allAssignments?.find(x=>x.id===id)||current?.personalTasks?.find(x=>x.id===id);
  if(!a){startFeedback("Uppdraget kunde inte hittas. Ladda om sidan och försök igen.","bad");return false;}
+ if(current?.personalTasks?.some(x=>x.id===id)&&Number(a.completed)>=Number(a.target)){
+   startFeedback("Det personliga uppdraget är redan klart.","good");return false;
+ }
  if(a.homework_id){
    const hw=current?.homeworks?.find(x=>x.id===a.homework_id);
    if(hw?.opens_at&&Date.now()<new Date(hw.opens_at).getTime()){
@@ -11901,7 +11966,7 @@ function startAssignment(id){
    setActiveAssignment(a.id);
    MZ.missionBoard.launch(a.game_id,a.game_config||{});
    if(a.game_id==="equations")window.setTimeout(()=>$("#eqRandomOne")?.click(),120);
-   $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";
+   $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":current?.personalTasks?.some(x=>x.id===id)?"🎯 Ditt personliga uppdrag: ":"📌 Läraruppdrag aktivt: ")+a.title+". Ditt arbete sparas när en hel omgång är klar.";
    startFeedback("");
    return true;
  }catch(error){
@@ -11988,7 +12053,34 @@ async function syncLocalHomeworkCompletions(){
  return synced;
 }
 function recordRound(event){
- const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
+ const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;
+ const personal=current?.personalTasks?.find(v=>v.id===id);
+ if(personal){
+  if(!matchingRound(personal,x))return;
+  writeQueue=writeQueue.then(async()=>{
+    await ensureStudentConnection();
+    if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");
+    const res=await client().rpc("student_record_personal_round",{
+      p_task_id:id,p_game_id:x.gameId,p_round_type:x.type,
+      p_table:Number.isFinite(Number(x.table))?Number(x.table):null
+    });
+    if(res.error||res.data?.ok!==true)throw res.error||new Error(res.data?.reason||"Kunde inte registrera omgången.");
+    const task=current.personalTasks.find(t=>t.id===id);
+    if(task){
+      task.completed=Number(res.data.completed)||0;
+      task.completed_at=res.data.completed_at||null;
+      const done=Boolean(res.data.done);
+      if(done){setActiveAssignment(null);$("#status").textContent="🎉 Ditt personliga uppdrag är klart! Din lärare kan se det.";}
+      else $("#status").textContent="🎯 "+task.title+": "+task.completed+" av "+task.target+" omgångar klara.";
+    }
+    render();
+  }).catch(error=>{
+    console.error("Personligt uppdrag kunde inte synkas",error);
+    $("#status").textContent="Uppdraget kunde inte registreras just nu. Försök igen när kontakten fungerar.";
+  });
+  return;
+ }
+ const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
  if(a?.homework_id){
   markHomeworkAssignmentDone(id);
   setActiveAssignment(null);
@@ -12622,6 +12714,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <section class="modal mission-noticeboard" role="dialog" aria-modal="true" aria-labelledby="missionBoardTitle" tabindex="-1">
 <button class="close" data-close="missionBoardModal" aria-label="Stäng dagens uppdrag">×</button>
 <div class="board-plaque" id="missionBoardTitle">DAGENS UPPDRAG<span>MATTEPARKEN · PARKKONTORET</span></div>
+<div id="teacherMessageNotes" style="display:none;margin:12px 0 12px;padding:14px;background:#fff4d8;border:3px solid #a67e50;border-radius:8px"></div>
 <div id="quizFeedbackNotes" style="display:none;margin:12px 0 18px;padding:14px;background:#fff4d8;border:3px solid #a67e50;border-radius:8px"></div>
 <div class="mission-board-grid">
   <div class="mission-paper-stack">
@@ -12646,7 +12739,11 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div id="studentAssignmentsPanel" class="hidden">
         <div class="assignment-actions student-switch-row student-switch-top"><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
-        <h4 class="daily-assignment-title">📌 Dagens uppdrag</h4>
+        <div id="personalStudentPanel" style="display:none;margin:0 0 18px">
+          <h4 class="daily-assignment-title">🎯 Personliga uppdrag från din lärare</h4>
+          <div id="personalStudentTaskList" class="student-assignment-list"></div>
+        </div>
+        <h4 class="daily-assignment-title">📌 Klassens Dagens uppdrag</h4>
         <div id="studentAssignmentsList" class="student-assignment-list"></div>
         <div class="daily-assignment-overview">
           <strong id="dailyAssignmentSummary">0 av 0 delar klara idag</strong>
@@ -12759,6 +12856,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!MZ.state.onboarding.bagOpened)return;
     returningFocus=document.activeElement;render();MZ.openModal('missionBoardModal');
     MZ.renderQuizFeedbackNotes?.();
+    MZ.renderDirectTeacherNotes?.();
     const tutorialSeed=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     const panel=$('missionBoardModal').querySelector('.mission-noticeboard');
     panel.scrollTop=0;
