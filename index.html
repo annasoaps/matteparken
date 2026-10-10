@@ -6798,35 +6798,80 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       });
     }catch(error){console.warn("Feedback could not be loaded",error);}
   }
+  let teacherMessageFetchSequence=0;
   async function renderDirectTeacherNotes(){
+    const sequence=++teacherMessageFetchSequence;
     const panel=document.getElementById("teacherMessageNotes");
-    if(!panel)return;
-    panel.replaceChildren();panel.style.display="none";
-    if(!MZ.cloudStudent?.activeStudent?.())return;
+    const previousCard=document.getElementById("previousTeacherMessagesCard");
+    const previousList=document.getElementById("previousTeacherMessagesList");
+    const previousCount=document.getElementById("previousTeacherMessageCount");
+    if(!panel||!previousCard||!previousList||!previousCount)return;
+    panel.replaceChildren();
+    panel.style.display="none";
+    previousList.replaceChildren();
+    previousCard.style.display="none";
+    const student=MZ.cloudStudent?.activeStudent?.();
+    if(!student)return;
+    const studentId=student.student?.id;
     try{
       const result=await MZ.cloudStudent.getClient().rpc("student_list_direct_messages");
       if(result.error)throw result.error;
+      if(sequence!==teacherMessageFetchSequence ||
+         studentId!==MZ.cloudStudent?.activeStudent?.()?.student?.id)return;
       const entries=Array.isArray(result.data)?result.data:[];
-      if(!entries.length)return;
-      panel.style.display="block";
-      const header=document.createElement("strong");header.textContent="💌 Meddelanden från din lärare";panel.appendChild(header);
-      for(const entry of entries){
-        const note=document.createElement("details");note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
-        const heading=document.createElement("summary");heading.style.cursor="pointer";
-        const date=entry.created_at?new Date(entry.created_at).toLocaleDateString("sv-SE",{day:"numeric",month:"short"}):"";
-        heading.textContent=(entry.read_at?"":"● ")+"Personligt meddelande · "+date;
-        const body=document.createElement("p");body.style.whiteSpace="pre-wrap";body.textContent=entry.body;
-        note.append(heading,body);
-        note.addEventListener("toggle",async()=>{
-          if(!note.open||entry.read_at)return;
-          try{
-            const r=await MZ.cloudStudent.getClient().rpc("student_mark_direct_message_read",{p_message_id:entry.id});
-            if(!r.error&&r.data===true){entry.read_at=new Date().toISOString();heading.textContent="Personligt meddelande · "+date;}
-          }catch(error){console.warn("Message read receipt",error);}
-        });
-        panel.appendChild(note);
+      const unread=entries.filter(x=>!x.read_at);
+      const previous=entries.filter(x=>Boolean(x.read_at));
+      if(unread.length){
+        panel.style.display="block";
+        const header=document.createElement("strong");
+        header.textContent="💌 Nya meddelanden från din lärare";
+        panel.appendChild(header);
       }
-    }catch(error){console.warn("Teacher messages unavailable",error);}
+      const formatDate=entry=>entry.created_at
+        ?new Date(entry.created_at).toLocaleDateString("sv-SE",{day:"numeric",month:"short"})
+        :"";
+      const makeNote=(entry,old)=>{
+        const note=document.createElement("details");
+        note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
+        const title=document.createElement("summary");
+        title.style.cursor="pointer";
+        title.textContent=(old?"":"● ")+"Meddelande · "+formatDate(entry);
+        const body=document.createElement("p");
+        body.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0 2px";
+        body.textContent=entry.body;
+        note.append(title,body);
+        if(!old){
+          let savingRead=false;
+          note.addEventListener("toggle",async()=>{
+            if(!note.open){
+              if(entry.read_at)void renderDirectTeacherNotes();
+              return;
+            }
+            if(entry.read_at||savingRead)return;
+            savingRead=true;
+            try{
+              const res=await MZ.cloudStudent.getClient().rpc("student_mark_direct_message_read",{p_message_id:entry.id});
+              if(res.error||res.data!==true)throw res.error||new Error("Kunde inte markera som läst");
+              entry.read_at=new Date().toISOString();
+              title.textContent="Meddelande · "+formatDate(entry);
+              // Låt eleven läsa klart. Flytta meddelandet först när det stängs.
+              if(!note.open)void renderDirectTeacherNotes();
+            }catch(error){
+              console.warn("Message read receipt unavailable",error);
+            }finally{savingRead=false;}
+          });
+        }
+        return note;
+      };
+      unread.forEach(entry=>panel.appendChild(makeNote(entry,false)));
+      if(previous.length){
+        previousCard.style.display="";
+        previousCount.textContent="("+previous.length+")";
+        previous.forEach(entry=>previousList.appendChild(makeNote(entry,true)));
+      }
+    }catch(error){
+      console.warn("Teacher messages unavailable",error);
+    }
   }
   MZ.renderDirectTeacherNotes=renderDirectTeacherNotes;
   MZ.renderQuizFeedbackNotes=renderQuizFeedbackNotes;
@@ -12777,6 +12822,15 @@ document.addEventListener("DOMContentLoaded", () => {
       <div id="missionWeekDays" class="mission-week-days"></div>
       <p id="missionWeekSummary"></p>
       <button class="secondary" id="missionOpenJournal" type="button">Visa alla mina framsteg</button>
+    </section>
+
+    <section class="mission-paper" id="previousTeacherMessagesCard" style="display:none">
+      <details id="previousTeacherMessages">
+        <summary style="cursor:pointer;font-weight:800;font-size:19px;color:#425b3d">
+          📬 Tidigare meddelanden <span id="previousTeacherMessageCount" style="font-size:14px"></span>
+        </summary>
+        <div id="previousTeacherMessagesList"></div>
+      </details>
     </section>
 
     <p class="mission-local-note">Elevkod, läraruppdrag, mattearbetet och kottarna synkas via Matteparkens databas. Själva parken och dekorationerna sparas fortfarande lokalt i den här webbläsaren.</p>
