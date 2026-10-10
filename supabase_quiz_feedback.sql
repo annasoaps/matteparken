@@ -26,17 +26,30 @@ grant execute on function public.matteparken_is_student(uuid) to authenticated;
 
 create or replace function public.student_save_quiz_review(p_quiz_id uuid,p_answers jsonb)
 returns jsonb language plpgsql security definer set search_path=public as $$
-declare v_student uuid; v_id uuid;
+declare v_student uuid; v_expected_total integer;
 begin
- if jsonb_typeof(p_answers) <> 'array' or jsonb_array_length(p_answers)>30
-    or octet_length(p_answers::text)>50000 then
+ if p_answers is null or jsonb_typeof(p_answers) is distinct from 'array' then
    return jsonb_build_object('ok',false,'reason','invalid_answers');
  end if;
- select qa.student_id into v_student
+ if jsonb_array_length(p_answers)>30 or octet_length(p_answers::text)>50000 then
+   return jsonb_build_object('ok',false,'reason','invalid_answers');
+ end if;
+ select qa.student_id, qa.total into v_student, v_expected_total
  from public.quiz_attempts qa where qa.quiz_id=p_quiz_id
  and public.matteparken_is_student(qa.student_id)
  and qa.completed_at is not null limit 1;
  if v_student is null then return jsonb_build_object('ok',false,'reason','no_completed_attempt'); end if;
+ if jsonb_array_length(p_answers) <> v_expected_total then
+   return jsonb_build_object('ok',false,'reason','question_count_mismatch');
+ end if;
+ if exists (select 1 from jsonb_array_elements(p_answers) e
+    where jsonb_typeof(e.value) <> 'object'
+    or jsonb_typeof(e.value->'question') is distinct from 'string'
+    or jsonb_typeof(e.value->'answer') is distinct from 'string'
+    or jsonb_typeof(e.value->'correct_answer') is distinct from 'string'
+    or jsonb_typeof(e.value->'correct') is distinct from 'boolean') then
+   return jsonb_build_object('ok',false,'reason','invalid_answer_format');
+ end if;
  insert into public.quiz_reviews(quiz_id,student_id,answers)
  values(p_quiz_id,v_student,p_answers) on conflict(quiz_id,student_id) do nothing;
  return jsonb_build_object('ok',true);
