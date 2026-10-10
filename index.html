@@ -2230,7 +2230,6 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 }
 #missionBoardModal.seed-tutorial-only .mission-board-grid{display:block;max-width:780px;margin:0 auto}
 #missionBoardModal.seed-tutorial-only #studentAssignmentCard,
-#missionBoardModal.seed-tutorial-only #randomAssignmentCard,
 #missionBoardModal.seed-tutorial-only .mission-side{display:none!important}
 #missionBoardModal.seed-tutorial-only .mission-paper-stack{display:block}
 #missionBoardModal.seed-tutorial-only #seedMissionCard{
@@ -6784,27 +6783,164 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#seedChoices button")?.focus();
   }
 
+  let quizFeedbackFetchSequence=0;
   async function renderQuizFeedbackNotes(){
-    const panel=document.getElementById("quizFeedbackNotes");if(!panel)return;
-    const student=MZ.cloudStudent?.activeStudent?.();panel.replaceChildren();panel.style.display="none";if(!student)return;
+    const sequence=++quizFeedbackFetchSequence;
+    const panel=document.getElementById("quizFeedbackNotes");
+    const previousCard=document.getElementById("previousQuizFeedbackCard");
+    const previousList=document.getElementById("previousQuizFeedbackList");
+    const previousCount=document.getElementById("previousQuizFeedbackCount");
+    if(!panel||!previousCard||!previousList||!previousCount)return;
+    panel.replaceChildren();
+    panel.style.display="none";
+    previousList.replaceChildren();
+    previousCard.style.display="none";
+    const student=MZ.cloudStudent?.activeStudent?.();
+    if(!student)return;
+    const studentId=student.student?.id;
     try{
       const result=await MZ.cloudStudent.getClient().rpc("student_list_quiz_feedback");
       if(result.error)throw result.error;
-      const entries=Array.isArray(result.data)?result.data:[];if(!entries.length)return;
-      panel.style.display="block";const heading=document.createElement("strong");heading.textContent="💌 Återkoppling från din lärare";panel.appendChild(heading);
-      entries.forEach(entry=>{
-        const note=document.createElement("details");note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
-        const title=document.createElement("summary");title.style.cursor="pointer";title.textContent=(entry.feedback_read_at?"":"● ")+entry.title;note.appendChild(title);
-        const body=document.createElement("p");body.style.whiteSpace="pre-wrap";body.textContent=entry.teacher_feedback;note.appendChild(body);
+      if(sequence!==quizFeedbackFetchSequence ||
+         studentId!==MZ.cloudStudent?.activeStudent?.()?.student?.id)return;
+      const entries=Array.isArray(result.data)?result.data:[];
+      const unread=entries.filter(x=>!x.feedback_read_at);
+      const old=entries.filter(x=>Boolean(x.feedback_read_at));
+      if(unread.length){
+        panel.style.display="block";
+        const heading=document.createElement("strong");
+        heading.textContent="📄 Ny återkoppling på läxförhör";
+        panel.appendChild(heading);
+      }
+      const buildNote=(entry,alreadyRead)=>{
+        const note=document.createElement("details");
+        note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
+        const title=document.createElement("summary");
+        title.style.cursor="pointer";
+        title.textContent=(alreadyRead?"":"● ")+entry.title;
+        const body=document.createElement("p");
+        body.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere";
+        body.textContent=entry.teacher_feedback;
+        note.append(title,body);
         if(Array.isArray(entry.answers)&&entry.answers.length){
-          const review=document.createElement("details");const summary=document.createElement("summary");summary.textContent="Se mina svar";review.appendChild(summary);
-          entry.answers.forEach((a,i)=>{const p=document.createElement("p");p.style.fontSize="14px";p.textContent=(i+1)+". "+a.question+" | Mitt svar: "+a.answer+" | Rätt: "+a.correct_answer+(a.correct?" ✓":" ✗");review.appendChild(p);});note.appendChild(review);
+          const answers=document.createElement("details");
+          const summary=document.createElement("summary");summary.textContent="Se mina svar";
+          answers.appendChild(summary);
+          entry.answers.forEach((a,i)=>{
+            const p=document.createElement("p");
+            p.style.cssText="font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere";
+            p.textContent=(i+1)+". "+a.question+" | Mitt svar: "+a.answer+" | Rätt: "+a.correct_answer+(a.correct?" ✓":" ✗");
+            answers.appendChild(p);
+          });
+          note.appendChild(answers);
         }
-        note.addEventListener("toggle",async()=>{if(note.open&&!entry.feedback_read_at){const rr=await MZ.cloudStudent.getClient().rpc("student_mark_quiz_feedback_read",{p_quiz_id:entry.quiz_id});if(!rr.error&&rr.data){entry.feedback_read_at=new Date().toISOString();title.textContent=entry.title;}}});
-        panel.appendChild(note);
-      });
+        if(!alreadyRead){
+          let savingRead=false;
+          note.addEventListener("toggle",async()=>{
+            if(!note.open){
+              if(entry.feedback_read_at)void renderQuizFeedbackNotes();
+              return;
+            }
+            if(entry.feedback_read_at||savingRead)return;
+            savingRead=true;
+            try{
+              const res=await MZ.cloudStudent.getClient().rpc("student_mark_quiz_feedback_read",{p_quiz_id:entry.quiz_id});
+              if(res.error||res.data!==true)throw res.error||new Error("Kunde inte markera återkopplingen som läst");
+              entry.feedback_read_at=new Date().toISOString();
+              title.textContent=entry.title;
+              // Eleven ska kunna läsa klart innan återkopplingen flyttas.
+              if(!note.open)void renderQuizFeedbackNotes();
+            }catch(error){
+              console.warn("Quiz feedback read receipt",error);
+            }finally{savingRead=false;}
+          });
+        }
+        return note;
+      };
+      unread.forEach(entry=>panel.appendChild(buildNote(entry,false)));
+      if(old.length){
+        previousCard.style.display="";
+        previousCount.textContent="("+old.length+")";
+        old.forEach(entry=>previousList.appendChild(buildNote(entry,true)));
+      }
     }catch(error){console.warn("Feedback could not be loaded",error);}
   }
+  let teacherMessageFetchSequence=0;
+  async function renderDirectTeacherNotes(){
+    const sequence=++teacherMessageFetchSequence;
+    const panel=document.getElementById("teacherMessageNotes");
+    const previousCard=document.getElementById("previousTeacherMessagesCard");
+    const previousList=document.getElementById("previousTeacherMessagesList");
+    const previousCount=document.getElementById("previousTeacherMessageCount");
+    if(!panel||!previousCard||!previousList||!previousCount)return;
+    panel.replaceChildren();
+    panel.style.display="none";
+    previousList.replaceChildren();
+    previousCard.style.display="none";
+    const student=MZ.cloudStudent?.activeStudent?.();
+    if(!student)return;
+    const studentId=student.student?.id;
+    try{
+      const result=await MZ.cloudStudent.getClient().rpc("student_list_direct_messages");
+      if(result.error)throw result.error;
+      if(sequence!==teacherMessageFetchSequence ||
+         studentId!==MZ.cloudStudent?.activeStudent?.()?.student?.id)return;
+      const entries=Array.isArray(result.data)?result.data:[];
+      const unread=entries.filter(x=>!x.read_at);
+      const previous=entries.filter(x=>Boolean(x.read_at));
+      if(unread.length){
+        panel.style.display="block";
+        const header=document.createElement("strong");
+        header.textContent="💌 Nya meddelanden från din lärare";
+        panel.appendChild(header);
+      }
+      const formatDate=entry=>entry.created_at
+        ?new Date(entry.created_at).toLocaleDateString("sv-SE",{day:"numeric",month:"short"})
+        :"";
+      const makeNote=(entry,old)=>{
+        const note=document.createElement("details");
+        note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
+        const title=document.createElement("summary");
+        title.style.cursor="pointer";
+        title.textContent=(old?"":"● ")+"Meddelande · "+formatDate(entry);
+        const body=document.createElement("p");
+        body.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0 2px";
+        body.textContent=entry.body;
+        note.append(title,body);
+        if(!old){
+          let savingRead=false;
+          note.addEventListener("toggle",async()=>{
+            if(!note.open){
+              if(entry.read_at)void renderDirectTeacherNotes();
+              return;
+            }
+            if(entry.read_at||savingRead)return;
+            savingRead=true;
+            try{
+              const res=await MZ.cloudStudent.getClient().rpc("student_mark_direct_message_read",{p_message_id:entry.id});
+              if(res.error||res.data!==true)throw res.error||new Error("Kunde inte markera som läst");
+              entry.read_at=new Date().toISOString();
+              title.textContent="Meddelande · "+formatDate(entry);
+              // Låt eleven läsa klart. Flytta meddelandet först när det stängs.
+              if(!note.open)void renderDirectTeacherNotes();
+            }catch(error){
+              console.warn("Message read receipt unavailable",error);
+            }finally{savingRead=false;}
+          });
+        }
+        return note;
+      };
+      unread.forEach(entry=>panel.appendChild(makeNote(entry,false)));
+      if(previous.length){
+        previousCard.style.display="";
+        previousCount.textContent="("+previous.length+")";
+        previous.forEach(entry=>previousList.appendChild(makeNote(entry,true)));
+      }
+    }catch(error){
+      console.warn("Teacher messages unavailable",error);
+    }
+  }
+  MZ.renderDirectTeacherNotes=renderDirectTeacherNotes;
   MZ.renderQuizFeedbackNotes=renderQuizFeedbackNotes;
   function renderBoardMessage(){
     syncWelcomeBoard();
@@ -11744,11 +11880,12 @@ async function readCloudState(){
  if(sr.error)throw sr.error;
  if(!sr.data){current=null;render();return null;}
  const student=sr.data;
- const [cr,ar,hr,qr]=await Promise.all([
+ const [cr,ar,hr,qr,personalResult]=await Promise.all([
   c.from("classes").select("id,code,name").eq("id",student.class_id).maybeSingle(),
   c.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,homework_id,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
   c.from("homeworks").select("id,class_id,title,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
-  c.from("quizzes").select("id,class_id,game_id,title,game_config,question_count,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true})
+  c.from("quizzes").select("id,class_id,game_id,title,game_config,question_count,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
+  c.rpc("student_list_personal_tasks")
  ]);
  if(cr.error)throw cr.error;if(ar.error)throw ar.error;if(hr.error)throw hr.error;if(qr.error)throw qr.error;
  const allAssignments=ar.data||[],assignments=allAssignments.filter(a=>!a.homework_id),homeworks=hr.data||[],quizzes=qr.data||[],progressMap=new Map(),ids=allAssignments.map(x=>x.id);
@@ -11761,8 +11898,10 @@ async function readCloudState(){
   const qa=await c.from("quiz_attempts").select("quiz_id,score,total,started_at,completed_at,reward_claimed_at").eq("student_id",student.id).in("quiz_id",quizzes.map(q=>q.id));
   if(qa.error)throw qa.error;quizAttempts=qa.data||[];
  }
- current={classInfo:cr.data,student,assignments,allAssignments,homeworks,quizzes,quizAttempts,progressMap};
- const active=getActiveAssignment();if(active&&!allAssignments.some(x=>x.id===active))setActiveAssignment(null);
+ const personalTasks=personalResult.error?[]:(Array.isArray(personalResult.data)?personalResult.data:[]);
+ if(personalResult.error)console.warn("Personliga uppdrag är inte aktiverade ännu:",personalResult.error);
+ current={classInfo:cr.data,student,assignments,allAssignments,homeworks,quizzes,quizAttempts,progressMap,personalTasks};
+ const active=getActiveAssignment();if(active&&![...allAssignments,...personalTasks].some(x=>x.id===active))setActiveAssignment(null);
  await syncLocalHomeworkCompletions();
  if(MZ.cloudCones?.sync)await MZ.cloudCones.sync();
  render();MZ.homeworkQuiz?.render?.();return current;
@@ -11771,6 +11910,7 @@ function activeStudent(){
  if(!current?.student)return null;
  return{classId:current.classInfo?.code||getSelection()?.classId||"",code:current.student.code,displayName:cleanDisplayName(getSelection()?.displayName||""),student:current.student,
   assignments:(current.assignments||[]).map(a=>({...a,gameId:a.game_id,progress:current.progressMap.get(a.id)||{completed:0,last_active:null,completed_at:null}})),
+  personalTasks:current.personalTasks||[],
   homeworks:(current.homeworks||[]).map(h=>({...h,status:homeworkStatus(h)})),
   quizzes:(current.quizzes||[]).map(q=>({...q,attempt:(current.quizAttempts||[]).find(a=>a.quiz_id===q.id)||null}))
  };
@@ -11791,6 +11931,7 @@ function render(){
  $("#studentLoginPanel")?.classList.toggle("hidden",loggedIn);
  $("#studentAssignmentsPanel")?.classList.toggle("hidden",!loggedIn);
  $("#studentHomeworkPaper")?.classList.toggle("hidden",!loggedIn);
+ $("#personalStudentPanel")?.style.setProperty("display",loggedIn&&current?.personalTasks?.length?"block":"none");
  if(!loggedIn){
   if($("#studentIdentityPill"))$("#studentIdentityPill").textContent="Inte inloggad";
   if($("#studentAssignmentHeading"))$("#studentAssignmentHeading").textContent="Dagens uppdrag";
@@ -11849,6 +11990,7 @@ function render(){
     card.append(info,parts);homeworkList.appendChild(card);
   });
  }
+ renderPersonalStudentTasks();
  const list=$("#studentAssignmentsList");if(!list)return;list.innerHTML="";
  if(!current.assignments.length){
   list.innerHTML='<div class="assignment-empty-cloud">🌿 Inget läraruppdrag är aktivt idag.</div>';
@@ -11886,9 +12028,37 @@ function startFeedback(message="",kind=""){
  const el=$("#studentStartFeedback");
  if(el){el.textContent=message;el.className="feedback"+(kind?" "+kind:"");}
 }
+
+function renderPersonalStudentTasks(){
+ const panel=$("#personalStudentPanel"),list=$("#personalStudentTaskList");
+ if(!panel||!list)return;
+ const tasks=current?.personalTasks||[];
+ panel.style.display=tasks.length?"block":"none";list.replaceChildren();
+ tasks.forEach(a=>{
+  const completed=Math.max(0,Number(a.completed)||0),target=Math.max(1,Number(a.target)||1),done=completed>=target;
+  const card=document.createElement("div");card.className="student-cloud-task"+(done?" done":"");
+  const info=document.createElement("div"),title=document.createElement("h4");title.textContent=(done?"✓ ":"🎯 ")+a.title;
+  const p=document.createElement("p");p.className="muted";p.textContent=done?"Bra jobbat! Din lärare kan se att du är klar.":"Ett frivilligt uppdrag bara för dig.";
+  const count=document.createElement("div");count.className="round-note";count.textContent=completed+" av "+target+" omgångar klara";
+  const bar=document.createElement("div");bar.className="progress";
+  const fill=document.createElement("div");fill.style.width=Math.min(100,Math.round(completed/target*100))+"%";bar.appendChild(fill);
+  info.append(title,p,count,bar);
+  const actions=document.createElement("div");actions.className="assignment-actions";
+  const button=document.createElement("button");button.className="primary";button.type="button";
+  button.textContent=done?"Träna igen":"Starta mitt uppdrag";
+  if(done){button.disabled=true;button.textContent="✓ Klart";}
+  else{button.dataset.startAssignment=a.id;button.dataset.assignmentKind="personal";}
+  actions.appendChild(button);
+  card.append(info,actions);list.appendChild(card);
+ });
+}
+
 function startAssignment(id){
- const a=current?.allAssignments?.find(x=>x.id===id);
+ const a=current?.allAssignments?.find(x=>x.id===id)||current?.personalTasks?.find(x=>x.id===id);
  if(!a){startFeedback("Uppdraget kunde inte hittas. Ladda om sidan och försök igen.","bad");return false;}
+ if(current?.personalTasks?.some(x=>x.id===id)&&Number(a.completed)>=Number(a.target)){
+   startFeedback("Det personliga uppdraget är redan klart.","good");return false;
+ }
  if(a.homework_id){
    const hw=current?.homeworks?.find(x=>x.id===a.homework_id);
    if(hw?.opens_at&&Date.now()<new Date(hw.opens_at).getTime()){
@@ -11907,7 +12077,7 @@ function startAssignment(id){
    setActiveAssignment(a.id);
    MZ.missionBoard.launch(a.game_id,a.game_config||{});
    if(a.game_id==="equations")window.setTimeout(()=>$("#eqRandomOne")?.click(),120);
-   $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":"📌 Läraruppdrag aktivt: ")+a.title+". När hela omgången är klar markeras uppdraget som klart.";
+   $("#status").textContent=(a.homework_id?"🏠 Läxan är igång: ":current?.personalTasks?.some(x=>x.id===id)?"🎯 Ditt personliga uppdrag: ":"📌 Läraruppdrag aktivt: ")+a.title+". Ditt arbete sparas när en hel omgång är klar.";
    startFeedback("");
    return true;
  }catch(error){
@@ -11994,7 +12164,34 @@ async function syncLocalHomeworkCompletions(){
  return synced;
 }
 function recordRound(event){
- const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
+ const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;
+ const personal=current?.personalTasks?.find(v=>v.id===id);
+ if(personal){
+  if(!matchingRound(personal,x))return;
+  writeQueue=writeQueue.then(async()=>{
+    await ensureStudentConnection();
+    if(!current?.student)throw new Error("Ingen aktiv elevkoppling.");
+    const res=await client().rpc("student_record_personal_round",{
+      p_task_id:id,p_game_id:x.gameId,p_round_type:x.type,
+      p_table:Number.isFinite(Number(x.table))?Number(x.table):null
+    });
+    if(res.error||res.data?.ok!==true)throw res.error||new Error(res.data?.reason||"Kunde inte registrera omgången.");
+    const task=current.personalTasks.find(t=>t.id===id);
+    if(task){
+      task.completed=Number(res.data.completed)||0;
+      task.completed_at=res.data.completed_at||null;
+      const done=Boolean(res.data.done);
+      if(done){setActiveAssignment(null);$("#status").textContent="🎉 Ditt personliga uppdrag är klart! Din lärare kan se det.";}
+      else $("#status").textContent="🎯 "+task.title+": "+task.completed+" av "+task.target+" omgångar klara.";
+    }
+    render();
+  }).catch(error=>{
+    console.error("Personligt uppdrag kunde inte synkas",error);
+    $("#status").textContent="Uppdraget kunde inte registreras just nu. Försök igen när kontakten fungerar.";
+  });
+  return;
+ }
+ const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
  if(a?.homework_id){
   markHomeworkAssignmentDone(id);
   setActiveAssignment(null);
@@ -12659,6 +12856,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <section class="modal mission-noticeboard" role="dialog" aria-modal="true" aria-labelledby="missionBoardTitle" tabindex="-1">
 <button class="close" data-close="missionBoardModal" aria-label="Stäng dagens uppdrag">×</button>
 <div class="board-plaque" id="missionBoardTitle">DAGENS UPPDRAG<span>MATTEPARKEN · PARKKONTORET</span></div>
+<div id="teacherMessageNotes" style="display:none;margin:12px 0 12px;padding:14px;background:#fff4d8;border:3px solid #a67e50;border-radius:8px"></div>
 <div id="quizFeedbackNotes" style="display:none;margin:12px 0 18px;padding:14px;background:#fff4d8;border:3px solid #a67e50;border-radius:8px"></div>
 <div class="mission-board-grid">
   <div class="mission-paper-stack">
@@ -12683,7 +12881,11 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div id="studentAssignmentsPanel" class="hidden">
         <div class="assignment-actions student-switch-row student-switch-top"><button class="secondary" id="studentLogoutBtn" type="button">Byt elevkod</button></div>
-        <h4 class="daily-assignment-title">📌 Dagens uppdrag</h4>
+        <div id="personalStudentPanel" style="display:none;margin:0 0 18px">
+          <h4 class="daily-assignment-title">🎯 Personliga uppdrag från din lärare</h4>
+          <div id="personalStudentTaskList" class="student-assignment-list"></div>
+        </div>
+        <h4 class="daily-assignment-title">📌 Klassens Dagens uppdrag</h4>
         <div id="studentAssignmentsList" class="student-assignment-list"></div>
         <div class="daily-assignment-overview">
           <strong id="dailyAssignmentSummary">0 av 0 delar klara idag</strong>
@@ -12700,7 +12902,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <button class="secondary" id="missionDailyExtra" type="button">Visa parkutmaningen</button>
     </section>
 
-    <section class="mission-paper" id="randomAssignmentCard"><span class="mission-kicker">ETT UPPDRAG FÖR DIG</span><h2 id="randomMissionTitle"></h2><p id="randomMissionDescription"></p><p id="randomMissionProgress" role="status"></p><div class="progress"><div id="randomMissionFill"></div></div><button class="primary" id="startRandomMission" type="button">Starta uppdraget</button><p class="muted">Ett slumpat uppdrag varje dag. Du kan fortsätta där du slutade.</p></section>
     <section class="mission-paper" id="seedMissionCard"><h3>🌱 Hjälp ditt första frö att växa</h3><p id="missionSeedHint">Svara rätt på fem multiplikationsfrågor. Varje rätt svar hjälper fröet att växa.</p><p id="missionSeedProgress"></p><button class="primary" id="missionSeedStart" type="button">Starta första matteuppdraget</button></section>
   </div>
 
@@ -12719,6 +12920,24 @@ document.addEventListener("DOMContentLoaded", () => {
       <div id="missionWeekDays" class="mission-week-days"></div>
       <p id="missionWeekSummary"></p>
       <button class="secondary" id="missionOpenJournal" type="button">Visa alla mina framsteg</button>
+    </section>
+
+    <section class="mission-paper" id="previousTeacherMessagesCard" style="display:none">
+      <details id="previousTeacherMessages">
+        <summary style="cursor:pointer;font-weight:800;font-size:19px;color:#425b3d">
+          📬 Tidigare meddelanden <span id="previousTeacherMessageCount" style="font-size:14px"></span>
+        </summary>
+        <div id="previousTeacherMessagesList"></div>
+      </details>
+    </section>
+
+    <section class="mission-paper" id="previousQuizFeedbackCard" style="display:none">
+      <details id="previousQuizFeedback">
+        <summary style="cursor:pointer;font-weight:800;font-size:19px;color:#425b3d">
+          📄 Tidigare återkoppling <span id="previousQuizFeedbackCount" style="font-size:14px"></span>
+        </summary>
+        <div id="previousQuizFeedbackList"></div>
+      </details>
     </section>
 
     <p class="mission-local-note">Elevkod, läraruppdrag, mattearbetet och kottarna synkas via Matteparkens databas. Själva parken och dekorationerna sparas fortfarande lokalt i den här webbläsaren.</p>
@@ -12740,24 +12959,9 @@ document.addEventListener("DOMContentLoaded", () => {
     statistics:['Statistik','openStatistics'],
     scientificNotation:['Grundpotensform','openScientificNotation']
   };
-  const randomGameIds=Object.keys(games).filter(id=>id!=='sharePart');
-  const storeKey='matteparken_randomMissions_v1';
   let returningFocus=null, dateSeen='';
   function today(){return MZ.getLocalDateKey();}
   function current(){return MZ.cloudStudent?.activeStudent?.()||null;}
-  function profile(){const s=current();return s ? s.classId+':'+s.code : 'local-park';}
-  function read(){try{const x=JSON.parse(localStorage.getItem(storeKey)||'{}');return x && typeof x==='object' && !Array.isArray(x)?x:{};}catch{return {};}}
-  function write(data){localStorage.setItem(storeKey,JSON.stringify(data));}
-  function randomMission(){
-    const all=read(),who=profile(),day=today();
-    if(!all[who] || typeof all[who]!=='object')all[who]={};
-    let m=all[who][day];
-    if(!m || !games[m.gameId]){
-      const ids=randomGameIds;
-      m=all[who][day]={gameId:ids[Math.floor(Math.random()*ids.length)],completed:0,target:10};write(all);
-    }
-    return m;
-  }
   function renderWeek(s){
     const days=$('missionWeekDays');if(!days)return;days.replaceChildren();
     const d=new Date(),start=new Date(d.getFullYear(),d.getMonth(),d.getDate());start.setDate(start.getDate()-(start.getDay()+6)%7);
@@ -12779,23 +12983,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const seedTutorial=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     $('missionBoardModal').classList.toggle('seed-tutorial-only',seedTutorial);
     const s=current(),hasDaily=Boolean(s?.assignments?.length);
-    if($('studentAssignmentIntro'))$('studentAssignmentIntro').textContent=s?(hasDaily?'Gör hela dagens uppdrag. I morgon börjar du om från början.':'Du är inloggad. Inget läraruppdrag är aktivt idag, så du får ett slumpat dagsuppdrag.'):'Logga in med klass och elevkod för att se dagens uppdrag.';
-    $('randomAssignmentCard').classList.toggle('hidden',hasDaily);
-    if(!hasDaily){const m=randomMission();$('randomMissionTitle').textContent=games[m.gameId][0];$('randomMissionDescription').textContent=`Lös ${m.target} uppgifter i ${games[m.gameId][0].toLowerCase()}.`;
-      $('randomMissionProgress').textContent=m.completed>=m.target?`✓ Klart! Du har löst ${m.target} uppgifter.`:`${m.completed} av ${m.target} uppgifter klara`;
-      $('randomMissionFill').style.width=Math.min(100,m.completed/m.target*100)+'%';$('startRandomMission').textContent=m.completed>=m.target?'Träna vidare':'Starta uppdraget';}
+    if($('studentAssignmentIntro'))$('studentAssignmentIntro').textContent=s?(hasDaily?'Gör gärna klassens uppdrag. I morgon börjar de om från början.':'Här finns dina personliga uppdrag och klassens uppdrag när läraren har lagt ut dem.'):'Logga in med klass och elevkod för att se dagens uppdrag.';
     const seed=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     $('seedMissionCard').classList.toggle('hidden',!seed);
     $('missionSeedProgress').textContent=`${MZ.state.onboarding.seedQuestCorrect} av ${MZ.config.starterSeedQuestions} rätt. ${MZ.state.onboarding.seedQuestCorrect ? 'Fortsätt, fröet växer!' : 'Din första blomma väntar på dig.'}`;
     $('missionSeedStart').textContent=MZ.state.onboarding.seedQuestCorrect ? 'Fortsätt matteuppdraget' : 'Starta första matteuppdraget';
     if(!seedTutorial) renderWeek(s);
     dateSeen=today();
-    if($('missionBoardModal').classList.contains('open')) MZ.renderQuizFeedbackNotes?.();
+    if($('missionBoardModal').classList.contains('open')){
+      MZ.renderQuizFeedbackNotes?.();
+      MZ.renderDirectTeacherNotes?.();
+    }
   }
   function open(){
     if(!MZ.state.onboarding.bagOpened)return;
     returningFocus=document.activeElement;render();MZ.openModal('missionBoardModal');
     MZ.renderQuizFeedbackNotes?.();
+    MZ.renderDirectTeacherNotes?.();
     const tutorialSeed=MZ.state.onboarding.seedPlaced && !MZ.state.onboarding.seedGrown;
     const panel=$('missionBoardModal').querySelector('.mission-noticeboard');
     panel.scrollTop=0;
@@ -12838,14 +13042,9 @@ document.addEventListener("DOMContentLoaded", () => {
     MZ.openModal('officeModal');
     $(button)?.click();
   }
-  function record(event){
-    const s=current();if(s?.assignments?.length){render();return;}
-    const m=randomMission();if(event.detail?.gameId===m.gameId && m.completed<m.target){const all=read();all[profile()][today()].completed+=1;write(all);}render();
-  }
   MZ.missionBoard={open,render,launch};
   document.addEventListener('DOMContentLoaded',()=>{
 
-    $('startRandomMission').addEventListener('click',()=>launch(randomMission().gameId));
     $('missionOpenJournal').addEventListener('click',()=>{MZ.closeModal('missionBoardModal');$('openActivityLog').click();});
     $('journalOpenMissions').addEventListener('click',open);
     $('missionDailyExtra').addEventListener('click',()=>{MZ.closeModal('missionBoardModal');$('dailyQuestBtn').click();});
@@ -12861,7 +13060,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
     $('missionBoardModal').querySelector('[data-close]').addEventListener('click',()=>returningFocus?.focus());
-    MZ.events.addEventListener('mathquestion',record);MZ.events.addEventListener('activitychange',render);MZ.events.addEventListener('mathcomplete',render);
+    MZ.events.addEventListener('activitychange',render);MZ.events.addEventListener('mathcomplete',render);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden&&dateSeen!==today())render();});
     render();
   });
