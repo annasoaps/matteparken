@@ -8251,7 +8251,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#seedQuestView").classList.add("hidden");
     $("#multiplicationView").classList.add("hidden");
     $("#equationsView").classList.add("hidden");
-    ["#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#percentConvertView","#prefixMatchView","#unitConvertView","#statisticsView","#activityView"].forEach((id)=>$(id)?.classList.add("hidden"));
+    ["#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#percentConvertView","#percentChangeView","#prefixMatchView","#unitConvertView","#statisticsView","#activityView"].forEach((id)=>$(id)?.classList.add("hidden"));
     $("#dailyQuestView").classList.remove("hidden");
   }
 
@@ -8348,7 +8348,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       const backByGame={
         multiplication:"#backToShelf",equations:"#backFromEquations",pow10:"#backFromPow10",
         fractionDecimal:"#backFromFractionDecimal",mgn:"#backFromMgn",percentConvert:"#backFromPercentConvert",
-        prefixMatch:"#backFromPrefixMatch",unitConvert:"#backFromUnitConvert",statistics:"#backFromStatistics"
+        prefixMatch:"#backFromPrefixMatch",unitConvert:"#backFromUnitConvert",statistics:"#backFromStatistics",percentChange:"#pcBack"
       };
       window.setTimeout(()=>{
         $(backByGame[task.gameId])?.click();
