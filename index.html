@@ -11966,7 +11966,9 @@ function render(){
  const homeworkList=$("#studentHomeworkList");
  if(homeworkList){
   homeworkList.innerHTML="";
-  const hwGroups=homeworkGroups();
+  // Visa bara läxor vars deadline inte har passerat. Sparade resultat rörs inte.
+  const hwGroups=homeworkGroups().filter(group=>!group.due_at||Date.now()<=new Date(group.due_at).getTime());
+  $("#studentHomeworkPaper")?.classList.toggle("hidden",!hwGroups.length);
   if(!hwGroups.length){
     homeworkList.innerHTML='<div class="assignment-empty-cloud">Ingen läxa är aktiv just nu.</div>';
   }else hwGroups.forEach(group=>{
