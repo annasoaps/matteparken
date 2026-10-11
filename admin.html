@@ -32,7 +32,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 .assignment-list{display:grid;gap:12px}.assignment-item{border:1px solid #d4dece;border-radius:16px;background:white;padding:15px}.assignment-item.paused{opacity:.7;background:#f5f5f1}
 .assignment-item-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.assignment-item h3{margin:0 0 5px;font-size:17px}.assignment-meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.mini-pill{display:inline-flex;padding:5px 8px;border-radius:999px;background:#eef3e9;font-size:12px;font-weight:800}.assignment-buttons{display:flex;gap:7px;flex-wrap:wrap}
 .code-controls{display:grid;grid-template-columns:140px auto;gap:10px;align-items:end}.generated-codes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.code-chip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:900;letter-spacing:.08em;background:#eef3e8;border:1px solid #cbd7c6;border-radius:9px;padding:8px 10px}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:660px;background:white}th,td{padding:12px 13px;border-bottom:1px solid #e6ece2;text-align:left}th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#637467;background:#f4f7f0}tbody tr{cursor:pointer}tbody tr:hover{background:#f7faf4}tbody tr.selected{background:#eaf3e5}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:660px;background:white}th,td{padding:12px 13px;border-bottom:1px solid #e6ece2;text-align:left}th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#637467;background:#f4f7f0}tbody tr{cursor:pointer}tbody tr:hover{background:#f7faf4}tbody tr.selected{background:#eaf3e5}.student-note{min-width:135px;max-width:200px;padding:7px 9px;font-size:13px;border-radius:8px}.student-note:disabled{opacity:.65}
 .progressbar{height:8px;border-radius:999px;background:#e6ebe2;overflow:hidden;margin-top:5px}.progressbar span{display:block;height:100%;background:var(--accent)}
 .status{font-weight:850}.status.done{color:var(--good)}
 .detail{margin-top:18px}.detail-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:18px}.activity-list,.student-assignment-detail{display:grid;gap:9px}.activity-row{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;border-radius:12px;background:#f3f7ef}.activity-row span{font-weight:850}
@@ -230,7 +230,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     <section class="card">
       <div class="section-head"><div><h2>🌱 Elevöversikt</h2><p class="muted">Klicka på en elevkod för uppdrag och aktivitet.</p></div><strong id="studentCount">0 elever</strong></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Nr</th><th>Elevkod</th><th>Uppdrag</th><th>Läxa</th><th>Förhör</th><th>Status</th><th>Senast aktiv</th></tr></thead>
+        <thead><tr><th>Nr</th><th>Elevkod</th><th>Min anteckning</th><th>Uppdrag</th><th>Läxa</th><th>Förhör</th><th>Status</th><th>Senast aktiv</th></tr></thead>
         <tbody id="studentRows"></tbody>
       </table></div>
     </section>
@@ -282,7 +282,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 
   const authUrlText=window.location.search+" "+window.location.hash;
   const inviteFlow=/type=(invite|recovery)/i.test(authUrlText);
-  let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],quizReviews=[],students=[],progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
+  let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],quizReviews=[],students=[],studentNotes=new Map(),notesEnabled=false,progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
   let refreshTimer=null,lastGeneratedCodes=[];
 
   function setFeedback(id,msg="",kind=""){const el=$(id);if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
@@ -359,7 +359,7 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     catch(error){console.error(error);setFeedback("loginFeedback","Kunde inte logga in. Kontrollera e-post och lösenord.","bad");}
     finally{$("loginBtn").disabled=false;}
   }
-  async function logout(){await sb.auth.signOut();user=null;classes=[];classId=null;assignments=[];students=[];selectedStudentId=null;if(refreshTimer)clearInterval(refreshTimer);$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden");setFeedback("loginFeedback","Utloggad.","good");}
+  async function logout(){await sb.auth.signOut();user=null;classes=[];classId=null;assignments=[];students=[];studentNotes=new Map();selectedStudentId=null;if(refreshTimer)clearInterval(refreshTimer);$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden");setFeedback("loginFeedback","Utloggad.","good");}
 
   async function loadClasses(){
     const tc=await sb.from("teacher_classes").select("class_id");if(tc.error)throw tc.error;
@@ -437,7 +437,13 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         (pRes.data||[]).forEach(p=>progressMap.set(progressKey(p.student_id,p.assignment_id),p));
       }
 
-      quizAttempts=[];quizReviews=[];const studentIds=students.map(s=>s.id);
+      quizAttempts=[];quizReviews=[];studentNotes=new Map();notesEnabled=false;
+      const noteRes=await sb.rpc("teacher_list_student_notes",{p_class_id:classId});
+      if(!noteRes.error&&Array.isArray(noteRes.data)){
+        notesEnabled=true;
+        noteRes.data.forEach(n=>studentNotes.set(n.student_id,n.note||""));
+      }else if(noteRes.error){console.warn("Läraranteckningar behöver sin SQL-installation",noteRes.error);}
+      const studentIds=students.map(s=>s.id);
       if(studentIds.length&&quizzes.length){
         const qa=await sb.from("quiz_attempts").select("student_id,quiz_id,score,total,started_at,completed_at,reward_claimed_at").in("student_id",studentIds).in("quiz_id",quizzes.map(q=>q.id));
         if(qa.error)throw qa.error;quizAttempts=qa.data||[];
@@ -536,7 +542,9 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
 
   function renderStudents(){
     $("studentCount").textContent=students.length+" "+(students.length===1?"elev":"elever");
-    const tbody=$("studentRows");tbody.innerHTML="";const active=assignments.filter(a=>a.enabled&&!a.homework_id);
+    const tbody=$("studentRows");
+    if(document.activeElement?.classList?.contains("student-note"))return;
+    tbody.innerHTML="";const active=assignments.filter(a=>a.enabled&&!a.homework_id);
     students.forEach(student=>{
       const done=active.filter(a=>assignmentDoneToday(student.id,a.id)).length;
       const total=active.length;const pct=total?Math.round(done/total*100):0;
@@ -553,11 +561,33 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
       const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
       tr.innerHTML="<td><strong>"+(Number(student.list_number)||"–")+"</strong></td>"+
         "<td><strong>"+escapeHtml(student.code)+"</strong></td>"+
+        "<td class=\'note-cell\'></td>"+
         "<td><strong>"+done+" / "+total+"</strong><div class='progressbar'><span style='width:"+pct+"%'></span></div></td>"+
         "<td><strong>"+hwDone+" / "+hwTotal+"</strong><div class='progressbar'><span style='width:"+hwPct+"%'></span></div></td>"+
         "<td><strong>"+qDone+" / "+activeQ.length+"</strong></td>"+
         "<td><span class='status "+(hasAnything&&allComplete?"done":"")+"'>"+(!hasAnything?"Inga aktiva":allComplete?"✓ Allt klart":anyProgress||hwDone||qDone?"Pågår":"Ej startad")+"</span></td>"+
         "<td>"+formatLast(student.last_active)+"</td>";
+      const noteInput=document.createElement("input");
+      noteInput.className="student-note";noteInput.type="text";noteInput.maxLength=80;
+      noteInput.placeholder=notesEnabled?"Namn / initialer":"Kör antecknings-SQL";
+      noteInput.setAttribute("aria-label","Min anteckning för elevkod "+student.code);
+      noteInput.value=studentNotes.get(student.id)||"";noteInput.disabled=!notesEnabled;
+      noteInput.addEventListener("click",e=>e.stopPropagation());
+      noteInput.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter")noteInput.blur();});
+      noteInput.addEventListener("change",async()=>{
+        const previous=studentNotes.get(student.id)||"";
+        const next=noteInput.value.trim();
+        if(next===previous)return;
+        noteInput.disabled=true;
+        const result=await sb.rpc("teacher_set_student_note",{p_student_id:student.id,p_note:next});
+        if(result.error||result.data?.ok!==true){
+          console.error("Could not save teacher note",result.error||result.data);
+          noteInput.value=previous;noteInput.title="Kunde inte spara. Försök igen.";
+          alert("Anteckningen kunde inte sparas. Kontrollera att antecknings-SQL har körts.");
+        }else{studentNotes.set(student.id,next);noteInput.title="Sparat";}
+        noteInput.disabled=false;
+      });
+      tr.querySelector(".note-cell").appendChild(noteInput);
       tr.addEventListener("click",()=>{selectedStudentId=student.id;renderStudents();renderDetail();});
       tbody.appendChild(tr);
     });
