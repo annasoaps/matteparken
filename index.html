@@ -4046,6 +4046,16 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,perfect:Boolean(activity.perfect),progressionRound:true};
       }
 
+      if(activity.gameId === "whole" && activity.type === "four-whole-round" && Number(activity.questions) === 4){
+        const entry = state.simpleGameStats.whole || (state.simpleGameStats.whole = {rounds:0, correct:0});
+        entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
+        entry.correct = Math.max(0, Number(entry.correct) || 0) + 4;
+        storage.saveSimpleGameStats();
+        const rewardNP = config.standardRoundRewardNP;
+        storage.addNaturePoints(rewardNP);
+        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,progressionRound:true};
+      }
+
       if(activity.gameId === "percentChange" && activity.type === "three-change-round"){
         const entry = state.simpleGameStats.percentChange || (state.simpleGameStats.percentChange = {rounds:0, correct:0});
         entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
@@ -11362,7 +11372,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     unitConvert:"#unitConvertView",
     statistics:"#statisticsView",
     scientificNotation:"#scientificNotationView",
-    percentChange:"#percentChangeView"
+    percentChange:"#percentChangeView",
+    whole:"#wholeView"
   });
 
   const fallbackTitles = Object.freeze({
@@ -11378,7 +11389,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     unitConvert:"Enhetsomvandling",
     statistics:"Statistik",
     scientificNotation:"Grundpotensform",
-    percentChange:"Beräkna förändring"
+    percentChange:"Beräkna förändring",
+    whole:"Hitta det hela"
   });
 
   function emptyDay(){
@@ -12707,6 +12719,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 </script>
 
 <script src="percent_change.js"></script>
+<script src="hitta_det_hela_integration.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
@@ -12727,6 +12740,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.Mattezoo.games.statistics.init();
   window.Mattezoo.games.scientificNotation.init();
   window.Mattezoo.games.percentChange.init();
+  window.Mattezoo.games.whole.init();
   window.Mattezoo.activity.init();
   window.Mattezoo.cloudStudent.init();
   window.Mattezoo.cloudCones.init();
@@ -12880,6 +12894,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const MZ=window.Mattezoo, $=id=>document.getElementById(id);
   const games={
     percentChange:["Beräkna förändring","openPercentChange"],
+    whole:["Hitta det hela","openWhole"],
     multiplication:['Multiplikation','openMultiplication'],
     equations:['Ekvationer','openEquations'],
     pow10:['× och ÷ med 10, 100, 1000','openPow10'],
@@ -12906,7 +12921,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let m=all[who][day];
     if(!m || !games[m.gameId]){
       const ids=randomGameIds;
-      const gameId=ids[Math.floor(Math.random()*ids.length)];m=all[who][day]={gameId,completed:0,target:gameId==="percentChange"?3:10};write(all);
+      const gameId=ids[Math.floor(Math.random()*ids.length)];m=all[who][day]={gameId,completed:0,target:gameId==="percentChange"?3:gameId==="whole"?4:10};write(all);
     }
     return m;
   }
