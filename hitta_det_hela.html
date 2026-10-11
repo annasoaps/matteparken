@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hitta det hela | Matteparken</title>
+<style>
+:root { color-scheme: light; --forest:#285d51; --forest2:#376d59; --sage:#d5e8cf; --cream:#fffaf0; --paper:#fffef9; --ink:#223d38; --quiet:#547067; --line:#d8e3d7; --orange:#d9894e; --gold:#e8b661; --soft:#eaf4e5; --red:#9e463b; }
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 6%,#f5efdb 0,transparent 40%),linear-gradient(165deg,#dfeee0,#f5f5e9 65%,#e8f1e3);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);min-height:100vh}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #c98a43;outline-offset:2px}.shell{width:min(100%,1040px);margin:auto;padding:24px 18px 50px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 20px}.brand{font-size:14px;letter-spacing:.065em;font-weight:900;color:#41675b}.brand .dot{display:inline-block;width:12px;height:12px;border-radius:3px;background:#efba6e;transform:rotate(17deg);margin-right:7px}.tag{font-size:12px;color:#4d6b62;background:#fff9e9;border:1px solid #e4e5cf;border-radius:999px;padding:8px 12px;font-weight:650}.main{background:var(--paper);border:1px solid rgba(62,108,75,.2);border-radius:24px;box-shadow:0 18px 40px rgba(42,70,47,.1);overflow:hidden}.hero{padding:26px 32px 24px;background:linear-gradient(115deg,#305e51 0,#41705d 75%,#507c5b 100%);color:#fff;position:relative}.hero:after{content:'✦';position:absolute;right:38px;top:8px;color:#f0ce8a;font-size:104px;opacity:.3}.eyebrow{letter-spacing:.11em;font-size:11px;text-transform:uppercase;font-weight:850;color:#d6e9cb}h1{margin:6px 0 8px;font-family:Georgia,serif;font-size:clamp(29px,4vw,43px);letter-spacing:-.035em}.hero p{margin:0;max-width:620px;color:#e0efe2;font-size:15px;line-height:1.55}.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:22px 32px;border-bottom:1px solid var(--line);background:#fcfdf7}.control-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#547268;font-weight:900;margin-bottom:9px}.segmented{display:flex;background:#e7ede4;border-radius:12px;padding:4px;gap:4px}.segmented button{flex:1;border:0;background:transparent;border-radius:9px;color:#406055;font-size:13px;font-weight:750;padding:10px 7px;min-height:42px}.segmented button[aria-pressed="true"]{background:#fffefa;box-shadow:0 2px 7px rgba(29,52,29,.12);color:#1c5544}.play-area{padding:26px 32px 32px}.game-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.small-label{font-size:12px;color:var(--quiet);font-weight:750}.progress-line{height:8px;border-radius:12px;background:#e2eadc;overflow:hidden;width:min(260px,35vw);margin-top:8px}.progress-fill{height:100%;border-radius:12px;background:#78a86b;width:0;transition:width .25s}.count{font-size:13px;background:#faf1dd;border:1px solid #f1e2c2;padding:8px 11px;border-radius:10px;font-weight:750;color:#795a34}.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:25px;align-items:start}.visual{padding:24px;background:linear-gradient(160deg,#edf5e8,#f8f6e9);border:1px solid #d4e5d0;border-radius:19px;min-height:350px}.visual .icon-row{font-size:30px;line-height:1}.visual h2{font-family:Georgia,serif;font-weight:700;line-height:1.25;font-size:23px;margin:14px 0 12px}.visual .given{font-size:19px;font-weight:850;color:#2a6450}.visual .instruction{font-size:14px;line-height:1.55;color:#587568;max-width:320px}.tiles{margin:32px 0 12px;display:flex;gap:5px;min-height:53px}.tile{min-width:0;flex:1;border-radius:6px;border:2px solid #b2c8ac;background:repeating-linear-gradient(135deg,#f3f5ea,#f3f5ea 6px,#e5ecdf 6px,#e5ecdf 12px);position:relative}.tile.filled{background:#679d79;border-color:#4d825e;box-shadow:inset 0 -7px 0 rgba(26,78,38,.12)}.tile:nth-child(2n).filled{background:#75a783}.tile-note{font-size:12px;color:var(--quiet);display:flex;justify-content:space-between}.mini-note{background:#fffaf1;border:1px solid #e8e8d4;border-radius:12px;padding:13px;margin-top:20px;font-size:13px;line-height:1.5;color:#577168}.workspace{background:#fff;border:1px solid #e0e5d8;border-radius:19px;padding:24px;min-height:350px}.method-title{font-size:13px;font-weight:900;letter-spacing:.025em;color:#326f57;margin-bottom:12px}.stage-index{font-size:12px;font-weight:700;color:#8a876e}.problem{font-size:23px;font-family:Georgia,serif;line-height:1.3;margin:6px 0 18px;color:#243f38}.math-row{font-size:19px;padding:14px;background:#f1f6eb;border-radius:12px;color:#315647;line-height:1.4;overflow-wrap:anywhere}.ask{font-size:15px;font-weight:800;margin:20px 0 11px;line-height:1.45}.answerline{display:flex;gap:10px;align-items:stretch}.answerline input{width:100%;min-width:0;max-width:210px;border:2px solid #ceded2;border-radius:11px;padding:11px 13px;font-size:19px;background:white;color:#1d4336}.action{border:0;background:#356e54;color:white;border-radius:11px;padding:11px 18px;font-weight:850;transition:filter .12s}.action:hover{filter:brightness(1.09)}.ghost{border:1px solid #c9d9c9;background:#f4f8f0;color:#3c6b50;border-radius:10px;padding:9px 13px;font-weight:850}.ghost:hover{background:#e4eedc}.choices{display:grid;gap:9px}.choice{background:#f8faf3;border:2px solid #d7e4d4;border-radius:12px;text-align:left;padding:13px 14px;font-size:17px;font-weight:680;color:#285545}.choice:hover{background:#eaf4e4;border-color:#8eac90}.under-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.feedback{font-size:14px;font-weight:750;min-height:24px;margin-top:14px;line-height:1.45}.feedback.good{color:#207a4a}.feedback.bad{color:var(--red)}.hint{font-size:14px;line-height:1.6;color:#536959;background:#f9f3e7;border:1px solid #e7dbbe;border-radius:10px;padding:11px 13px;margin-top:12px}.hidden{display:none!important}.success{padding:21px 0 5px}.success h2{font-family:Georgia,serif;font-size:28px;margin:8px 0}.success p{line-height:1.5;color:#4c7061}.success .big-result{font-size:28px;font-weight:900;color:#246747;background:#e4f4dd;border-radius:14px;padding:15px 18px;display:inline-block;margin-bottom:14px}.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.method-card{border:1px solid #d7e5d6;border-radius:14px;background:#f9fcf5;padding:14px;min-width:0}.method-card strong{display:block;color:#336d50;font-size:13px;margin-bottom:9px}.method-card div{font-size:14px;line-height:1.6;overflow-wrap:anywhere}.method-card div+div{margin-top:4px}.success .action{margin-top:5px}.ending{text-align:center;padding:38px 15px}.ending h2{font-family:Georgia,serif;font-size:35px;margin:8px 0}.ending p{line-height:1.55;color:#4b6c5d}.final-medal{font-size:64px;line-height:1.3}.footer{font-size:12px;text-align:center;color:#698175;line-height:1.5;margin-top:18px}.fraction{display:inline-grid;vertical-align:middle;text-align:center;line-height:1.05;margin:0 .12em;min-width:1em}.fraction span:first-child{border-bottom:1.5px solid currentColor;padding:0 .1em .12em}.fraction span:last-child{padding-top:.12em}.inline-math{white-space:nowrap}.how-to{margin:18px 32px 0;padding:14px 20px;border:1px solid #e0e9d7;border-radius:13px;background:#f8faf3;color:#486756;font-size:13px;line-height:1.5}.how-to strong{color:#32654d}@media(max-width:750px){.toolbar,.two-col,.compare{grid-template-columns:1fr}.toolbar{gap:16px}.shell{padding:8px 10px 30px}.hero{padding:24px 21px}.toolbar,.play-area{padding:20px}.visual{min-height:0}.workspace{min-height:270px}.visual .instruction{max-width:none}.tiles{margin:16px 0 10px}.game-header{margin-bottom:15px}.how-to{margin:16px 20px 0}.hero:after{right:15px;top:22px;font-size:75px}}
+.math-tip{display:block;margin-top:6px;font-size:14px;line-height:1.4;font-weight:600;color:#597265}
+
+/* Miniräknare: egen panel så spelets svarsfält och mellanled förblir separata. */
+.calc-panel{margin-top:13px;padding:15px;background:#f7faf3;border:1px solid #cbdcc9;border-radius:15px;max-width:350px;box-shadow:0 6px 16px rgba(34,69,48,.06)}
+.calc-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;font-size:13px;font-weight:850;color:#37674f}
+.calc-display{padding:10px 13px;text-align:right;background:#fff;border:1px solid #cedbcb;border-radius:10px;margin-bottom:11px;min-height:77px;font-variant-numeric:tabular-nums;overflow:hidden}
+.calc-expression{font-size:12px;color:#627c6f;min-height:18px;overflow-wrap:anywhere}
+.calc-screen{font-size:29px;font-weight:800;line-height:1.45;color:#254b39;overflow-wrap:anywhere}
+.calc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.calc-key{background:#fff;border:1px solid #d2e0d0;border-radius:9px;padding:11px 3px;font-size:18px;font-weight:750;color:#335a45;min-height:45px;touch-action:manipulation}
+.calc-key:hover{background:#eaf4e5}
+.calc-key:focus-visible{outline:3px solid #c98a43;outline-offset:1px}
+.calc-key.operation{background:#e7f0e0;color:#24583f}
+.calc-key.equals{grid-column:span 3;background:#376e53;color:#fff;border-color:#376e53}
+.calc-key.equals:hover{background:#2d6047}
+.calc-footnote{font-size:12px;color:#59746a;margin:11px 2px 0;line-height:1.5}
+#calcToggle[aria-expanded="true"]{background:#e2efdf;border-color:#83a68b}
+body{background:#eaf2e6}.shell{padding:12px 10px 22px}.topbar{padding:3px 0 12px}.main{box-shadow:none}.hero{padding:18px 25px}.hero:after{display:none}.footer{margin-bottom:0}@media(max-width:750px){.toolbar,.play-area{padding:15px}.how-to{margin:12px 16px 0}}
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="topbar"><div class="brand"><span class="dot"></span>MATTEPARKEN</div><div class="tag">🌿 Träningsspel · Matteparken</div></div>
+<main class="main">
+<section class="hero"><div class="eyebrow">Taluppfattning · bråk och procent</div><h1>Hitta det hela</h1><p>Du vet hur stor en del är. Kan du ta reda på hela talet? Välj Y-bokens sätt eller testa algebra.</p></section>
+<section class="toolbar" aria-label="Spelinställningar">
+<div><div class="control-label">Vilka uppgifter?</div><div class="segmented" id="typeControl"><button data-type="fraction" aria-pressed="false">Bråk</button><button data-type="percent" aria-pressed="false">Procent</button><button data-type="mix" aria-pressed="true">Blandat</button></div></div>
+<div><div class="control-label">Hur vill du lösa?</div><div class="segmented" id="methodControl"><button data-method="book" aria-pressed="true">Y-bokens sätt</button><button data-method="algebra" aria-pressed="false">Algebra</button></div></div>
+</section>
+<div class="how-to"><strong>Så fungerar spelet:</strong> Lös fyra uppgifter, ett mellanled i taget. Du kan byta metod under samma uppgift om du vill prova en annan väg. Efter varje uppgift får du jämföra båda lösningarna.</div>
+<section class="play-area">
+<div id="activeGame">
+<div class="game-header"><div><div class="small-label" id="roundLabel">Uppgift 1 av 4</div><div class="progress-line"><div class="progress-fill" id="progressFill"></div></div></div><div class="count" id="countLabel">✓ 0 klara</div></div>
+<div class="two-col">
+<div class="visual"><div class="icon-row" id="visualIcon">🌳</div><h2 id="visualTitle">Den kända delen</h2><div class="given" id="knownPart"></div><p class="instruction" id="visualExplanation"></p><div class="tiles" id="tiles" aria-label="Bild av känt antal delar"></div><div class="tile-note"><span id="tileStart">0</span><span id="tileEnd">Hela talet = ?</span></div><div class="mini-note" id="visualNote">De färgade rutorna visar det vi vet.</div></div>
+<div class="workspace"><div id="exercise"><div class="method-title" id="methodTitle">Y-bokens sätt</div><div class="stage-index" id="stageIndex">Steg 1 av 3</div><div class="problem" id="problem"></div><div class="math-row" id="mathLine"></div><div class="ask" id="ask"></div><div id="questionControls"></div><div class="under-actions"><button class="ghost" type="button" id="hintButton">💡 Ledtråd</button><button class="ghost" type="button" id="calcToggle" aria-expanded="false" aria-controls="calcPanel">🧮 Miniräknare</button></div>
+<div class="calc-panel hidden" id="calcPanel" aria-label="Miniräknare">
+ <div class="calc-heading"><span>🧮 Miniräknare</span><span>Räknehjälp</span></div>
+ <div class="calc-display" aria-live="polite" aria-atomic="true" tabindex="0" aria-label="Miniräknarens resultat"><div class="calc-expression" id="calcExpression"></div><div class="calc-screen" id="calcScreen">0</div></div>
+ <div class="calc-grid" aria-label="Miniräknarens knappar">
+  <button class="calc-key" type="button" data-calc="7">7</button><button class="calc-key" type="button" data-calc="8">8</button><button class="calc-key" type="button" data-calc="9">9</button><button class="calc-key operation" type="button" data-calc="/" aria-label="Dividerat med">÷</button>
+  <button class="calc-key" type="button" data-calc="4">4</button><button class="calc-key" type="button" data-calc="5">5</button><button class="calc-key" type="button" data-calc="6">6</button><button class="calc-key operation" type="button" data-calc="*" aria-label="Multiplicerat med">×</button>
+  <button class="calc-key" type="button" data-calc="1">1</button><button class="calc-key" type="button" data-calc="2">2</button><button class="calc-key" type="button" data-calc="3">3</button><button class="calc-key operation" type="button" data-calc="-" aria-label="Minus">−</button>
+  <button class="calc-key" type="button" data-calc="0">0</button><button class="calc-key" type="button" data-calc=",">,</button><button class="calc-key" type="button" data-calc="back" aria-label="Ta bort sista siffran">⌫</button><button class="calc-key operation" type="button" data-calc="+" aria-label="Plus">+</button>
+  <button class="calc-key" type="button" data-calc="clear" aria-label="Rensa miniräknaren">C</button><button class="calc-key equals" type="button" data-calc="=" aria-label="Lika med">=</button>
+ </div>
+ <p class="calc-footnote">Räkna här och skriv sedan själv ditt svar i uppgiften. Miniräknaren fyller inte i svaret åt dig.</p>
+</div><div id="hint" class="hint hidden" aria-live="polite"></div><div id="feedback" class="feedback" role="status" aria-live="polite"></div></div><div id="solved" class="success hidden"></div></div>
+</div></div>
+<div id="ending" class="ending hidden"><div class="final-medal">🌟</div><h2>Du hittade det hela!</h2><p id="endingText"></p><button class="action" id="restartButton">Spela igen</button></div>
+</section>
+</main><p class="footer">Fyra uppgifter ger 10 kottar när du spelar via Matteparkens spelhylla.</p>
+</div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const state={kind:'mix',method:'book',questions:[],index:0,step:0,finished:0,solved:false,mistakes:0,hints:0,rewarded:false,rewardNP:0};
+function parkMath(){
+ try{
+  if(window.parent===window)return null;
+  const p=window.parent;
+  const view=p.document.getElementById('wholeView');
+  if(!view || view.classList.contains('hidden'))return null;
+  return p.Mattezoo?.math || null;
+ }catch(error){return null;}
+}
+const random=a=>a[Math.floor(Math.random()*a.length)];
+const fraction=(a,b)=>`<span class="fraction"><span>${a}</span><span>${b}</span></span>`;
+const pct=p=>p+' %';
+const fmt=n=>String(n).replace('.',',');
+function createFraction(a,b,unit){return {kind:'fraction',a,b,unit,part:a*unit,whole:b*unit}}
+function createPercent(p,ten){return {kind:'percent',p,ten,part:p/10*ten,whole:10*ten}}
+function generate(kind){
+ if(kind==='fraction') {let b=random([3,4,5,6,8]),a=random(Array.from({length:b-2},(_,i)=>i+2));return createFraction(a,b,random([4,5,6,8,10,12,15,20,25]));}
+ return createPercent(random([20,30,40,50,60,70,80,90]),random([3,4,5,6,7,8,10,12,15,20]));
+}
+function buildRound(){
+ const firstF=createFraction(3,5,25),secondF=createFraction(2,3,12),firstP=createPercent(60,7),secondP=createPercent(70,8);
+ let q;
+ if(state.kind==='fraction')q=[firstF,secondF,generate('fraction'),generate('fraction')];
+ else if(state.kind==='percent')q=[firstP,secondP,generate('percent'),generate('percent')];
+ else q=[firstF,firstP,generate('fraction'),generate('percent')];
+ return q;
+}
+function current(){return state.questions[state.index]}
+function problem(q){if(q.kind==='fraction')return `${fraction(q.a,q.b)} av ett tal är ${q.part}. Vilket är talet?`;return `${q.p} % av ett tal är ${q.part}. Vilket är talet?`}
+function bookStages(q){if(q.kind==='fraction')return [
+ {math:`${fraction(q.a,q.b)} av talet = ${q.part}`,ask:`För att få ${fraction(1,q.b)} av talet, vilket tal delar du ${q.part} med?`,answer:q.a,hint:`Täljaren ${q.a} berättar hur många lika stora delar du redan känner till. Dela med täljaren.`},
+ {math:`${fraction(1,q.b)} av talet = ${q.part} ÷ ${q.a}`,ask:`Vad är ${fraction(1,q.b)} av talet?`,answer:q.unit,hint:`Beräkna ${q.part} ÷ ${q.a}. Det ger värdet av en enda del.`},
+ {math:`${fraction(q.b,q.b)} av talet = ${q.unit} · ${q.b}`,ask:`Vad är hela talet?`,answer:q.whole,hint:`En del är ${q.unit}. Det hela innehåller ${q.b} sådana delar. Multiplicera!`}
+ ];return [
+ {math:`${pct(q.p)} av talet = ${q.part}`,ask:`Hur många 10 %-delar finns det i ${pct(q.p)}?`,answer:q.p/10,hint:`10 %, 20 %, 30 % ... Räkna hur många tioprocentare ${pct(q.p)} motsvarar.`},
+ {math:`10 % av talet = ${q.part} ÷ ${q.p/10}`,ask:`Hur mycket är 10 % av talet?`,answer:q.ten,hint:`Dela den kända delen ${q.part} med ${q.p/10}, så får du 10 %.`},
+ {math:`100 % av talet = ${q.ten} · 10`,ask:`Vad är hela talet (100 %)?`,answer:q.whole,hint:`100 % är tio gånger 10 %. Multiplicera ${q.ten} med 10.`}
+ ]}
+function algebraStages(q){if(q.kind==='fraction')return [
+ {ask:'Vilken ekvation beskriver uppgiften?',choices:[`${fraction(q.a,q.b)}x = ${q.part}`,`${fraction(q.b,q.a)}x = ${q.part}`,`x + ${fraction(q.a,q.b)} = ${q.part}`],answer:0,math:'Anta att hela talet är X',hint:'Tänk: den givna bråkdelen av x ska vara lika med det kända värdet.'},
+ {math:`${fraction(q.a,q.b)}x = ${q.part} &nbsp; ⇒ &nbsp; ${q.a}x = ${q.part} · ${q.b}`,ask:`Multiplicera båda led med ${q.b}. Vad blir ${q.a}x?`,answer:q.part*q.b,hint:`Beräkna ${q.part} · ${q.b}. Då försvinner nämnaren från vänsterledet.`},
+ {math:`${q.a}x = ${q.part*q.b} &nbsp; ⇒ &nbsp; x = ${q.part*q.b} ÷ ${q.a}`,ask:'Vad är x, alltså hela talet?',answer:q.whole,hint:`Dela ${q.part*q.b} med ${q.a} för att få ett ensamt x.`}
+ ];return [
+ {ask:'Vilken ekvation beskriver uppgiften?',choices:[`${fmt(q.p/100)}x = ${q.part}`,`${q.p}x = ${q.part}`,`x + ${fmt(q.p/100)} = ${q.part}`],answer:0,math:'Anta att hela talet är X<div class="math-tip">Tips: Procent kan skrivas som decimaltal</div>',hint:`${q.p} % = ${fmt(q.p/100)}. Den delen av x ska vara ${q.part}.`},
+ {math:`${fmt(q.p/100)}x = ${q.part} &nbsp; ⇒ &nbsp; x = ${q.part} ÷ ${fmt(q.p/100)}`,ask:'Vad är x, alltså hela talet?',answer:q.whole,hint:`Dela båda led med ${fmt(q.p/100)}, alltså skriv ${q.part} ÷ ${fmt(q.p/100)}.`}
+ ]}
+function stages(q){return state.method==='book'?bookStages(q):algebraStages(q)}
+function toggle(el,bool){el.classList.toggle('hidden',!bool)}
+function drawVisual(q){
+ $('visualIcon').textContent=q.kind==='fraction'?'🍃':'🌳';
+ $('visualTitle').textContent=q.kind==='fraction'?'En del av en helhet':'En andel av det hela';
+ $('knownPart').textContent=q.kind==='fraction'?`${q.a} av ${q.b} delar = ${q.part}`:`${q.p} % = ${q.part}`;
+ $('visualExplanation').textContent='Hur stort är hela talet om den färgade delen är det vi redan känner till?';
+ const total=q.kind==='fraction'?q.b:10;
+ const known=q.kind==='fraction'?q.a:q.p/10;
+ $('tiles').innerHTML=Array.from({length:total},(_,i)=>`<div class="tile ${i<known?'filled':''}" title="${i<known?'Känd del':'Okänd del'}"></div>`).join('');
+ $('tiles').setAttribute('aria-label',`${known} av ${total} delar är färgade och har tillsammans värdet ${q.part}`);
+ $('tileStart').textContent='Det vi vet: '+q.part;
+ $('visualNote').innerHTML=q.kind==='fraction'?`De <strong>${known} gröna rutorna</strong> är värda ${q.part} tillsammans. Hur mycket är då alla ${total} rutorna?`:`De <strong>${known} gröna rutorna</strong> visar ${q.p} %. Alla 10 rutorna är 100 %.`;
+}
+function render(){
+ if(state.index>=state.questions.length){renderEnd();return;}
+ const q=current(); const steps=stages(q), stage=steps[state.step];
+ toggle($('activeGame'),true);toggle($('ending'),false);
+ $('roundLabel').textContent=`Uppgift ${state.index+1} av ${state.questions.length}`;
+ $('progressFill').style.width=(100*state.finished/state.questions.length)+'%';
+ $('countLabel').textContent=`✓ ${state.finished} klara`;
+ for(const b of document.querySelectorAll('#typeControl button'))b.setAttribute('aria-pressed',String(b.dataset.type===state.kind));
+ for(const b of document.querySelectorAll('#methodControl button'))b.setAttribute('aria-pressed',String(b.dataset.method===state.method));
+ drawVisual(q);
+ toggle($('solved'),state.solved);toggle($('exercise'),!state.solved);
+ if(state.solved){renderSolved(q);return;}
+ $('methodTitle').textContent=state.method==='book'?'🌱 Y-bokens sätt: hitta en del':'✏️ Algebra: lös med x';
+ $('stageIndex').textContent=`Steg ${state.step+1} av ${steps.length}`;
+ $('problem').innerHTML=problem(q);
+ $('mathLine').innerHTML=stage.math;
+ $('ask').innerHTML=stage.ask;
+ const c=$('questionControls');c.innerHTML='';
+ if(stage.choices){let div=document.createElement('div');div.className='choices';
+  stage.choices.forEach((txt,i)=>{let b=document.createElement('button');b.type='button';b.className='choice';b.innerHTML=txt;b.addEventListener('click',()=>submit(i));div.appendChild(b)});c.appendChild(div)}
+ else{c.innerHTML='<form id="answerForm" class="answerline"><input id="answerInput" type="text" inputmode="decimal" autocomplete="off" aria-label="Ditt svar" placeholder="Skriv svaret" /><button class="action" type="submit">Kontrollera</button></form>';
+  $('answerForm').addEventListener('submit',e=>{e.preventDefault();submit($('answerInput').value)});setTimeout(()=>{$('answerInput')?.focus()},0);}
+ toggle($('hint'),false);$('hint').textContent='';$('feedback').textContent='';$('feedback').className='feedback';
+}
+function submit(raw){if(state.solved)return;let st=stages(current())[state.step];let value;
+ if(st.choices)value=raw;
+ else {let s=String(raw).trim().replace(/\s/g,'').replace(',','.');if(!s){feedback('Skriv ett svar innan du kontrollerar.',false);return;}value=Number(s);}
+ if(Number.isFinite(value)&&Math.abs(value-st.answer)<1e-8){
+  state.step++;if(state.step>=stages(current()).length){state.solved=true;state.finished++;
+   try{parkMath()?.recordQuestion({gameId:'whole',type:'solved-whole',method:state.method,kind:current().kind});}
+   catch(error){console.warn('Kunde inte registrera uppgiften',error);}
+   render();return;}
+  render();feedback('Rätt! Nu tar vi nästa steg.',true);
+ }else{state.mistakes++;feedback('Inte riktigt. Prova igen eller ta en ledtråd.',false)}
+}
+function feedback(message,good){$('feedback').textContent=message;$('feedback').className='feedback '+(good?'good':'bad')}
+function buildComparison(q){
+ let book,alg;
+ if(q.kind==='fraction'){
+ book=[`${fraction(q.a,q.b)} av talet = ${q.part}`,`${fraction(1,q.b)} = ${q.part} ÷ ${q.a} = ${q.unit}`,`${fraction(q.b,q.b)} = ${q.unit} · ${q.b} = ${q.whole}`];
+ alg=[`${fraction(q.a,q.b)}x = ${q.part}`,`${q.a}x = ${q.part} · ${q.b} = ${q.part*q.b}`,`x = ${q.part*q.b} ÷ ${q.a} = ${q.whole}`];
+ }else{
+ book=[`${pct(q.p)} = ${q.part}`,`10 % = ${q.part} ÷ ${q.p/10} = ${q.ten}`,`100 % = ${q.ten} · 10 = ${q.whole}`];
+ alg=[`${fmt(q.p/100)}x = ${q.part}`,`x = ${q.part} ÷ ${fmt(q.p/100)}`,`x = ${q.whole}`];
+ }
+ return `<div class="compare"><div class="method-card"><strong>🌱 Y-bokens sätt</strong>${book.map(x=>'<div>'+x+'</div>').join('')}</div><div class="method-card"><strong>✏️ Algebra</strong>${alg.map(x=>'<div>'+x+'</div>').join('')}</div></div>`;
+}
+function renderSolved(q){$('solved').innerHTML=`<div style="font-size:35px">✨</div><h2>Du hittade hela talet!</h2><div class="big-result">${q.whole}</div><p>Två olika vägar, samma svar. Jämför hur stegen hänger ihop:</p>${buildComparison(q)}<button type="button" class="action" id="nextButton">${state.index===state.questions.length-1?'Se resultat':'Nästa uppgift →'}</button>`;$('nextButton').addEventListener('click',()=>{state.index++;state.step=0;state.solved=false;render()})}
+function renderEnd(){
+ toggle($('activeGame'),false);toggle($('ending'),true);
+ if(!state.rewarded){
+   state.rewarded=true;
+   try{
+     const math=parkMath();
+     if(math){
+       const result=math.completeActivity({gameId:'whole',type:'four-whole-round',questions:4});
+       state.rewardNP=Math.max(0,Number(result?.rewardNP)||0);
+     }
+   }catch(error){console.warn('Kunde inte registrera omgången',error);}
+ }
+ const reward=state.rewardNP>0?' Du fick '+state.rewardNP+' kottar!':'';
+ $('endingText').textContent=`Du löste alla ${state.finished} uppgifterna. ${state.mistakes===0?'Utan ett enda fel dessutom!':'Du tränade, prövade och tog dig hela vägen.'}${reward} Välj gärna en annan metod och jämför.`;
+}
+function start(){state.questions=buildRound();state.index=0;state.step=0;state.finished=0;state.solved=false;state.mistakes=0;state.hints=0;state.rewarded=false;state.rewardNP=0;render()}
+document.querySelectorAll('#typeControl button').forEach(b=>b.addEventListener('click',()=>{if(state.kind===b.dataset.type)return;state.kind=b.dataset.type;start()}));
+document.querySelectorAll('#methodControl button').forEach(b=>b.addEventListener('click',()=>{if(state.method===b.dataset.method)return;state.method=b.dataset.method;state.step=0;render()}));
+$('hintButton').addEventListener('click',()=>{if(state.solved)return;const stage=stages(current())[state.step];$('hint').innerHTML=stage.hint;toggle($('hint'),true);state.hints++});
+
+// Fristående miniräknare. Inga uttryck evalueras med eval() och den skriver aldrig i spelets svarsfält.
+const calculator={number:'0',accumulator:null,operator:null,waiting:false,expression:''};
+const opLabel={'+':'+','-':'−','*':'×','/':'÷'};
+function calcFormat(n){
+ if(!Number.isFinite(n))return 'Fel';
+ const rounded=Number(n.toPrecision(12));
+ return String(rounded).replace('.',',');
+}
+function calcDraw(){
+ $('calcScreen').textContent=calculator.number;
+ $('calcExpression').textContent=calculator.operator!==null
+   ?`${calcFormat(calculator.accumulator)} ${opLabel[calculator.operator]}${calculator.waiting?'':' '+calculator.number}`
+   :calculator.expression;
+}
+function calcClear(){calculator.number='0';calculator.accumulator=null;calculator.operator=null;calculator.waiting=false;calculator.expression='';calcDraw()}
+function calcCompute(a,b,operator){
+ switch(operator){case '+':return a+b;case '-':return a-b;case '*':return a*b;case '/':return b===0?NaN:a/b;default:return b;}
+}
+function calcInput(key){
+ if(key==='clear'){calcClear();return;}
+ if(calculator.number==='Fel')calcClear();
+ if(/^\d$/.test(key)){
+  if(calculator.waiting){calculator.number=key;calculator.waiting=false;calculator.expression='';}
+  else if(calculator.number.replace(/[^0-9]/g,'').length<13)calculator.number=calculator.number==='0'?key:calculator.number+key;
+ }else if(key===','){
+  if(calculator.waiting){calculator.number='0,';calculator.waiting=false;calculator.expression='';}
+  else if(!calculator.number.includes(','))calculator.number+=',';
+ }else if(key==='back'){
+  if(!calculator.waiting){calculator.number=calculator.number.length<=1?'0':calculator.number.slice(0,-1);if(calculator.number==='-')calculator.number='0';}
+ }else if(Object.prototype.hasOwnProperty.call(opLabel,key)){
+  const current=Number(calculator.number.replace(',','.'));
+  if(calculator.operator!==null&&!calculator.waiting){
+   const result=calcCompute(calculator.accumulator,current,calculator.operator);
+   calculator.number=calcFormat(result);
+   if(calculator.number==='Fel'){calculator.accumulator=null;calculator.operator=null;calculator.expression='Kan inte dividera med noll';calcDraw();return;}
+   calculator.accumulator=Number(calculator.number.replace(',','.'));
+  }else if(calculator.operator===null){calculator.accumulator=current;}
+  calculator.operator=key;calculator.waiting=true;calculator.expression='';
+ }else if(key==='='){
+  if(calculator.operator!==null&&!calculator.waiting){
+   const left=calcFormat(calculator.accumulator),right=calculator.number,op=opLabel[calculator.operator];
+   const result=calcCompute(calculator.accumulator,Number(right.replace(',','.')),calculator.operator);
+   calculator.number=calcFormat(result);
+   calculator.expression=calculator.number==='Fel'?'Kan inte dividera med noll':`${left} ${op} ${right} =`;
+   calculator.accumulator=null;calculator.operator=null;calculator.waiting=true;
+  }
+ }
+ calcDraw();
+}
+$('calcToggle').addEventListener('click',()=>{
+ const open=$('calcPanel').classList.contains('hidden');
+ toggle($('calcPanel'),open);
+ $('calcToggle').setAttribute('aria-expanded',String(open));
+ if(open)$('calcPanel').querySelector('.calc-display').focus();
+});
+$('calcPanel').addEventListener('click',e=>{
+ const button=e.target.closest('[data-calc]');
+ if(button)calcInput(button.dataset.calc);
+});
+$('calcPanel').addEventListener('keydown',e=>{
+ if(e.target.tagName==='BUTTON'&&(e.key==='Enter'||e.key===' '))return;
+ const keys={'Enter':'=','=':'=','.':',',',':',','Backspace':'back','Escape':'clear','x':'*','X':'*','*':'*','/':'/','-':'-','+':'+'};
+ const value=/^[0-9]$/.test(e.key)?e.key:keys[e.key];
+ if(value!==undefined){e.preventDefault();calcInput(value);}
+});
+calcDraw();
+
+$('restartButton').addEventListener('click',start);start();
+})();
+</script>
+</body>
+</html>
