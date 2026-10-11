@@ -3219,6 +3219,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           <strong>Välj tabell</strong>
           <div class="table-buttons" id="tableButtons"></div>
           <button class="primary" id="startBtn" disabled>Starta valt varv</button>
+          <div class="feedback bad hidden" id="tableCooldownNotice" role="status" aria-live="polite" style="margin-top:10px;text-align:left"></div>
 
           <div class="top-reward-zone">
             <div class="reward-box">
@@ -8938,6 +8939,86 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   let seedQuestLocked = false;
   let requiredTable = null;
 
+  // Tre fullständiga varv på 1:an eller 10:an, sedan tio minuters paus per tabell.
+  // Lagringen är separat för varje inloggad elev på samma enhet.
+  const easyTableCooldownKey = "matteparkenEasyTableCooldown_v1";
+  const easyTableCooldownLimit = 3;
+  const easyTableCooldownMs = 10 * 60 * 1000;
+  const isEasyTable = (table) => Number(table) === 1 || Number(table) === 10;
+
+  function easyTableStudentKey(){
+    const studentId=MZ.cloudStudent?.activeStudent?.()?.student?.id;
+    return studentId ? "student:" + studentId : "guest";
+  }
+
+  function readEasyTableCooldowns(){
+    try {
+      const saved=JSON.parse(localStorage.getItem(easyTableCooldownKey) || "{}");
+      return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+    } catch { return {}; }
+  }
+
+  function easyTableStatus(table){
+    if(!isEasyTable(table)) return {rounds:0,remainingMs:0};
+    const all=readEasyTableCooldowns();
+    const who=easyTableStudentKey();
+    const entry=all[who]?.[String(table)];
+    const rounds=Math.max(0,Math.min(easyTableCooldownLimit,Math.floor(Number(entry?.rounds)||0)));
+    const until=Math.max(0,Number(entry?.cooldownUntil)||0);
+    if((until && Date.now() >= until) || (rounds >= easyTableCooldownLimit && !until)){
+      if(all[who]){ delete all[who][String(table)]; localStorage.setItem(easyTableCooldownKey,JSON.stringify(all)); }
+      return {rounds:0,remainingMs:0};
+    }
+    return {rounds,remainingMs:Math.max(0,until-Date.now())};
+  }
+
+  function recordEasyTableRound(table){
+    if(!isEasyTable(table)) return;
+    const previous=easyTableStatus(table);
+    const all=readEasyTableCooldowns();
+    const who=easyTableStudentKey();
+    if(!all[who] || typeof all[who] !== "object" || Array.isArray(all[who])) all[who]={};
+    const rounds=Math.min(easyTableCooldownLimit,previous.rounds+1);
+    all[who][String(table)]={rounds,cooldownUntil:rounds >= easyTableCooldownLimit ? Date.now()+easyTableCooldownMs : 0};
+    localStorage.setItem(easyTableCooldownKey,JSON.stringify(all));
+  }
+
+  function formatEasyTableCooldown(ms){
+    const seconds=Math.max(0,Math.ceil(ms/1000));
+    return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,"0")}`;
+  }
+
+  function refreshEasyTableCooldownUI(){
+    const table=state.selectedTable;
+    const info=isEasyTable(table) ? easyTableStatus(table) : null;
+    const notice=$("#tableCooldownNotice");
+    const label=$("#rewardProgressText");
+    if(!label || !notice) return;
+    if(!info){ label.textContent="10 kottar / varv"; notice.classList.add("hidden"); return; }
+    if(info.remainingMs > 0){
+      const left=formatEasyTableCooldown(info.remainingMs);
+      label.textContent=`Paus ${left} kvar`;
+      if(!notice.classList.contains("hidden")) notice.textContent=`Du kan nog ${table}:ans tabell nu 😉 Vänta lite tills du kör igen. ⏳ ${left} kvar.`;
+    } else {
+      label.textContent=`10 kottar / varv · ${info.rounds} av 3 före paus`;
+      notice.classList.add("hidden");
+    }
+  }
+
+  function showEasyTableCooldownIfNeeded(table){
+    const info=easyTableStatus(table);
+    if(info.remainingMs <= 0) return false;
+    $("#tableCooldownNotice").classList.remove("hidden");
+    refreshEasyTableCooldownUI();
+    return true;
+  }
+
+  // Uppdaterar nedräkningen även när eleven stannar kvar i tränaren.
+  function startEasyTableCooldownClock(){
+    window.setInterval(() => {
+      if(!$("#multiplicationView")?.classList.contains("hidden") && isEasyTable(state.selectedTable)) refreshEasyTableCooldownUI();
+    },1000);
+  }
   function getBestForTable(table){
     const value = state.bestTimes[String(table)];
     return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -8996,8 +9077,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     }
 
     $("#bestForSelected").textContent = MZ.formatMs(getBestForTable(state.selectedTable));
-    $("#rewardProgressText").textContent = "10 kottar / varv";
     $("#rewardProgressFill").style.width = "100%";
+    refreshEasyTableCooldownUI();
     $("#againBtn").textContent = `Kör ${state.selectedTable}:ans tabell igen`;
     MZ.park.renderDailyMission();
   }
@@ -9034,6 +9115,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function startRound(){
     if(!state.selectedTable) return;
+    if(showEasyTableCooldownIfNeeded(state.selectedTable)) return;
+    $("#tableCooldownNotice").classList.add("hidden");
     tasks = buildTasks(state.selectedTable);
     roundFinished = false;
     $("#gameBox").classList.remove("hidden");
@@ -9070,6 +9153,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       table:state.selectedTable,
       elapsedMs:elapsed
     });
+    recordEasyTableRound(state.selectedTable);
 
     renderBestGrid();
     updateSelectedTableUI();
@@ -9265,6 +9349,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       renderTableButtons();
       renderBestGrid();
       updateSelectedTableUI();
+      startEasyTableCooldownClock();
     }
   };
 })();
