@@ -234,7 +234,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     </div>
 
     <section class="card">
-      <div class="section-head"><div><h2>🌱 Elevöversikt</h2><p class="muted">Klicka på en elevrad för att visa eller dölja uppdrag, läxa, läxförhör och aktivitet direkt under eleven.</p></div><strong id="studentCount">0 elever</strong></div>
+      <div class="section-head"><div><h2>🌱 Elevöversikt</h2><p class="muted">Klicka på en elevrad för detaljer och historik. <span id="studentOverviewScope"></span></p></div><strong id="studentCount">0 elever</strong></div>
       <div class="table-wrap"><table>
         <thead><tr><th>Nr</th><th>Elevkod</th><th>Min anteckning</th><th>Uppdrag</th><th>Läxa</th><th>Förhör</th><th>Status</th><th>Senast aktiv</th></tr></thead>
         <tbody id="studentRows"></tbody>
@@ -323,6 +323,26 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       map.get(key).homeworks.push(hw);
     });
     return Array.from(map.values());
+  }
+  // Elevöversikten följer ett förhör och en läxa åt gången.
+  // Avslutade perioder påverkar inte tabellens siffror men finns kvar i elevdetaljerna.
+  function chooseOverviewItem(items,getCreatedAt=item=>Date.parse(item.created_at)||0){
+    const now=Date.now();
+    const candidates=(items||[]).filter(item=>!item.due_at||!(Date.parse(item.due_at)<now));
+    const started=candidates.filter(item=>!item.opens_at||!(Date.parse(item.opens_at)>now));
+    if(started.length){
+      return [...started].sort((a,b)=>getCreatedAt(b)-getCreatedAt(a))[0];
+    }
+    return [...candidates].sort((a,b)=>(Date.parse(a.opens_at)||0)-(Date.parse(b.opens_at)||0)||getCreatedAt(b)-getCreatedAt(a))[0]||null;
+  }
+  function overviewHomeworkGroup(){
+    return chooseOverviewItem(
+      homeworkGroups(homeworks.filter(hw=>hw.enabled)),
+      group=>Math.max(0,...group.homeworks.map(hw=>Date.parse(hw.created_at)||0))
+    );
+  }
+  function overviewQuiz(){
+    return chooseOverviewItem(quizzes.filter(q=>q.enabled));
   }
   function homeworkGroupTasks(group){return (group?.homeworks||[]).flatMap(hw=>homeworkTasks(hw.id));}
   function homeworkGroupStatus(studentId,group){
@@ -558,26 +578,32 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     const parking=$("detailParking");
     if(detail.parentElement!==parking)parking.appendChild(detail);
     tbody.innerHTML="";const active=assignments.filter(a=>a.enabled&&!a.homework_id);
+    const activeHomework=overviewHomeworkGroup(),activeQuiz=overviewQuiz();
+    const scope=$("studentOverviewScope");
+    if(scope){
+      const hwLabel=activeHomework?"Läxa: "+activeHomework.title+" ("+windowText(activeHomework)+")":"Ingen aktuell läxa";
+      const quizLabel=activeQuiz?"Förhör: "+activeQuiz.title+" ("+windowText(activeQuiz)+")":"Inget aktuellt läxförhör";
+      scope.textContent=hwLabel+" · "+quizLabel;
+    }
     students.forEach(student=>{
       const done=active.filter(a=>assignmentDoneToday(student.id,a.id)).length;
       const total=active.length;const pct=total?Math.round(done/total*100):0;
       const anyProgress=active.some(a=>progressTouchedToday(getProgress(student.id,a.id)));
-      const activeHw=homeworkGroups(homeworks.filter(h=>h.enabled));
-      const hwStatuses=activeHw.map(group=>homeworkGroupStatus(student.id,group));
-      const hwDone=hwStatuses.reduce((sum,st)=>sum+st.done,0);
-      const hwTotal=hwStatuses.reduce((sum,st)=>sum+st.total,0);
+      const hwStatus=activeHomework?homeworkGroupStatus(student.id,activeHomework):null;
+      const hwDone=hwStatus?.done||0,hwTotal=hwStatus?.total||0;
       const hwPct=hwTotal?Math.round(hwDone/hwTotal*100):0;
-      const hwComplete=activeHw.length===0||(hwTotal>0&&hwDone===hwTotal);
-      const activeQ=quizzes.filter(q=>q.enabled),qDone=activeQ.filter(q=>quizAttempt(student.id,q.id)).length;
-      const allComplete=(!total||done===total)&&hwComplete&&qDone===activeQ.length;
-      const hasAnything=Boolean(total||activeHw.length||activeQ.length);
+      const hwComplete=!activeHomework||hwStatus.complete;
+      const qDone=activeQuiz&&quizAttempt(student.id,activeQuiz.id)?1:0;
+      const qTotal=activeQuiz?1:0;
+      const allComplete=(!total||done===total)&&hwComplete&&qDone===qTotal;
+      const hasAnything=Boolean(total||activeHomework||activeQuiz);
       const tr=document.createElement("tr");if(student.id===selectedStudentId)tr.classList.add("selected");
       tr.innerHTML="<td><strong>"+(Number(student.list_number)||"–")+"</strong></td>"+
         "<td><strong>"+escapeHtml(student.code)+"</strong></td>"+
         "<td class=\'note-cell\'></td>"+
         "<td><strong>"+done+" / "+total+"</strong><div class='progressbar'><span style='width:"+pct+"%'></span></div></td>"+
         "<td><strong>"+hwDone+" / "+hwTotal+"</strong><div class='progressbar'><span style='width:"+hwPct+"%'></span></div></td>"+
-        "<td><strong>"+qDone+" / "+activeQ.length+"</strong></td>"+
+        "<td><strong>"+qDone+" / "+qTotal+"</strong></td>"+
         "<td><span class='status "+(hasAnything&&allComplete?"done":"")+"'>"+(!hasAnything?"Inga aktiva":allComplete?"✓ Allt klart":anyProgress||hwDone||qDone?"Pågår":"Ej startad")+"</span></td>"+
         "<td>"+formatLast(student.last_active)+"</td>";
       const noteInput=document.createElement("input");
