@@ -2407,6 +2407,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 .gnome-sighting img{display:block;width:100%;height:auto;image-rendering:pixelated;user-select:none}
 @keyframes gnomePeek{from{opacity:0;transform:translate(-50%,-44%) scale(.92)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 </style>
+<link rel="stylesheet" href="percent_change.css" />
 </head>
 <body>
 <main class="game" aria-label="Matteparken">
@@ -3771,7 +3772,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   state.daily.version = Math.max(0, Number(state.daily.version) || 0);
 
   if(!state.simpleGameStats || typeof state.simpleGameStats !== "object" || Array.isArray(state.simpleGameStats)) state.simpleGameStats = {};
-  ["pow10","fractionDecimal","fractionArithmetic","mgn","percentConvert","sharePart","prefixMatch","unitConvert","statistics"].forEach((gameId) => {
+  ["pow10","fractionDecimal","fractionArithmetic","mgn","percentConvert","percentChange","sharePart","prefixMatch","unitConvert","statistics"].forEach((gameId) => {
     const entry = state.simpleGameStats[gameId];
     state.simpleGameStats[gameId] = entry && typeof entry === "object" && !Array.isArray(entry) ? entry : {};
     state.simpleGameStats[gameId].rounds = Math.max(0, Number(state.simpleGameStats[gameId].rounds) || 0);
@@ -4043,6 +4044,16 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         const rewardNP = config.standardRoundRewardNP;
         storage.addNaturePoints(rewardNP);
         return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,perfect:Boolean(activity.perfect),progressionRound:true};
+      }
+
+      if(activity.gameId === "percentChange" && activity.type === "three-change-round"){
+        const entry = state.simpleGameStats.percentChange || (state.simpleGameStats.percentChange = {rounds:0, correct:0});
+        entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
+        entry.correct = Math.max(0, Number(entry.correct) || 0) + 3;
+        storage.saveSimpleGameStats();
+        const rewardNP = config.standardRoundRewardNP;
+        storage.addNaturePoints(rewardNP);
+        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,progressionRound:true};
       }
 
       if(activity.gameId === "percentConvert" && activity.type === "six-trio-round"){
@@ -4655,6 +4666,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       make(){return {label:"Räkna med bråk",description:"Gör ett helt slumpat bråkvarv",detailText:"3 uppgifter · välj valfri del"};}},
     {gameId:"percentConvert", icon:"📈", target:1,
       make(){return {label:"Bråk • Decimal • Procent",description:"Gör ett helt omvandlingsvarv",detailText:"6 kompletta trior"};}},
+    {gameId:"percentChange", icon:"%", target:1,
+      make(){return {label:"Beräkna förändring",description:"Räkna procentuell ökning och minskning",detailText:"3 uppgifter med mindre och mindre stöd"};}},
     {gameId:"prefixMatch", icon:"📏", target:1,
       make(){return {label:"Prefix",description:"Gör ett helt prefix-varv",detailText:"10 uppgifter"};}},
     {gameId:"unitConvert", icon:"🔁", target:1,
@@ -4735,6 +4748,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     if(task.gameId==="fractionArithmetic") return activity.type==="three-calculation-round";
     if(task.gameId==="fractionDecimal") return activity.type==="matching-board";
     if(task.gameId==="percentConvert") return activity.type==="six-trio-round";
+    if(task.gameId==="percentChange") return activity.type==="three-change-round";
     return activity.type==="ten-question-round";
   }
 
@@ -8238,7 +8252,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#seedQuestView").classList.add("hidden");
     $("#multiplicationView").classList.add("hidden");
     $("#equationsView").classList.add("hidden");
-    ["#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#percentConvertView","#prefixMatchView","#unitConvertView","#statisticsView","#activityView"].forEach((id)=>$(id)?.classList.add("hidden"));
+    ["#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#percentConvertView","#percentChangeView","#prefixMatchView","#unitConvertView","#statisticsView","#activityView"].forEach((id)=>$(id)?.classList.add("hidden"));
     $("#dailyQuestView").classList.remove("hidden");
   }
 
@@ -8271,7 +8285,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const buttonByGame={
       pow10:"#openPow10",fractionDecimal:"#openFractionDecimal",fractionArithmetic:"#openFractionArithmetic",
       percentConvert:"#openPercentConvert",prefixMatch:"#openPrefixMatch",
-      unitConvert:"#openUnitConvert",statistics:"#openStatistics"
+      unitConvert:"#openUnitConvert",statistics:"#openStatistics",percentChange:"#openPercentChange"
     };
     $(buttonByGame[task.gameId])?.click();
   }
@@ -8335,7 +8349,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       const backByGame={
         multiplication:"#backToShelf",equations:"#backFromEquations",pow10:"#backFromPow10",
         fractionDecimal:"#backFromFractionDecimal",mgn:"#backFromMgn",percentConvert:"#backFromPercentConvert",
-        prefixMatch:"#backFromPrefixMatch",unitConvert:"#backFromUnitConvert",statistics:"#backFromStatistics"
+        prefixMatch:"#backFromPrefixMatch",unitConvert:"#backFromUnitConvert",statistics:"#backFromStatistics",percentChange:"#pcBack"
       };
       window.setTimeout(()=>{
         $(backByGame[task.gameId])?.click();
@@ -11309,7 +11323,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     return fallback;
   }
 
-  function hideOthers(){["#fieldGuideView","#seedQuestView","#dailyQuestView","#multiplicationView","#equationsView","#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#percentConvertView","#prefixMatchView","#unitConvertView","#scientificNotationView"].forEach(id=>$(id)?.classList.add("hidden"));}
+  function hideOthers(){["#fieldGuideView","#seedQuestView","#dailyQuestView","#multiplicationView","#equationsView","#pow10View","#fractionDecimalView","#fractionArithmeticView","#mgnView","#percentConvertView","#prefixMatchView","#unitConvertView","#scientificNotationView","#percentChangeView"].forEach(id=>$(id)?.classList.add("hidden"));}
   function showView(){$("#officeHome").classList.add("hidden");hideOthers();$("#statisticsView").classList.remove("hidden");$("#statisticsNp").textContent=storage.getNaturePoints();startRound();}
   function back(){$("#statisticsView").classList.add("hidden");$("#officeHome").classList.remove("hidden");}
   function renderProgress(){$("#statisticsProgressText").textContent=`${completed} / ${config.standardRoundQuestions} rätt`;$("#statisticsProgressFill").style.width=`${completed/config.standardRoundQuestions*100}%`;}
@@ -11347,7 +11361,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     prefixMatch:"#prefixMatchView",
     unitConvert:"#unitConvertView",
     statistics:"#statisticsView",
-    scientificNotation:"#scientificNotationView"
+    scientificNotation:"#scientificNotationView",
+    percentChange:"#percentChangeView"
   });
 
   const fallbackTitles = Object.freeze({
@@ -11362,7 +11377,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     prefixMatch:"Prefix",
     unitConvert:"Enhetsomvandling",
     statistics:"Statistik",
-    scientificNotation:"Grundpotensform"
+    scientificNotation:"Grundpotensform",
+    percentChange:"Beräkna förändring"
   });
 
   function emptyDay(){
@@ -11721,9 +11737,9 @@ const expectedRoundTypes={
  multiplication:"table-round",equations:"solved-random-equation",pow10:"ten-question-round",
  fractionDecimal:"matching-board",fractionArithmetic:"three-calculation-round",
  percentConvert:"six-trio-round",sharePart:"ten-question-round",prefixMatch:"ten-question-round",
- unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round"
+ unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round",percentChange:"three-change-round"
 };
-const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform"};
+const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform",percentChange:"Beräkna förändring"};
 
 const norm=v=>String(v||"").trim().toUpperCase().replace(/\s+/g,"");
 const cleanDisplayName=v=>String(v||"").trim().replace(/\s+/g," ").slice(0,24);
@@ -11780,7 +11796,7 @@ function homeworkGroupSummary(group){
  return Array.from(counts.entries()).map(([label,count])=>label+(count>1?" × "+count:"")).join(" · ");
 }
 function activityDescriptor(d){if(d.gameId==="multiplication"&&Number.isFinite(Number(d.table))){const t=Number(d.table);return{key:"multiplication:"+t,label:t+":ans tabell"};}return{key:d.gameId,label:gameTitle(d.gameId)};}
-function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 10 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt."};return x[a?.game_id]||"En hel omgång.";}
+function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 10 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt.",percentChange:"En omgång = 3 uppgifter: välj, skriv med stöd, lös själv."};return x[a?.game_id]||"En hel omgång.";}
 
 function getSelection(){try{return JSON.parse(localStorage.getItem(SELECTION_KEY)||"null");}catch{return null;}}
 function setSelection(v){v?localStorage.setItem(SELECTION_KEY,JSON.stringify(v)):localStorage.removeItem(SELECTION_KEY);}
@@ -12063,7 +12079,7 @@ function recordQuestion(event){
 }
 function matchingRound(a,x){if(!a||!x||a.game_id!==x.gameId||expectedRoundTypes[a.game_id]!==x.type)return false;const t=Number(a.game_config?.table);return !(a.game_id==="multiplication"&&t>=1&&t<=10)||Number(x.table)===t;}
 async function assignmentRoundRpc(id,x,roundType=x.type){
- return client().rpc("record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:roundType,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});
+ return client().rpc(x.gameId==="percentChange"?"record_percent_change_round":"record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:roundType,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});
 }
 async function recordAssignmentRound(id,x){
  let r=await assignmentRoundRpc(id,x);if(r.error)throw r.error;
@@ -12690,6 +12706,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 })();
 </script>
 
+<script src="percent_change.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
@@ -12709,6 +12726,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.Mattezoo.games.unitConvert.init();
   window.Mattezoo.games.statistics.init();
   window.Mattezoo.games.scientificNotation.init();
+  window.Mattezoo.games.percentChange.init();
   window.Mattezoo.activity.init();
   window.Mattezoo.cloudStudent.init();
   window.Mattezoo.cloudCones.init();
@@ -12861,6 +12879,7 @@ document.addEventListener("DOMContentLoaded", () => {
   'use strict';
   const MZ=window.Mattezoo, $=id=>document.getElementById(id);
   const games={
+    percentChange:["Beräkna förändring","openPercentChange"],
     multiplication:['Multiplikation','openMultiplication'],
     equations:['Ekvationer','openEquations'],
     pow10:['× och ÷ med 10, 100, 1000','openPow10'],
@@ -12887,7 +12906,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let m=all[who][day];
     if(!m || !games[m.gameId]){
       const ids=randomGameIds;
-      m=all[who][day]={gameId:ids[Math.floor(Math.random()*ids.length)],completed:0,target:10};write(all);
+      const gameId=ids[Math.floor(Math.random()*ids.length)];m=all[who][day]={gameId,completed:0,target:gameId==="percentChange"?3:10};write(all);
     }
     return m;
   }
