@@ -4759,6 +4759,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     if(task.gameId==="fractionDecimal") return activity.type==="matching-board";
     if(task.gameId==="percentConvert") return activity.type==="six-trio-round";
     if(task.gameId==="percentChange") return activity.type==="three-change-round";
+    if(task.gameId==="whole") return activity.type==="four-whole-round";
     return activity.type==="ten-question-round";
   }
 
@@ -11749,9 +11750,9 @@ const expectedRoundTypes={
  multiplication:"table-round",equations:"solved-random-equation",pow10:"ten-question-round",
  fractionDecimal:"matching-board",fractionArithmetic:"three-calculation-round",
  percentConvert:"six-trio-round",sharePart:"ten-question-round",prefixMatch:"ten-question-round",
- unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round",percentChange:"three-change-round"
+ unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round",percentChange:"three-change-round",whole:"four-whole-round"
 };
-const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform",percentChange:"Beräkna förändring"};
+const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform",percentChange:"Beräkna förändring",whole:"Hitta det hela"};
 
 const norm=v=>String(v||"").trim().toUpperCase().replace(/\s+/g,"");
 const cleanDisplayName=v=>String(v||"").trim().replace(/\s+/g," ").slice(0,24);
@@ -11808,7 +11809,7 @@ function homeworkGroupSummary(group){
  return Array.from(counts.entries()).map(([label,count])=>label+(count>1?" × "+count:"")).join(" · ");
 }
 function activityDescriptor(d){if(d.gameId==="multiplication"&&Number.isFinite(Number(d.table))){const t=Number(d.table);return{key:"multiplication:"+t,label:t+":ans tabell"};}return{key:d.gameId,label:gameTitle(d.gameId)};}
-function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 10 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt.",percentChange:"En omgång = 3 uppgifter: välj, skriv med stöd, lös själv."};return x[a?.game_id]||"En hel omgång.";}
+function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 10 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt.",percentChange:"En omgång = 3 uppgifter: välj, skriv med stöd, lös själv.",whole:"En omgång = 4 uppgifter med Y-bokens sätt eller algebra."};return x[a?.game_id]||"En hel omgång.";}
 
 function getSelection(){try{return JSON.parse(localStorage.getItem(SELECTION_KEY)||"null");}catch{return null;}}
 function setSelection(v){v?localStorage.setItem(SELECTION_KEY,JSON.stringify(v)):localStorage.removeItem(SELECTION_KEY);}
@@ -12091,7 +12092,7 @@ function recordQuestion(event){
 }
 function matchingRound(a,x){if(!a||!x||a.game_id!==x.gameId||expectedRoundTypes[a.game_id]!==x.type)return false;const t=Number(a.game_config?.table);return !(a.game_id==="multiplication"&&t>=1&&t<=10)||Number(x.table)===t;}
 async function assignmentRoundRpc(id,x,roundType=x.type){
- return client().rpc(x.gameId==="percentChange"?"record_percent_change_round":"record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:roundType,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});
+ return client().rpc(x.gameId==="percentChange"?"record_percent_change_round":x.gameId==="whole"?"record_whole_round":"record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:roundType,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});
 }
 async function recordAssignmentRound(id,x){
  let r=await assignmentRoundRpc(id,x);if(r.error)throw r.error;
