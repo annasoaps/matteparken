@@ -582,7 +582,14 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
     hwGroups.forEach(group=>{const st=homeworkGroupStatus(student.id,group),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(group.title)+"</strong><div>"+escapeHtml(homeworkGroupSummary(group))+"</div><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
     const qBox=$("detailQuizzes");qBox.innerHTML="";
     if(!quizzes.length)qBox.innerHTML='<div class="empty">Inga läxförhör.</div>';
-    quizzes.forEach(q=>{
+    const newestQuizId=quizzes.length?quizzes.reduce((latest,q)=>String(q.created_at||"")>String(latest.created_at||"")?q:latest).id:null;
+    const olderQuizzes=quizzes.filter(q=>q.id!==newestQuizId);
+    const history=olderQuizzes.length?document.createElement("details"):null;
+    if(history){
+      history.style.cssText="margin-top:14px;border:1px solid #d4dece;border-radius:12px;padding:12px;background:#f7faf4";
+      const summary=document.createElement("summary");summary.style.cssText="cursor:pointer;font-weight:700";summary.textContent="📚 Visa tidigare läxförhör ("+olderQuizzes.length+")";history.appendChild(summary);
+    }
+    [...quizzes].sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||""))).forEach(q=>{
       const a=quizAttempt(student.id,q.id),row=document.createElement("div");row.className="student-task";
       row.innerHTML="<strong>"+escapeHtml(q.title)+"</strong><div>"+(a?"✓ "+a.score+" / "+a.total+" · "+formatMoment(a.completed_at):"○ Inte genomfört")+"</div>";
       if(a){
@@ -617,8 +624,9 @@ input:focus,select:focus{outline:3px solid rgba(85,122,91,.18);border-color:var(
         send.addEventListener("click",async()=>{send.disabled=true;status.textContent="Skickar …";try{const result=await sb.rpc("teacher_send_quiz_feedback",{p_quiz_id:q.id,p_student_id:student.id,p_feedback:input.value});if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte spara");status.textContent="✓ Återkopplingen är skickad till anslagstavlan.";await loadClassData({silent:true});}catch(error){console.error(error);status.textContent="Kunde inte skicka. Kontrollera att supabase_quiz_feedback.sql har körts.";}finally{send.disabled=false;}});
         panel.append(send,status);row.append(button,panel);
       }
-      qBox.appendChild(row);
+      (history&&q.id!==newestQuizId?history:qBox).appendChild(row);
     });
+    if(history)qBox.appendChild(history);
     fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
   }
 
