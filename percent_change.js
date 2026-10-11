@@ -63,7 +63,7 @@
     const unit=scene.kind==="fish"?"g":scene.kind==="price"?"kottar":"st";
     const title=scene.kind==="price"?"Parkens prislista":scene.kind==="fish"?"Fiskar i sjön":scene.kind==="wildlife"?"Djurlivet i parken":"Parkens förråd";
     let text;
-    if(scene.kind==="price") text="Tidigare kostade en "+scene.name.toLowerCase()+" "+start+" kottar. I veckans exempel kostar den "+end+" kottar.";
+    if(scene.kind==="price") text="I ett räkneexempel var priset på "+scene.name.toLowerCase()+" tidigare "+start+" kottar. Nu är priset "+end+" kottar.";
     else if(scene.kind==="fish") text="Förra veckans "+scene.name.toLowerCase()+" vägde "+start+" g. Den här veckans fångst väger "+end+" g.";
     else if(scene.kind==="wildlife") text="Förra veckan såg parkvakten "+start+" "+scene.plural+". Den här veckan sågs "+end+".";
     else text="Tidigare fanns "+start+" "+scene.plural+" i parkens förråd. Nu finns "+end+".";
