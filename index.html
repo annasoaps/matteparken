@@ -790,6 +790,22 @@ window.MATTEZOO_TEACHER_PLAN = {
   height:68px;
   transform:translate(-50%,-50%);
 }
+.wildlife-visitor.blackCat.sprite-animal{
+  width:70px;
+  height:70px;
+  transform:translate(-50%,-54%);
+  animation:blackCatIdle 5.6s ease-in-out infinite;
+}
+.wildlife-visitor.blackCat .black-cat-animation{position:relative;display:block;width:100%;height:100%}
+.wildlife-visitor.blackCat .black-cat-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;opacity:0}
+.wildlife-visitor.blackCat .frame-1{animation:blackCatFrame1 5.6s steps(1,end) infinite}
+.wildlife-visitor.blackCat .frame-2{animation:blackCatFrame2 5.6s steps(1,end) infinite}
+@keyframes blackCatIdle{
+  0%,100%{transform:translate(-50%,-54%) translateY(0)}
+  50%{transform:translate(-50%,-54%) translateY(-1px)}
+}
+@keyframes blackCatFrame1{0%,68%{opacity:1}69%,84%{opacity:0}85%,100%{opacity:1}}
+@keyframes blackCatFrame2{0%,68%{opacity:0}69%,84%{opacity:1}85%,100%{opacity:0}}
 .wildlife-visitor.hedgehog.sprite-animal{
   width:58px;
   height:58px;
@@ -3707,7 +3723,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   if(!state.wildlife || typeof state.wildlife !== "object" || Array.isArray(state.wildlife)) state.wildlife = {};
   if(!state.wildlife.discovered || typeof state.wildlife.discovered !== "object") state.wildlife.discovered = {};
   if(!state.wildlife.eligibleDays || typeof state.wildlife.eligibleDays !== "object") state.wildlife.eligibleDays = {};
-  ["bird","moth","snail","bumblebee","butterfly","ladybug","tit","beetle","squirrel","hedgehog","woodpecker","fox","owl","lizard","bluewing","grasshopper","groundBeetle","frog","dragonfly","duck","waterSnail","coot"].forEach((species) => {
+  ["bird","moth","snail","bumblebee","butterfly","ladybug","tit","beetle","squirrel","hedgehog","woodpecker","fox","owl","blackCat","lizard","bluewing","grasshopper","groundBeetle","frog","dragonfly","duck","waterSnail","coot"].forEach((species) => {
     state.wildlife.discovered[species] = Boolean(state.wildlife.discovered[species]);
     state.wildlife.eligibleDays[species] = Math.max(0, Number(state.wildlife.eligibleDays[species]) || 0);
   });
@@ -4774,6 +4790,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const {state, storage} = MZ;
 
   const flowerTypes = new Set(["daisy","tulip","lavender","sunflower","poppy","cornflower","marigold","woodAnemone","heather","rockThyme","waterLily"]);
+  const autumnDecorationTypes = new Set(["autumnPot","pumpkins","pumpkinLantern","leafBasket","appleBasket","hayBale","leafPile","boletes","parasolMushroom"]);
 
   const species = Object.freeze({
     bird:{
@@ -4906,6 +4923,19 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       guideText:"Ugglor söker lugna skogsmiljöer med äldre träd och bra utsiktsplatser där de kan vila och spana efter smådjur.",
       attractorName:"Ek + gammal stubbe", hint:"En nattaktiv fågel verkar söka ett gammalt träd och en lugn utkiksplats.", offsetX:4, offsetY:-18
     },
+    blackCat:{
+      id:"blackCat", name:"Svart katt", icon:"🐈‍⬛", habitat:"park",
+      anchorTypes:["leafPile","hayBale","pumpkinLantern","pumpkins","leafBasket","appleBasket","autumnPot","boletes","parasolMushroom"],
+      requirements:{minUniqueAutumnDecorations:3}, limitedSeason:"autumn", seasonalPriority:true,
+      minEligibleDays:1, guaranteedAfter:3, discoverChance:.45, visitOffset:1,
+      clueHeadline:"Små tasspår bland höstlöven",
+      clueBody:"Någon har tassat mellan höstdekorationerna. I löven syns små spår som inte fanns där igår.",
+      discoveryHeadline:"En svart katt har hittat till parken!",
+      discoveryBody:"Den höstiga parken har fått en ny besökare. En svart katt tassar försiktigt fram mellan dekorationerna.",
+      guideText:"En nyfiken svart katt som bara brukar visa sig under höstsäsongen när parken har fått ordentlig höstkänsla.",
+      attractorName:"Minst tre olika dekorationer från Höstlådan",
+      hint:"Någon verkar dras till en park med flera olika höstdekorationer.", offsetX:12, offsetY:7
+    },
     lizard:{
       id:"lizard", name:"Ödla", icon:"🦎", habitat:"northeast", anchorTypes:["sunRock"],
       requirements:{allItems:["sunRock","heather"]}, minEligibleDays:2, guaranteedAfter:5, discoverChance:.55, visitOffset:0,
@@ -5027,13 +5057,22 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function hasRecipe(speciesId){
     const def = species[speciesId];
-    if(!def || !MZ.habitats.isUnlocked(def.habitat)) return false;
-    const items = zoneItems(def.habitat);
+    if(!def) return false;
+    if(def.habitat !== "park" && !MZ.habitats.isUnlocked(def.habitat)) return false;
+    if(def.limitedSeason === "autumn"){
+      const month = new Date().getMonth() + 1;
+      if(month < 9 || month > 11) return false;
+    }
+    const items = def.habitat === "park" ? state.parkItems : zoneItems(def.habitat);
     const types = items.map(effectiveType);
     const uniqueTypes = new Set(types);
     const req = def.requirements || {};
     if((req.allItems || []).some((type) => !uniqueTypes.has(type) && !(type === "reeds" && uniqueTypes.has("cattails")))) return false;
     if(req.minUniqueItems && uniqueTypes.size < req.minUniqueItems) return false;
+    if(req.minUniqueAutumnDecorations){
+      const autumnCount = new Set(types.filter((type) => autumnDecorationTypes.has(type))).size;
+      if(autumnCount < req.minUniqueAutumnDecorations) return false;
+    }
     if(req.minUniqueFlowers){
       const flowerCount = new Set(types.filter((type) => flowerTypes.has(type))).size;
       if(flowerCount < req.minUniqueFlowers) return false;
@@ -5043,7 +5082,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function anchorItem(speciesId){
     const def = species[speciesId];
-    const items = zoneItems(def.habitat);
+    const items = def.habitat === "park" ? state.parkItems : zoneItems(def.habitat);
     for(const type of def.anchorTypes || []){
       const item = items.find((candidate) => (effectiveType(candidate) === type || (type === "reeds" && effectiveType(candidate) === "cattails")));
       if(item) return item;
@@ -5058,6 +5097,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function chooseCandidate(ids){
     return [...ids].sort((a,b) => {
+      const priorityDiff = Number(Boolean(species[b]?.seasonalPriority)) - Number(Boolean(species[a]?.seasonalPriority));
+      if(priorityDiff !== 0) return priorityDiff;
       const dayDiff = (state.wildlife.eligibleDays[b] || 0) - (state.wildlife.eligibleDays[a] || 0);
       if(dayDiff !== 0) return dayDiff;
       return a.localeCompare(b);
@@ -5204,7 +5245,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         icon:def.icon,
         x:Math.max(4, Math.min(96, Number(item.x) + spawnOffset.x)),
         y:Math.max(5, Math.min(95, Number(item.y) + spawnOffset.y)),
-        zone:def.habitat,
+        zone:def.habitat === "park" ? (item.zone || "southwest") : def.habitat,
         anchorId:item.id || "",
         anchorType:effectiveType(item)
       });
@@ -6400,8 +6441,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     hedgehog:"assets/asset_097_f11e3af0d2f58427.png",
     woodpecker:"assets/asset_098_aff26148210aa6e6.png",
     fox:"assets/asset_099_df93ec3e64f38c5f.png",
-    owl:"assets/asset_100_1108b5bae805f420.png"
-,
+    owl:"assets/asset_100_1108b5bae805f420.png",
+    blackCat:"assets/autumn/black_cat_1.png",
     dragonfly:"assets/asset_101_d774bb8763ae6372.png",
     waterSnail:"assets/asset_102_0c833fcfd45178ee.png",
     coot:"assets/asset_103_d0a1d1d750185f15.png"
@@ -6420,6 +6461,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       "assets/asset_100_1108b5bae805f420.png",
       "assets/asset_107_5c8389ed81c9314f.png",
       "assets/asset_108_14b49f575393a42f.png"
+    ],
+    blackCat:[
+      "assets/autumn/black_cat_1.png",
+      "assets/autumn/black_cat_2.png"
     ]
   };
   Object.assign(wildlifeSprites, {
@@ -6443,6 +6488,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     }
     if(species === "coot"){
       return `<span class="coot-animation">${cootAnimationFrames.map((src,index)=>`<img class="wildlife-sprite coot-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
+    }
+    if(species === "blackCat"){
+      return `<span class="black-cat-animation">${wildlifeAnimationFrames.blackCat.map((src,index)=>`<img class="wildlife-sprite black-cat-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
     }
     return `<img class="wildlife-sprite ${species}" src="${wildlifeSpriteUrl(species)}" alt="" />`;
   }
@@ -6708,7 +6756,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   const zoneSelectors = {southwest:"#southwestBuildZone",northwest:"#northwestBuildZone",northeast:"#northeastBuildZone",southeast:"#southeastBuildZone"};
-  const zoneNames = {southwest:"Startgläntan",northwest:"Skogsdungen",northeast:"Berget",southeast:"Sjön"};
+  const zoneNames = {southwest:"Startgläntan",northwest:"Skogsdungen",northeast:"Berget",southeast:"Sjön",park:"Hela parken"};
   const zoneElement = (zoneId) => $(zoneSelectors[zoneId] || zoneSelectors.southwest);
   const unlockedZoneIds = () => Object.keys(zoneSelectors).filter((id) => MZ.habitats.isUnlocked(id));
   const zoneName = (zoneId) => zoneNames[zoneId] || "Startgläntan";
