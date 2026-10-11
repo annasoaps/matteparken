@@ -12821,7 +12821,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let m=all[who][day];
     if(!m || !games[m.gameId]){
       const ids=randomGameIds;
-      m=all[who][day]={gameId:ids[Math.floor(Math.random()*ids.length)],completed:0,target:10};write(all);
+      const gameId=ids[Math.floor(Math.random()*ids.length)];m=all[who][day]={gameId,completed:0,target:gameId==="percentChange"?3:10};write(all);
     }
     return m;
   }
