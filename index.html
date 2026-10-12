@@ -2451,16 +2451,16 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       <span id="northwestLockHint">Utveckla Startgläntan</span>
     </button>
     <div class="habitat-zone-label northwest-label hidden" id="northwestZoneLabel">🌲 Skogsdungen</div>
-    <button class="habitat-lock future-lock northeast-lock" id="northeastHabitatLock" type="button" aria-label="Berget är låst">
+    <button class="habitat-lock northeast-lock" id="northeastHabitatLock" type="button" aria-label="Visa kraven för Berget">
       <span class="habitat-lock-icon">🔒</span>
       <strong>⛰️ Berget</strong>
-      <span>Öppnas senare</span>
+      <span id="northeastLockHint">Öppna Sjön först</span>
     </button>
     <div class="habitat-zone-label northeast-label hidden" id="northeastZoneLabel">⛰️ Berget</div>
-    <button class="habitat-lock future-lock southeast-lock" id="southeastHabitatLock" type="button" aria-label="Sjön är låst">
+    <button class="habitat-lock southeast-lock" id="southeastHabitatLock" type="button" aria-label="Visa kraven för Sjön">
       <span class="habitat-lock-icon">🔒</span>
       <strong>💧 Sjön</strong>
-      <span>Öppnas senare</span>
+      <span id="southeastLockHint">Utveckla Skogsdungen</span>
     </button>
     <div class="habitat-zone-label southeast-label hidden" id="southeastZoneLabel">💧 Sjön</div>
     <div class="gnome-sighting" id="gnomeSighting" aria-hidden="true"><img id="gnomeSightingImg" alt="" src="assets/gnome_hat_192.png" /></div>
@@ -3400,10 +3400,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     <section class="modal habitat-modal" role="dialog" aria-modal="true">
       <button class="close" data-close="habitatModal">×</button>
       <div class="habitat-modal-title">
-        <span class="habitat-modal-icon">🌲</span>
+        <span class="habitat-modal-icon" id="habitatModalIcon">🌲</span>
         <div>
           <div class="field-guide-kicker">Nästa habitat</div>
-          <h2>Skogsdungen</h2>
+          <h2 id="habitatModalTitle">Skogsdungen</h2>
         </div>
       </div>
       <p id="habitatModalIntro">Utveckla Startgläntan för att göra parken redo att växa.</p>
@@ -5395,6 +5395,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 })();
 
 </script>
+<script src="park_progression_etapp1.js"></script>
 <script>
 (() => {
   "use strict";
@@ -7822,87 +7823,122 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     showParkBadgeToast.timer=window.setTimeout(()=>toast.classList.remove("open"),6500);
   }
 
+  let selectedHabitatGoal = "northwest";
+  const nextHabitatGoal = () => ["northwest","southeast","northeast"].find(id=>!MZ.habitats.isUnlocked(id)) || "northeast";
+  const capped = (n,max)=>Math.min(Math.max(0,Number(n)||0),max);
+
   function renderHabitatProgress(){
-    const progress = MZ.habitats.snapshot("northwest");
-    const unlocked = progress.unlocked;
-    const percent = unlocked ? 100 : (progress.completed / progress.total) * 100;
-    if($("#parkBadgeCount")) $("#parkBadgeCount").textContent = String(MZ.habitats.badgeCount());
-    if($("#habitatProgressFill")) $("#habitatProgressFill").style.width = `${percent}%`;
-    if($("#habitatProgressText")) $("#habitatProgressText").textContent = unlocked
-      ? "Skogsdungen är upplåst och redo att byggas i."
-      : `${progress.completed} av ${progress.total} steg klara · 🏅 ${progress.requiredBadgesEarned}/3 · 🧮 ${Math.min(progress.current.mathRounds,progress.requirements.mathRounds)}/${progress.requirements.mathRounds}`;
-    if($("#habitatMiniState")) $("#habitatMiniState").textContent = unlocked ? "Upplåst" : progress.ready ? "Redo!" : "Låst";
-    const lock=$("#northwestHabitatLock"), label=$("#northwestZoneLabel");
-    if(lock){ lock.classList.toggle("hidden",unlocked); lock.classList.toggle("ready",!unlocked && progress.ready); }
-    if(label) label.classList.toggle("hidden",!unlocked);
-    if($("#northwestLockHint")) $("#northwestLockHint").textContent = progress.ready
-      ? "✨ Redo att öppnas"
-      : `🏅 ${progress.requiredBadgesEarned}/3 · 🧮 ${Math.min(progress.current.mathRounds,progress.requirements.mathRounds)}/${progress.requirements.mathRounds}`;
-    [["northeast","#northeastHabitatLock","#northeastZoneLabel"],["southeast","#southeastHabitatLock","#southeastZoneLabel"]].forEach(([id,lockSel,labelSel]) => {
-      const isOpen=MZ.habitats.isUnlocked(id);
-      $(lockSel)?.classList.toggle("hidden",isOpen);
-      $(labelSel)?.classList.toggle("hidden",!isOpen);
+    const zoneId=nextHabitatGoal();
+    const progress=MZ.habitats.snapshot(zoneId);
+    if(!progress)return;
+    const unlocked=progress.unlocked;
+    const percent=unlocked?100:(progress.completed/progress.total)*100;
+    if($("#parkBadgeCount"))$("#parkBadgeCount").textContent=String(MZ.habitats.badgeCount());
+    if($("#habitatProgressFill"))$("#habitatProgressFill").style.width=`${percent}%`;
+    if($("#habitatProgressText"))$("#habitatProgressText").textContent=unlocked
+      ? "Alla tre områden är upplåsta! Fortsätt samla Parkmärken."
+      : `${progress.habitat.name}: ${progress.completed} av ${progress.total} steg klara · 🏅 ${progress.requiredBadgesEarned}/3 · 🧮 ${capped(progress.current.mathRounds,progress.requirements.mathRounds)}/${progress.requirements.mathRounds}`;
+    if($("#habitatMiniState"))$("#habitatMiniState").textContent=unlocked?"Upplåst":progress.ready?"Redo!":"Låst";
+    ["northwest","southeast","northeast"].forEach(id=>{
+      const info=MZ.habitats.snapshot(id);
+      const open=info.unlocked;
+      const lock=$("#"+id+"HabitatLock");
+      const label=$("#"+id+"ZoneLabel");
+      const hint=$("#"+id+"LockHint");
+      lock?.classList.toggle("hidden",open);
+      lock?.classList.toggle("ready",!open&&info.ready);
+      label?.classList.toggle("hidden",!open);
+      if(!hint)return;
+      hint.textContent=info.ready?"✨ Redo att öppnas"
+        : (id==="northeast"&&!MZ.habitats.isUnlocked("southeast"))?"Öppna Sjön först"
+        : (id==="southeast"&&!MZ.habitats.isUnlocked("northwest"))?"Öppna Skogsdungen först"
+        : `🏅 ${info.requiredBadgesEarned}/3 · 🧮 ${capped(info.current.mathRounds,info.requirements.mathRounds)}/${info.requirements.mathRounds}`;
     });
   }
-
   function renderHabitatModal(){
     MZ.habitats.refreshMilestones();
-    const progress=MZ.habitats.snapshot("northwest");
-    const list=$("#habitatRequirements"); if(!list) return; list.innerHTML="";
+    const area=selectedHabitatGoal;
+    const progress=MZ.habitats.snapshot(area);
+    if(!progress)return;
+    const req=progress.requirements,cur=progress.current;
+    const list=$("#habitatRequirements");if(!list)return;list.innerHTML="";
     const badgeDefs=MZ.habitats.badgeDefinitions;
-    const rows=[
-      {key:"firstBloom",icon:badgeDefs.firstBloom.icon,label:badgeDefs.firstBloom.name,detail:badgeDefs.firstBloom.description,value:progress.checks.firstBloom?"Parkmärke klart":"Inte klart ännu"},
-      {key:"parkBuilder",icon:badgeDefs.parkBuilder.icon,label:badgeDefs.parkBuilder.name,detail:badgeDefs.parkBuilder.description,value:`${Math.min(progress.current.uniqueItems,progress.requirements.uniqueItems)} / ${progress.requirements.uniqueItems} olika saker`},
-      {key:"natureWatcher",icon:badgeDefs.natureWatcher.icon,label:badgeDefs.natureWatcher.name,detail:badgeDefs.natureWatcher.description,value:`${Math.min(progress.current.species,progress.requirements.species)} / ${progress.requirements.species} arter`},
-      {key:"mathRounds",icon:"🧮",label:"Mattearbete",detail:"Gör 15 hela matteomgångar i Matteparken.",value:`${Math.min(progress.current.mathRounds,progress.requirements.mathRounds)} / ${progress.requirements.mathRounds} omgångar`}
-    ];
-    rows.forEach((row)=>{
+    $("#habitatModalIcon").textContent=progress.habitat.icon;
+    $("#habitatModalTitle").textContent=progress.habitat.name;
+    let rows;
+    if(area==="northwest"){
+      rows=[
+        {key:"firstBloom",icon:badgeDefs.firstBloom.icon,label:badgeDefs.firstBloom.name,detail:badgeDefs.firstBloom.description,value:progress.checks.firstBloom?"Parkmärke klart":"Inte klart ännu"},
+        {key:"parkBuilder",icon:badgeDefs.parkBuilder.icon,label:badgeDefs.parkBuilder.name,detail:badgeDefs.parkBuilder.description,value:`${capped(cur.uniqueItems,req.uniqueItems)} / ${req.uniqueItems} olika saker`},
+        {key:"natureWatcher",icon:badgeDefs.natureWatcher.icon,label:badgeDefs.natureWatcher.name,detail:badgeDefs.natureWatcher.description,value:`${capped(cur.species,req.species)} / ${req.species} arter`}
+      ];
+    }else if(area==="southeast"){
+      rows=[
+        {key:"forestPlanter",icon:badgeDefs.forestPlanter.icon,label:badgeDefs.forestPlanter.name,detail:badgeDefs.forestPlanter.description,value:`${capped(cur.trees,req.trees)} / ${req.trees} träd`},
+        {key:"forestKeeper",icon:badgeDefs.forestKeeper.icon,label:badgeDefs.forestKeeper.name,detail:badgeDefs.forestKeeper.description,value:`${capped(cur.uniqueObjects,req.uniqueObjects)} / ${req.uniqueObjects} olika saker`},
+        {key:"forestSpotter",icon:badgeDefs.forestSpotter.icon,label:badgeDefs.forestSpotter.name,detail:badgeDefs.forestSpotter.description,value:`${capped(cur.species,req.species)} / ${req.species} arter`}
+      ];
+    }else{
+      rows=[
+        {key:"dockBuilder",icon:badgeDefs.dockBuilder.icon,label:badgeDefs.dockBuilder.name,detail:badgeDefs.dockBuilder.description,value:cur.dock?"Bryggan är på plats":"Bryggan saknas"},
+        {key:"lakeKeeper",icon:badgeDefs.lakeKeeper.icon,label:badgeDefs.lakeKeeper.name,detail:badgeDefs.lakeKeeper.description,value:`${capped(cur.uniqueObjects,req.uniqueObjects)} / ${req.uniqueObjects} olika saker`},
+        {key:"lakeExpert",icon:badgeDefs.lakeExpert.icon,label:badgeDefs.lakeExpert.name,detail:badgeDefs.lakeExpert.description,value:`${capped(cur.fishSpecies,req.fishSpecies)} / ${req.fishSpecies} fiskarter · ${capped(cur.otherSpecies,req.otherSpecies)} / ${req.otherSpecies} andra arter`}
+      ];
+    }
+    rows.push({key:"mathRounds",icon:"🧮",label:"Mattearbete",detail:area==="northwest"
+      ?"Gör 15 hela matteomgångar i Matteparken."
+      :`Gör ${req.mathRounds} nya matteomgångar sedan föregående område öppnades.`,
+      value:`${capped(cur.mathRounds,req.mathRounds)} / ${req.mathRounds} omgångar`});
+    rows.forEach(row=>{
       const done=progress.checks[row.key];
-      const node=document.createElement("div"); node.className=`habitat-requirement ${done ? "done" : "pending"}`;
-      node.innerHTML=`<span class="habitat-requirement-icon">${done ? "✅" : row.icon}</span><div><strong>${row.label}</strong><div class="muted">${row.detail}</div><div style="margin-top:4px;font-weight:900">${row.value}</div></div>`;
+      const node=document.createElement("div");node.className=`habitat-requirement ${done?"done":"pending"}`;
+      node.innerHTML=`<span class="habitat-requirement-icon">${done?"✅":row.icon}</span><div><strong>${row.label}</strong><div class="muted">${row.detail}</div><div style="margin-top:4px;font-weight:900">${row.value}</div></div>`;
       list.appendChild(node);
     });
-    const badges=$("#badgeCollection"); badges.innerHTML="";
-    Object.values(badgeDefs).forEach((badge)=>{
+    const badges=$("#badgeCollection");badges.innerHTML="";
+    const related=new Set(progress.requiredBadgeIds);
+    if(area==="northeast"&&progress.unlocked)MZ.habitats.mountainBadgeIds.forEach(id=>related.add(id));
+    Object.values(badgeDefs).filter(b=>state.habitats.badges[b.id]||related.has(b.id)).forEach(badge=>{
       const earned=Boolean(state.habitats.badges[badge.id]);
-      const node=document.createElement("div"); node.className=`park-badge ${earned ? "earned" : "locked"}`;
-      node.innerHTML=`<span class="park-badge-icon">${earned ? badge.icon : "○"}</span><div><strong>${badge.name}</strong><div class="muted">${badge.description}</div></div>`;
+      const node=document.createElement("div");
+      node.className=`park-badge ${earned?"earned":"locked"}`;
+      node.innerHTML=`<span class="park-badge-icon">${earned?badge.icon:"○"}</span><div><strong>${badge.name}</strong><div class="muted">${badge.description}</div></div>`;
       badges.appendChild(node);
     });
-    const testBadgeCount=MZ.habitats.badgeIds().filter((id)=>id.startsWith("testBadge")).length;
+    const testBadgeCount=MZ.habitats.badgeIds().filter(id=>id.startsWith("testBadge")).length;
     if(testBadgeCount>0){
-      const node=document.createElement("div"); node.className="park-badge earned test-badge";
+      const node=document.createElement("div");node.className="park-badge earned test-badge";
       node.innerHTML=`<span class="park-badge-icon">🧪</span><div><strong>Testmärke × ${testBadgeCount}</strong><div class="muted">Tillfälligt märke för prototyptestning.</div></div>`;
       badges.appendChild(node);
     }
-    const button=$("#unlockNorthwestHabitat"); button.disabled=!progress.ready || progress.unlocked;
-    button.textContent=progress.unlocked ? "✅ Skogsdungen är upplåst" : progress.ready ? "🌲 Lås upp Skogsdungen" : "🔒 Fortsätt utveckla parken";
+    const button=$("#unlockNorthwestHabitat");
+    button.disabled=!progress.ready||progress.unlocked;
+    button.textContent=progress.unlocked?`✅ ${progress.habitat.name} är upplåst`
+      :progress.ready?`${progress.habitat.icon} Lås upp ${progress.habitat.name}`
+      :"🔒 Fortsätt utveckla parken";
     $("#habitatUnlockStatus").textContent=progress.unlocked
-      ? "Skogsdungen är nu en del av din park."
-      : progress.ready
-        ? "Alla tre Parkmärken och mattekravet är klara. Skogsdungen kan öppnas!"
-        : `🏅 ${progress.requiredBadgesEarned}/3 Parkmärken · 🧮 ${Math.min(progress.current.mathRounds,progress.requirements.mathRounds)}/${progress.requirements.mathRounds} matteomgångar`;
+      ?`${progress.habitat.name} är nu en del av din park.`
+      :progress.ready?`Alla tre Parkmärken och mattekravet är klara. ${progress.habitat.name} kan öppnas!`
+      :`🏅 ${progress.requiredBadgesEarned}/3 Parkmärken · 🧮 ${capped(cur.mathRounds,req.mathRounds)}/${req.mathRounds} matteomgångar`;
     $("#habitatModalIntro").textContent=progress.unlocked
-      ? "Du har öppnat parkens första expansion. Föremål kan nu placeras i båda habitaten."
-      : "Få tre Parkmärken i Startgläntan och gör 15 hela matteomgångar för att öppna Skogsdungen.";
+      ?`${progress.habitat.name} är redan upplåst. Fortsätt utveckla parken!`
+      :area==="northwest"?"Få tre Parkmärken i Startgläntan och gör 15 hela matteomgångar för att öppna Skogsdungen."
+      :area==="southeast"?"Få tre Parkmärken i Skogsdungen och gör 35 nya matteomgångar för att öppna Sjön."
+      :"Få tre Parkmärken vid Sjön och gör 50 nya matteomgångar för att öppna Berget.";
   }
 
-  function openHabitatModal(){ renderHabitatModal(); MZ.openModal("habitatModal"); }
-  function unlockNorthwestHabitat(){
-    const result=MZ.habitats.unlock("northwest");
-    if(!result.ok){ renderHabitatModal(); return; }
-    renderHabitatProgress(); renderParkItems();
-    // Unlocking is the action the dialog was waiting for. Return directly
-    // to the park so the newly opened habitat is visible immediately.
+  function openHabitatModal(areaId=nextHabitatGoal()){
+    selectedHabitatGoal=areaId;
+    renderHabitatModal();
+    MZ.openModal("habitatModal");
+  }
+  function unlockSelectedHabitat(){
+    const result=MZ.habitats.unlock(selectedHabitatGoal);
+    if(!result.ok){renderHabitatModal();return;}
+    renderHabitatProgress();renderParkItems();updateShopUI();
     MZ.closeModal("habitatModal");
     MZ.closeModal("officeModal");
-    $("#status").textContent="🌲 Skogsdungen är upplåst! Din park har fått ett nytt habitat.";
-  }
-
-  function showFutureHabitatMessage(habitatId){
-    const habitat=MZ.habitats.habitats[habitatId];
-    if(!habitat) return;
-    $("#status").textContent = `${habitat.icon} ${habitat.name} är fortfarande låst. Först behöver parken utvecklas vidare.`;
+    $("#status").textContent=`${MZ.habitats.habitats[selectedHabitatGoal].icon} ${MZ.habitats.habitats[selectedHabitatGoal].name} är upplåst! Din park har fått ett nytt område.`;
   }
 
   function setFieldGuideTab(tab){
@@ -8682,11 +8718,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#northwestBuildZone").addEventListener("click", placeSelectedItem);
     $("#northeastBuildZone").addEventListener("click", placeSelectedItem);
     $("#southeastBuildZone").addEventListener("click", placeSelectedItem);
-    $("#northwestHabitatLock").addEventListener("click", openHabitatModal);
-    $("#northeastHabitatLock").addEventListener("click", () => showFutureHabitatMessage("northeast"));
-    $("#southeastHabitatLock").addEventListener("click", () => showFutureHabitatMessage("southeast"));
-    $("#openHabitatProgress").addEventListener("click", openHabitatModal);
-    $("#unlockNorthwestHabitat").addEventListener("click", unlockNorthwestHabitat);
+    $("#northwestHabitatLock").addEventListener("click", () => openHabitatModal("northwest"));
+    $("#northeastHabitatLock").addEventListener("click", () => openHabitatModal("northeast"));
+    $("#southeastHabitatLock").addEventListener("click", () => openHabitatModal("southeast"));
+    $("#openHabitatProgress").addEventListener("click", () => openHabitatModal());
+    $("#unlockNorthwestHabitat").addEventListener("click", unlockSelectedHabitat);
     $("#moveItemAction").addEventListener("click", moveSelectedParkItem);
     $("#confirmItemAction").addEventListener("click", performSelectedItemAction);
     $("#cancelItemAction").addEventListener("click", closeItemAction);
