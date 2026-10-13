@@ -24,7 +24,6 @@
   let factBag = [];
   let round = {};
   let modal;
-  let launcher;
   let guideTab;
 
   function ownerKey() {
@@ -242,11 +241,6 @@
   function close() {
     MZ.closeModal("svampstigenModal");
   }
-  function refreshLauncher() {
-    if (!launcher) return;
-    const unlocked = MZ.habitats.isUnlocked("northwest") && !!MZ.state.onboarding?.keyTaken;
-    launcher.classList.toggle("hidden",!unlocked);
-  }
   function showGuide() {
     if (!guideTab) return;
     loadProgress();
@@ -279,14 +273,6 @@
   function init() {
     const park = document.querySelector(".park");
     if (!park || !byId("fieldGuideFishTab")) return;
-    launcher=document.createElement("button");
-    launcher.type="button";
-    launcher.className="sp-launcher hidden";
-    launcher.textContent="🍄 Svampstigen";
-    launcher.title="Utforska Skogsdungen och hitta svampar";
-    launcher.setAttribute("aria-label","Starta minispel Svampstigen");
-    park.appendChild(launcher);
-    launcher.addEventListener("click",event=>{event.stopPropagation();if(park.classList.contains("carrying-item"))return;open();});
     modal=document.createElement("div");
     modal.className="modal-backdrop";
     modal.id="svampstigenModal";
@@ -297,7 +283,7 @@
     document.querySelector(".game").appendChild(modal);
     byId("spCloseX").addEventListener("click",close);
     modal.addEventListener("click",event=>{if(event.target===modal)close();});
-    modal.addEventListener("keydown",event=>{if(event.key==="Escape"){event.preventDefault();close();launcher.focus();}});
+    modal.addEventListener("keydown",event=>{if(event.key==="Escape"){event.preventDefault();close();}});
     const tabs=byId("fieldGuideFishTab").parentElement;
     guideTab=document.createElement("button");
     guideTab.type="button";
@@ -310,9 +296,6 @@
       byId(id).addEventListener("click",()=>guideTab.classList.remove("active"));
     });
     byId("openFieldGuide")?.addEventListener("click",()=>guideTab.classList.remove("active"));
-    MZ.events.addEventListener("habitatchange",refreshLauncher);
-    MZ.events.addEventListener("wildlifechange",refreshLauncher);
-    refreshLauncher();
   }
   MZ.svampstigen = {open, close, startRound};
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded",init);
