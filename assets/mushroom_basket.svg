@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges">
+<title>Svampkorg till Matteparken</title>
+<rect width="64" height="64" fill="none"/>
+<path d="M19 28V16H22V12H26V9H40V12H44V16H47V28H42V17H39V14H27V17H24V28Z" fill="#513727"/>
+<path d="M23 27V17H26V13H40V17H43V27H39V19H27V27Z" fill="#caa06a"/>
+<path d="M11 26H53V36H50V52H46V56H18V52H14V36H11Z" fill="#5d3d27"/>
+<path d="M14 29H50V36H48V50H44V53H20V50H16V36H14Z" fill="#bc8850"/>
+<path d="M17 35H47V39H17Z" fill="#e0b579"/>
+<rect x="17" y="41" width="30" height="3" fill="#8b5b32"/>
+<rect x="17" y="47" width="30" height="3" fill="#8b5b32"/>
+<path d="M22 37V51H26V37ZM31 37V53H35V37ZM40 37V51H44V37Z" fill="#e4b77b" opacity=".9"/>
+<path d="M14 26H50V30H14Z" fill="#e4b77b"/>
+<path d="M15 31H49V34H15Z" fill="#865635"/>
+<path d="M22 25H30V29H22Z" fill="#578343"/>
+<path d="M32 23H41V29H32Z" fill="#a45036"/>
+<rect x="35" y="21" width="3" height="3" fill="#fff0b0"/>
+<rect x="10" y="56" width="44" height="3" fill="#263c2b" opacity=".25"/>
+</svg>
