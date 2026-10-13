@@ -2409,6 +2409,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 .gnome-sighting.leaving{display:block;opacity:0}
 .gnome-sighting img{display:block;width:100%;height:auto;image-rendering:pixelated;user-select:none}
 @keyframes gnomePeek{from{opacity:0;transform:translate(-50%,-44%) scale(.92)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
+/* Svampkorg: spelbart parkföremål i Skogsdungen */
+.placed-item.mushroomBasket.sprite-rendered{width:68px;height:68px;display:flex;align-items:flex-end;justify-content:center;overflow:visible}
+.placed-item.mushroomBasket .placed-sprite{width:68px;height:68px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 0 rgba(45,65,45,.16))}
 </style>
 <link rel="stylesheet" href="percent_change.css" />
 <link rel="stylesheet" href="svampstigen.css" />
@@ -4380,6 +4384,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     {type:"flowerPot", name:"Blomkruka", icon:"🪴", kind:"equipment", source:"decorBox", habitat:"southwest", decorative:true},
 
     // Skogsdungen — färdiga träd och basföremål i katalogen
+    {type:"mushroomBasket", name:"Svampkorg", icon:"🧺", kind:"equipment", source:"catalog", habitat:"northwest", catalogPrice:60, catalogNote:"Placera korgen i Skogsdungen för att spela Svampstigen."},
     {type:"birch", name:"Björk", icon:"🌳", kind:"equipment", source:"catalog", habitat:"northwest", catalogPrice:60, catalogNote:"Färdigt träd. Placeras direkt i Skogsdungen."},
     {type:"spruce", name:"Gran", icon:"🌲", kind:"nature", source:"catalog", habitat:"northwest", catalogPrice:55, catalogNote:"Färdigt träd. Placeras direkt i Skogsdungen."},
     {type:"pine", name:"Tall", icon:"🌲", kind:"nature", source:"catalog", habitat:"northwest", catalogPrice:55, catalogNote:"Färdigt träd. Placeras direkt i Skogsdungen."},
@@ -6243,7 +6248,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     fern:"ormbunke", blueberryBush:"blåbärsris", woodAnemone:"vitsippa", hepatica:"blåsippa", orchid:"skogsorkidé", spruce:"gran", pine:"tall", oak:"ek", heather:"ljung", rockThyme:"backtimjan", mountainShrub:"bergsbuske", reeds:"vass", cattails:"kaveldun", waterLily:"näckros", shoreGrass:"strandgräs"
   }[seed] || "växt");
 
-  const equipmentTypes = ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom"];
+  const equipmentTypes = ["mushroomBasket","flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom"];
   const natureTypes = ["daisy","tulip","lavender","sunflower","poppy","cornflower","marigold","fern","blueberryBush","woodAnemone","hepatica","orchid","spruce","pine","oak","heather","rockThyme","mountainShrub","reeds","cattails","waterLily","shoreGrass"];
   const isEquipment = (type) => equipmentTypes.includes(type);
   const isNature = (type) => natureTypes.includes(type);
@@ -6259,6 +6264,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     birch:{name:"Björk", icon:"🌳"},
     fallenLog:{name:"Fallen stock", icon:"🪵"},
     stump:{name:"Gammal stubbe", icon:"🪵"},
+    mushroomBasket:{name:"Svampkorg", icon:"🧺"},
     mushroomCluster:{name:"Svampklunga", icon:"🍄"},
     pineconePile:{name:"Kotthög", icon:"🌰"},
     sunRock:{name:"Solvarm sten", icon:"🪨"},
@@ -6296,6 +6302,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     birch:"assets/asset_029_8447c7ac258e1b3a.png",
     fallenLog:"assets/asset_030_7ebde1048ac81ba2.png",
     stump:"assets/asset_031_680ab840921c609d.png",
+    mushroomBasket:"assets/mushroom_basket.svg",
     flowerPot:"assets/asset_032_ff44e1b027b942f7.png",
     daisy:"assets/asset_033_38b4b8d996e6b996.png",
     tulip:"assets/asset_034_209e84e5dd29a017.png",
@@ -7330,7 +7337,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function zoneAtPoint(clientX,clientY){
-    return unlockedZoneIds().find((zoneId)=>{
+    return unlockedZoneIds().filter((zoneId)=>placementMode !== "mushroomBasket" || zoneId === "northwest").find((zoneId)=>{
       const zone=zoneElement(zoneId); if(!zone) return false;
       const r=zone.getBoundingClientRect();
       return clientX>=r.left && clientX<=r.right && clientY>=r.top && clientY<=r.bottom;
@@ -7751,6 +7758,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function selectParkItem(item, pointerEvent=null){
+    if(item?.type === "mushroomBasket" && item.zone === "northwest"){
+      MZ.svampstigen?.open?.();
+      return;
+    }
     if(item?.type === "miniJetty" && item.zone === "southeast"){
       openFishing(item);
       return;
@@ -8220,6 +8231,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     event.stopPropagation();
     const zone=event.currentTarget; const zoneId=zone?.dataset?.zone || "southwest";
     if(!MZ.habitats.isUnlocked(zoneId)) return;
+    if(placementMode === "mushroomBasket" && zoneId !== "northwest"){
+      $("#status").textContent="🧺 Svampkorgen placeras i Skogsdungen.";
+      return;
+    }
     const rect=zone.getBoundingClientRect();
     const point=carriedPoint(event.clientX,event.clientY);
     const rawX = ((point.clientX - rect.left) / rect.width) * 100;
