@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Svampstigen – fristående test | Matteparken</title>
+<link rel="stylesheet" href="svampstigen.css">
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#324438;background:#f2ecd9}
+*{box-sizing:border-box}body{margin:0}
+.game{position:relative;min-height:100vh;max-width:1120px;margin:0 auto;padding:16px 16px 60px;background:#f7f1df}
+.test-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+h1{font-size:clamp(22px,3vw,32px);margin:6px 0}p{line-height:1.5}
+.test-tag{border:2px solid #806e44;background:#f9e5ac;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900}
+.test-desc{margin:8px 0 14px;color:#5a6957}
+.test-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.test-button{border:3px solid #64794e;border-radius:8px;background:#7a9966;color:#fffcef;padding:10px 15px;font-size:14px;font-weight:850;cursor:pointer}
+.test-button[disabled]{background:#b7b7a8;cursor:not-allowed}
+.test-button.alt{background:#e6d6b6;color:#354937;border-color:#97835e}
+.test-money{background:#fff9e9;border:2px solid #a99d72;border-radius:9px;padding:10px 13px;font-weight:900}
+.park{position:relative;border:8px solid #536c52;border-radius:13px;overflow:hidden;background:#6d9b66;min-height:380px;height:min(54vw,550px)}
+.park:before{content:"";position:absolute;inset:0;background:linear-gradient(#bad0a5b3,#48754cc4),url('assets/asset_004_67f3dcefe27d25d0.webp') center /cover;filter:saturate(.75)}
+.park:after{content:"";position:absolute;inset:20px;border:3px dashed #e5efb270;border-radius:17px;pointer-events:none}
+.test-forest{position:absolute;inset:0;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:22px 10px}
+.test-forest h2{margin:0;padding:5px 17px;background:#f2e3baee;border:3px solid #614a2e;border-radius:7px;color:#2f4633}
+.test-forest p{margin-top:10px;background:#f9f1dcdf;padding:8px 14px;text-align:center;border-radius:7px;font-weight:750}
+.test-forest.placing{cursor:crosshair}
+#testBasket{position:absolute;z-index:10;border:0;background:transparent;transform:translate(-50%,-100%);width:80px;height:80px;padding:0;cursor:pointer;filter:drop-shadow(1px 5px 3px #192d1b87)}
+#testBasket img{display:block;width:100%;height:100%;image-rendering:pixelated}
+#testBasket:focus-visible{outline:4px solid #fff3ae;border-radius:8px}
+#testBasket:hover{filter:brightness(1.1) drop-shadow(1px 5px 4px #192d1b)}
+.sp-launcher{display:none!important}
+.modal-backdrop{position:absolute;z-index:90;inset:0;background:#1b2a1cc9;display:none;place-items:center;padding:12px}
+.modal-backdrop.open{display:grid}
+.close{position:absolute;right:10px;top:9px;width:36px;height:36px;background:#f4e6bd;color:#4b583e;border:0;border-radius:50%;font-weight:900;font-size:22px;cursor:pointer}
+.test-guide{border:3px solid #80916a;border-radius:12px;background:#efe6cd;margin-top:16px;padding:15px}
+.test-guide h2{margin:0 0 10px}
+.field-guide-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.secondary{border:2px solid #7d8f6a;padding:9px 14px;border-radius:6px;background:#e9d5a9;color:#394731;font-weight:850;cursor:pointer}
+.secondary.active{background:#6d8760;color:white}
+.field-guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:9px}
+.field-guide-card{display:flex;align-items:center;gap:9px;border:2px solid #8c9a78;border-radius:8px;padding:10px;background:#fff8e5}
+.field-guide-card.unknown{opacity:.7;background:#ddd9c8}
+.field-guide-icon{font-size:32px;min-width:62px}
+.field-guide-entry-copy h3{margin:2px 0}
+.field-guide-entry-copy p{margin:2px 0;font-size:13px}
+.field-guide-kicker{font-size:11px;text-transform:uppercase;font-weight:900;color:#617151}
+.test-guide-status{font-size:13px;color:#5b6c52}
+.sp-spot{z-index:2}.sp-dialog{z-index:100}
+@media(max-width:520px){.park{min-height:320px}.test-forest h2{font-size:18px}#testBasket{width:62px;height:62px}}
+</style>
+</head>
+<body>
+<div class="game">
+  <header class="test-top">
+    <h1>🍄 Svampstigen: provspelning</h1>
+    <span class="test-tag">ENDAST TEST · Ingen riktig beställning</span>
+  </header>
+  <p class="test-desc">Här kan du prova korgköp, placering och hela Svampstigen <strong>utan att ha låst upp Skogsdungen</strong>. Inga riktiga kottar används och ingenting läggs ut i elevernas parker.</p>
+  <div class="test-controls">
+    <span class="test-money">🌰 Testkottar: <span id="testCones">100</span></span>
+    <button class="test-button" type="button" id="testBuy">🧺 Köp svampkorg (60 kottar)</button>
+    <button class="test-button alt" type="button" id="testReset">Börja om testet</button>
+  </div>
+  <div class="park" id="testPark">
+    <div class="test-forest" id="testForest">
+      <h2>🌲 Skogsdungen (testmiljö)</h2>
+      <p id="testStatus">Köp en svampkorg med testkottarna ovan.</p>
+    </div>
+    <button hidden type="button" id="testBasket" title="Klicka för att gå längs Svampstigen" aria-label="Svampkorg – starta Svampstigen">
+      <img src="assets/mushroom_basket.svg" alt="">
+    </button>
+  </div>
+  <section class="test-guide" aria-label="Test av Fältguiden">
+    <h2>📗 Fältguiden i testversionen</h2>
+    <p class="test-guide-status" id="fieldGuideIntro">Upptäckta svampar hamnar i den här provsamlingen.</p>
+    <div class="field-guide-tabs">
+      <button type="button" class="secondary" id="fieldGuideWildlifeTab">🐾 Parkliv</button>
+      <button type="button" class="secondary" id="fieldGuideFishTab">🐟 Fiskar</button>
+    </div>
+    <p><strong id="fieldGuideCount">0 / 5</strong> <span id="fieldGuideProgressLabel">svampar upptäckta</span></p>
+    <div class="field-guide-grid" id="fieldGuideGrid"><p>Fynden visas här efter att du öppnat fliken Svampar.</p></div>
+  </section>
+  <p class="test-guide-status">Svampkorgen och placeringen är en testmodell. Den riktiga köpfunktionen i Matteparkens katalog införs efter att vi har provspelat och godkänt upplägget.</p>
+</div>
+<script>
+window.Mattezoo={
+  state:{onboarding:{keyTaken:true}},
+  habitats:{isUnlocked:()=>true},
+  events:new EventTarget(),
+  cloudStudent:{activeStudent:()=>({student:{id:"svampstigen-test-only"}})},
+  openModal:id=>document.getElementById(id)?.classList.add("open"),
+  closeModal:id=>document.getElementById(id)?.classList.remove("open")
+};
+</script>
+<script src="svampstigen.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  const money=document.getElementById("testCones");
+  const buy=document.getElementById("testBuy");
+  const reset=document.getElementById("testReset");
+  const forest=document.getElementById("testForest");
+  const basket=document.getElementById("testBasket");
+  const status=document.getElementById("testStatus");
+  const park=document.getElementById("testPark");
+  let cones=100,stage="shop";
+  const draw=()=>{
+    money.textContent=cones;
+    buy.disabled=stage!=="shop";
+    buy.textContent=stage==="shop"?"🧺 Köp svampkorg (60 kottar)":"🧺 Korgen är köpt";
+    forest.classList.toggle("placing",stage==="place");
+    status.textContent=stage==="shop"?"Köp en svampkorg med testkottarna ovan.":stage==="place"?"Klicka var du vill placera korgen i skogen.":"Klicka på korgen för att starta Svampstigen!";
+  };
+  buy.addEventListener("click",()=>{
+    if(stage!=="shop"||cones<60)return;
+    cones-=60;stage="place";draw();
+  });
+  forest.addEventListener("click",event=>{
+    if(stage!=="place")return;
+    const r=park.getBoundingClientRect();
+    let x=((event.clientX-r.left)/r.width)*100;
+    let y=((event.clientY-r.top)/r.height)*100;
+    x=Math.max(12,Math.min(88,x));y=Math.max(28,Math.min(92,y));
+    basket.style.left=x+"%";basket.style.top=y+"%";
+    basket.hidden=false;
+    stage="ready";draw();
+  });
+  basket.addEventListener("click",event=>{
+    event.preventDefault();event.stopPropagation();
+    if(stage==="ready")window.Mattezoo.svampstigen?.open();
+  });
+  reset.addEventListener("click",()=>{
+    window.Mattezoo.svampstigen?.close();
+    cones=100;stage="shop";basket.hidden=true;draw();
+  });
+  document.getElementById("fieldGuideWildlifeTab").addEventListener("click",()=>{
+    document.getElementById("fieldGuideGrid").innerHTML="<p>Provsamlingen gäller bara Svampstigen. Klicka på Svampar.</p>";
+    document.getElementById("fieldGuideMushroomTab")?.classList.remove("active");
+  });
+  document.getElementById("fieldGuideFishTab").addEventListener("click",()=>{
+    document.getElementById("fieldGuideGrid").innerHTML="<p>Provsamlingen gäller bara Svampstigen. Klicka på Svampar.</p>";
+    document.getElementById("fieldGuideMushroomTab")?.classList.remove("active");
+  });
+  draw();
+  document.getElementById("fieldGuideMushroomTab")?.click();
+});
+</script>
+</body>
+</html>
