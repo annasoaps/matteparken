@@ -294,7 +294,7 @@
       +'<button type="button" class="close" id="spCloseX" aria-label="Stäng">×</button>'
       +'<header class="sp-head"><div><h2 id="spHeading">🍄 Svampstigen</h2><p>En liten jakt i Skogsdungen</p></div></header>'
       +'<div id="spBody"></div></section>';
-    document.body.appendChild(modal);
+    document.querySelector(".game").appendChild(modal);
     byId("spCloseX").addEventListener("click",close);
     modal.addEventListener("click",event=>{if(event.target===modal)close();});
     modal.addEventListener("keydown",event=>{if(event.key==="Escape"){event.preventDefault();close();launcher.focus();}});
