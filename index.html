@@ -1267,12 +1267,16 @@ window.MATTEZOO_TEACHER_PLAN = {
   left:50%;top:calc(48% - 50px);transform:translate(-50%,-50%);z-index:7;
 }
 .house.pixel-office{
-  width:224px;height:224px;padding:0;border:0;background:transparent;
-  display:block;filter:drop-shadow(0 8px 0 rgba(45,65,45,.12));
+  /* Tighter click area so decorations can be placed beside the office. */
+  width:184px;height:184px;padding:0;border:0;background:transparent;
+  display:block;position:relative;overflow:visible;
+  filter:drop-shadow(0 8px 0 rgba(45,65,45,.12));
   cursor:pointer;transition:transform .15s ease,filter .15s ease;
 }
 .house.pixel-office img{
-  width:100%;height:100%;display:block;object-fit:contain;pointer-events:none;
+  /* Preserve the original size and position of the building artwork. */
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:224px;height:224px;display:block;object-fit:contain;pointer-events:none;
   image-rendering:auto;
 }
 .house.pixel-office:hover{
