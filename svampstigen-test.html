@@ -131,7 +131,17 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
   reset.addEventListener("click",()=>{
     window.Mattezoo.svampstigen?.close();
-    cones=100;stage="shop";basket.hidden=true;draw();
+    cones=100;stage="shop";basket.hidden=true;
+    try {
+      const key="matteparkenSvampstigen_v1";
+      const saved=JSON.parse(localStorage.getItem(key)||"{}");
+      if(saved && typeof saved==="object"){
+        delete saved["student:svampstigen-test-only"];
+        localStorage.setItem(key,JSON.stringify(saved));
+      }
+    } catch(_) {}
+    draw();
+    document.getElementById("fieldGuideMushroomTab")?.click();
   });
   document.getElementById("fieldGuideWildlifeTab").addEventListener("click",()=>{
     document.getElementById("fieldGuideGrid").innerHTML="<p>Provsamlingen gäller bara Svampstigen. Klicka på Svampar.</p>";
