@@ -6377,9 +6377,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   });
 
   // Restore sprites for park lantern and forest mushroom cluster.
-  // The forest mushroom uses the available autumn boletes artwork as a fallback.
+  // Forest mushroom cluster uses its own pixel-art sprite.
   itemSprites.lantern = "assets/asset_084_c5c6b94fc8d8b56f.png";
-  itemSprites.mushroomCluster = "assets/autumn/boletes.png";
+  itemSprites.mushroomCluster = "assets/mushroom_cluster.svg";
   itemSpriteVariants.lantern = [itemSprites.lantern];
 
   const itemSpriteList = (type) => itemSpriteVariants[type] || (itemSprites[type] ? [itemSprites[type]] : []);
