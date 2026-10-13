@@ -6780,7 +6780,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function attachedBirdMarkup(visitor){
-    if(!visitor || !["bird","tit"].includes(visitor.species)) return "";
+    // Keep the birdbath clear; retain the bird species in discoveries and the field guide.
+    if(!visitor || visitor.species === "bird" || visitor.species !== "tit") return "";
     const perchClass = visitor.species === "bird" ? "bird-on-bath" : "bird-on-house";
     return `<span class="attached-bird ${perchClass}" data-pose="neutral" data-wildlife-species="${visitor.species}" role="img" aria-label="${visitor.name}">${perchedBirdFrames.map((src,index)=>`<img class="bird-perch-pose pose-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
   }
