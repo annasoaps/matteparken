@@ -6376,7 +6376,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     parasolMushroom:"assets/autumn/parasol_mushroom.png"
   });
 
-  itemSpriteVariants.lantern = [itemSprites.lantern, 'assets/asset_084_c5c6b94fc8d8b56f.png'];
+  // Restore sprites for park lantern and forest mushroom cluster.
+  // The forest mushroom uses the available autumn boletes artwork as a fallback.
+  itemSprites.lantern = "assets/asset_084_c5c6b94fc8d8b56f.png";
+  itemSprites.mushroomCluster = "assets/autumn/boletes.png";
+  itemSpriteVariants.lantern = [itemSprites.lantern];
 
   const itemSpriteList = (type) => itemSpriteVariants[type] || (itemSprites[type] ? [itemSprites[type]] : []);
   function currentCalendarSeason(date = new Date()){
