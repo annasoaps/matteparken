@@ -33,6 +33,11 @@
     checkButton.textContent = backupMode === "restore"
       ? "Förhandsgranska molnkopian" : "Kontrollera min molnkopia";
     checkButton.style.marginLeft = "8px";
+    const auditButton = document.createElement("button");
+    auditButton.type = "button";
+    auditButton.className = "secondary";
+    auditButton.textContent = "Kontrollera mina katalogsaker";
+    auditButton.style.marginLeft = "8px";
     const restoreButton = document.createElement("button");
     restoreButton.type = "button";
     restoreButton.className = "secondary";
@@ -52,7 +57,7 @@
     } else if (backupMode === "restore") {
       panel.append(explanation, checkButton, restoreButton, feedback);
     } else {
-      panel.append(explanation, button, checkButton, feedback);
+      panel.append(explanation, button, checkButton, auditButton, feedback);
     }
     heading.insertAdjacentElement("afterend", panel);
 
@@ -138,6 +143,64 @@
       if (!Array.isArray(items)) throw new Error("Parkobjekten är ogiltiga.");
       return names.length;
     }
+
+    // Läsbart pilotprov: katalogföremål måste kunna knytas till betalade köp.
+    // Detta är bara en RAPPORT, inte en automatisk anklagelse eller borttagning.
+    auditButton.addEventListener("click", async () => {
+      if (auditButton.disabled) return;
+      const studentId = currentStudentId();
+      if (!studentId || MZ.teacherTest?.enabled) {
+        feedback.textContent = "Logga in med ditt vanliga elevkonto först.";
+        return;
+      }
+      auditButton.disabled = true;
+      feedback.textContent = "🌰 Jämför katalogföremål med verifierade köp …";
+      try {
+        const client = MZ.cloudStudent.getClient();
+        const {data, error} = await client
+          .from("student_park_catalog_assets")
+          .select("item_id");
+        if (error) throw error;
+        if (currentStudentId() !== studentId)
+          throw new Error("Elevkontot ändrades under kontrollen.");
+        const purchased = new Map();
+        (data || []).forEach(row =>
+          purchased.set(row.item_id, (purchased.get(row.item_id) || 0) + 1));
+        const catalogTypes = new Set(
+          (MZ.rewards?.itemDefinitions || []).filter(d => d.source === "catalog")
+            .map(d => d.type));
+        const local = new Map();
+        const add = (type,count=1) => {
+          if (!catalogTypes.has(type)) return;
+          const n = Math.max(0, Number(count) || 0);
+          if (n) local.set(type, (local.get(type) || 0) + n);
+        };
+        (MZ.state?.parkItems || []).forEach(item => add(item?.type));
+        Object.entries(MZ.state?.inventory || {}).forEach(([type,n]) => add(type,n));
+        (MZ.state?.rewards?.deliveries || []).forEach(entry => {
+          if (entry?.kind === "item") add(entry.type);
+        });
+        const deliveryChoice = MZ.state?.rewards?.deliveryChoice;
+        if (deliveryChoice?.kind === "item") add(deliveryChoice.type);
+        const unexpected = [...local].filter(([type,count]) =>
+          count > (purchased.get(type) || 0));
+        const localTotal = [...local.values()].reduce((sum,n)=>sum+n,0);
+        const boughtTotal = [...purchased.values()].reduce((sum,n)=>sum+n,0);
+        feedback.textContent = unexpected.length
+          ? "⚠️ Granskning behövs: " +
+            unexpected.map(([type,n]) => type + " (" + n +
+              " lokalt, " + (purchased.get(type) || 0) + " köpta)").join(", ") +
+            ". Inget har ändrats eller tagits bort."
+          : "✓ Alla " + localTotal + " lokala katalogföremål ryms inom " +
+            boughtTotal + " verifierade köp. " +
+            "Lådor och gratisbelöningar granskas separat. Ingenting har ändrats.";
+      } catch(error) {
+        console.warn("Parkkatalogens köpkontroll:",error);
+        feedback.textContent = "⚠️ Köphistoriken kunde inte kontrolleras. Ingenting har ändrats.";
+      } finally {
+        auditButton.disabled = false;
+      }
+    });
 
     // Kontrollera molnkopian utan att skriva något på den här datorn.
     let preview = null;
