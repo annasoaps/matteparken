@@ -10,8 +10,8 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 64px;
-  height: 52px;
+  width: 48px;
+  height: 46px;
   padding: 0;
   border: 0;
   border-radius: 12px;
@@ -24,9 +24,10 @@
   filter: drop-shadow(0 3px 0 rgba(32,45,35,.28));
 }
 .mz-goose-target svg {
-  width: 64px;
-  height: 46px;
+  width: 44px;
+  height: 36px;
   display: block;
+  margin: 4px auto 0;
   image-rendering: pixelated;
   overflow: visible;
 }
@@ -47,7 +48,7 @@
   content: "+1";
   position: absolute;
   top: 2px;
-  left: 15px;
+  left: 9px;
   color: #fff5c1;
   text-shadow: 0 2px 0 #405743, 1px 0 0 #405743, -1px 0 0 #405743;
   font-size: 25px;

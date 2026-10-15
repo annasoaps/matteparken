@@ -152,13 +152,14 @@
     if (flock || !inSeason() || !clearPark()) return false;
     const width = park.clientWidth, height = park.clientHeight;
     const direction = Math.random() < 0.5 ? 1 : -1;
-    const spacing = Math.max(52, Math.min(70, width * 0.08));
-    const offsets = [[0, 0], [-1, -1], [-1, 1], [-2, -2], [-2, 2], [-3, -3], [-3, 3]];
-    const centerY = Math.max(120, Math.min(height - 120, height * (0.35 + Math.random() * 0.17)));
+    // Tretton små flyttgäss i två vingar. Avståndet håller klickytorna åtskilda.
+    const spacing = Math.max(50, Math.min(58, width * 0.05));
+    const offsets = [[0, 0], [-1, -1], [-1, 1], [-2, -2], [-2, 2], [-3, -3], [-3, 3], [-4, -4], [-4, 4], [-5, -5], [-5, 5], [-6, -6], [-6, 6]];
+    const centerY = height * (0.47 + Math.random() * 0.06);
     const f = {
       started: performance.now(), duration: reducedMotion ? 12500 : 10500,
       fromX: direction === 1 ? -75 : width + 75,
-      toX: direction === 1 ? width + 3 * spacing + 95 : -(3 * spacing + 95),
+      toX: direction === 1 ? width + 6 * spacing + 95 : -(6 * spacing + 95),
       centerY, direction, width, hits: 0, birds: []
     };
 
@@ -169,7 +170,7 @@
       bird.className = "mz-goose-target" + (direction === -1 ? " mz-goose-reverse" : "");
       bird.setAttribute("aria-label", "Pricka flyttgås " + (index + 1));
       bird.innerHTML = GOOSE_SVG;
-      const item = {button: bird, dx: offset[0] * spacing, dy: offset[1] * 36, hit: false};
+      const item = {button: bird, dx: offset[0] * spacing, dy: offset[1] * 26, hit: false};
       bird.addEventListener("click", event => {
         event.preventDefault();
         event.stopPropagation();
