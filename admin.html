@@ -293,6 +293,35 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   const inviteFlow=/type=(invite|recovery)/i.test(authUrlText);
   let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],quizReviews=[],students=[],studentNotes=new Map(),notesEnabled=false,progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
   let refreshTimer=null,lastGeneratedCodes=[];
+  const feedbackDrafts=new Map();
+  const quizFeedbackStoragePrefix="matteparken:quiz-feedback-draft:v1:";
+  function feedbackDraftKey(studentId,quizId){return quizFeedbackStoragePrefix+[user?.id||"teacher",classId,studentId,quizId].join(":");}
+  function readFeedbackDraft(key){
+    if(feedbackDrafts.has(key))return feedbackDrafts.get(key);
+    try{const value=sessionStorage.getItem(key);if(value!==null){feedbackDrafts.set(key,value);return value;}}catch(error){console.warn("Utkast kunde inte läsas från denna flik",error);}
+    return null;
+  }
+  function saveFeedbackDraft(key,value){
+    feedbackDrafts.set(key,value);
+    try{sessionStorage.setItem(key,value);}catch(error){console.warn("Utkast sparas bara tills sidan stängs",error);}
+  }
+  function clearFeedbackDraft(key){
+    feedbackDrafts.delete(key);
+    try{sessionStorage.removeItem(key);}catch(error){console.warn("Utkast kunde inte rensas från fliken",error);}
+  }
+  function clearSessionFeedbackDrafts(){
+    feedbackDrafts.clear();
+    try{
+      for(let i=sessionStorage.length-1;i>=0;i--){
+        const key=sessionStorage.key(i);
+        if(key?.startsWith(quizFeedbackStoragePrefix))sessionStorage.removeItem(key);
+      }
+    }catch(error){console.warn("Utkast kunde inte rensas vid utloggning",error);}
+  }
+  function isEditingStudentDetail(){
+    const detail=$("studentDetail"),active=document.activeElement;
+    return Boolean(active&&detail?.contains(active)&&active.matches?.("textarea,input,[contenteditable='true']"));
+  }
 
   function setFeedback(id,msg="",kind=""){const el=$(id);if(!el)return;el.textContent=msg;el.className="feedback"+(kind?" "+kind:"");}
   function localDateKey(date=new Date()){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");return y+"-"+m+"-"+d;}
@@ -412,7 +441,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     catch(error){console.error(error);setFeedback("loginFeedback","Kunde inte logga in. Kontrollera e-post och lösenord.","bad");}
     finally{$("loginBtn").disabled=false;}
   }
-  async function logout(){await sb.auth.signOut();user=null;classes=[];classId=null;assignments=[];students=[];studentNotes=new Map();selectedStudentId=null;if(refreshTimer)clearInterval(refreshTimer);$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden");setFeedback("loginFeedback","Utloggad.","good");}
+  async function logout(){await sb.auth.signOut();clearSessionFeedbackDrafts();user=null;classes=[];classId=null;assignments=[];students=[];studentNotes=new Map();selectedStudentId=null;if(refreshTimer)clearInterval(refreshTimer);$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden");setFeedback("loginFeedback","Utloggad.","good");}
 
   async function loadClasses(){
     const tc=await sb.from("teacher_classes").select("class_id");if(tc.error)throw tc.error;
@@ -520,7 +549,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
 
   function render(){
     const cls=classes.find(c=>c.id===classId);$("classPill").textContent=cls?"Klass "+cls.code:"Klass";
-    renderAssignments();renderHomeworks();renderQuizzes();renderRedeemCodes();renderStudents();if(selectedStudentId)renderDetail();
+    renderAssignments();renderHomeworks();renderQuizzes();renderRedeemCodes();renderStudents();if(selectedStudentId&&!isEditingStudentDetail())renderDetail();
   }
 
   function redeemRewardLabel(code){
@@ -616,7 +645,8 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   function renderStudents(){
     $("studentCount").textContent=students.length+" "+(students.length===1?"elev":"elever");
     const tbody=$("studentRows");
-    if(document.activeElement?.classList?.contains("student-note"))return;
+    // Pollningen får aldrig ta fokus från ett pågående skrivarbete.
+    if(document.activeElement?.classList?.contains("student-note")||isEditingStudentDetail())return;
     // Flytta undan detaljpanelen före omritning, så den inte förstörs.
     const detail=$("studentDetail");
     const parking=$("detailParking");
@@ -709,7 +739,12 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     const hwGroups=homeworkGroups();
     if(!hwGroups.length)hwBox.innerHTML='<div class="empty">Inga läxor.</div>';
     hwGroups.forEach(group=>{const st=homeworkGroupStatus(student.id,group),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(group.title)+"</strong><div>"+escapeHtml(homeworkGroupSummary(group))+"</div><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
-    const qBox=$("detailQuizzes");qBox.innerHTML="";
+    // Kom ihåg vilka elevpaneler som är öppna vid 20-sekundersuppdateringen.
+    const qBox=$("detailQuizzes");
+    const openQuizPanels=new Set([...qBox.querySelectorAll("[data-quiz-panel-id]")]
+      .filter(panel=>!panel.hidden&&panel.dataset.quizStudentId===student.id)
+      .map(panel=>panel.dataset.quizPanelId));
+    qBox.innerHTML="";
     const groups=quizGroups().sort((a,b)=>{
       const newest=g=>Math.max(0,...g.quizzes.map(q=>Date.parse(q.created_at)||0));
       return newest(b)-newest(a);
@@ -742,7 +777,10 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       if(finished.length){
         const button=document.createElement("button");button.className="btn secondary";
         button.style.marginTop="9px";button.textContent="Visa svar och återkoppling";
-        const panel=document.createElement("div");panel.hidden=true;
+        const panel=document.createElement("div");
+        panel.dataset.quizPanelId=parts.at(-1).quiz.id;
+        panel.dataset.quizStudentId=student.id;
+        panel.hidden=!openQuizPanels.has(panel.dataset.quizPanelId);
         panel.style.cssText="padding:12px;margin-top:9px;background:white;border:1px solid #d4dece;border-radius:12px";
         button.addEventListener("click",()=>{
           panel.hidden=!panel.hidden;
@@ -798,8 +836,15 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
           label.textContent="Gemensam återkoppling för hela förhöret";
           const input=document.createElement("textarea");
           input.style.cssText="width:100%;min-height:90px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical";
-          input.maxLength=1500;input.value=feedbackReview?.teacher_feedback||"";
+          const draftKey=feedbackDraftKey(student.id,lastPart.quiz.id);
+          input.maxLength=1500;
+          const draft=readFeedbackDraft(draftKey);
+          input.value=draft===null?(feedbackReview?.teacher_feedback||""):draft;
+          input.addEventListener("input",()=>saveFeedbackDraft(draftKey,input.value));
           label.appendChild(input);panel.appendChild(label);
+          const draftNote=document.createElement("p");draftNote.className="small muted";
+          draftNote.textContent="✍️ Texten sparas som utkast i den här fliken tills du skickar den.";
+          panel.appendChild(draftNote);
           const status=document.createElement("p");status.className="small muted";
           status.textContent=feedbackReview?.teacher_feedback
             ?(feedbackReview.feedback_read_at?"✓ Eleven har läst återkopplingen.":"Väntar på att eleven ska läsa.")
@@ -813,6 +858,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
                 p_quiz_id:lastPart.quiz.id,p_student_id:student.id,p_feedback:input.value
               });
               if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte spara");
+              clearFeedbackDraft(draftKey);
               status.textContent="✓ Gemensam återkoppling skickad till elevens anslagstavla.";
               await loadClassData({silent:true});
             }catch(error){
