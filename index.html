@@ -2436,6 +2436,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 <link rel="stylesheet" href="percent_change.css" />
 <link rel="stylesheet" href="svampstigen.css" />
 <link rel="stylesheet" href="autumn_geese.css" />
+<link rel="stylesheet" href="mobile-park.css" />
 </head>
 <body>
 <main class="game" aria-label="Matteparken">
@@ -7465,8 +7466,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const park=$(".park"); if(!park) return;
     const point=carriedPoint(clientX,clientY);
     const r=park.getBoundingClientRect();
-    const x=Math.max(0,Math.min(r.width,point.clientX-r.left));
-    const y=Math.max(0,Math.min(r.height,point.clientY-r.top));
+    // Mobilpilot: kompensera för zoomning när ett föremål flyttas.
+    const factor=r.width / park.offsetWidth || 1;
+    const x=Math.max(0,Math.min(park.offsetWidth,(point.clientX-r.left)/factor));
+    const y=Math.max(0,Math.min(park.offsetHeight,(point.clientY-r.top)/factor));
     placementGhost.style.left=`${x}px`;
     placementGhost.style.top=`${y}px`;
     placementGhost.classList.toggle("invalid", !zoneAtPoint(point.clientX,point.clientY));
@@ -13279,5 +13282,6 @@ document.addEventListener("DOMContentLoaded", () => {
 <script defer src="park_backup_pilot.js"></script>
 <script defer src="park_cloud_sync_pilot.js"></script>
 <script defer src="autumn_geese.js"></script>
+<script defer src="mobile-park.js"></script>
 </body>
 </html>
