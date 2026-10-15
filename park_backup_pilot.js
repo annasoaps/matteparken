@@ -38,7 +38,12 @@
     restoreButton.className = "secondary";
     restoreButton.textContent = "Återställ denna park";
     restoreButton.hidden = true;
+    restoreButton.style.display = "none";
     restoreButton.style.marginTop = "8px";
+    const showRestoreButton = visible => {
+      restoreButton.hidden = !visible;
+      restoreButton.style.display = visible ? "inline-block" : "none";
+    };
     const feedback = document.createElement("p");
     feedback.setAttribute("role", "status");
     feedback.style.cssText = "margin:8px 0 0;font-size:0.9em;";
@@ -87,8 +92,8 @@
       if (Object.entries(habitats?.unlocked || {}).some(([k,v]) => k !== "southwest" && v))
         return true;
       if (Object.values(habitats?.badges || {}).some(Boolean)) return true;
-      if (Object.keys(getPart("multiplicationBest", {})).length > 0 ||
-          Object.keys(getPart("multiplicationProgress", {})).length > 0 ||
+      if (Object.keys(getPart("multiplicationBest", {}) || {}).length > 0 ||
+          Object.keys(getPart("multiplicationProgress", {}) || {}).length > 0 ||
           Number(localStorage.getItem(MZ.keys.equationProgress)) > 0) return true;
       const activity = getPart("activityLog", {});
       if (Object.values(activity?.days || {}).some(d =>
@@ -133,7 +138,7 @@
     checkButton.addEventListener("click", async () => {
       if (button.disabled || checkButton.disabled || restoreButton.disabled) return;
       preview = null;
-      restoreButton.hidden = true;
+      showRestoreButton(false);
       const currentStudent = MZ.cloudStudent?.currentState?.()?.student?.id;
       if (!currentStudent || MZ.teacherTest?.enabled) {
         feedback.textContent = "Logga in med samma elevkod som på första datorn.";
@@ -181,7 +186,7 @@
               " ⚠️ Här finns redan parkframsteg. Återställning är spärrad för att skydda dem.";
           } else {
             preview = { id: data.id, studentId: currentStudent, when };
-            restoreButton.hidden = false;
+            showRestoreButton(true);
             feedback.textContent +=
               " Parken på den här datorn verkar tom. Du kan välja att återställa kopian.";
           }
@@ -201,12 +206,12 @@
       if (!studentId || MZ.teacherTest?.enabled || studentId !== preview.studentId) {
         feedback.textContent = "Elevkontot har ändrats. Förhandsgranska kopian på nytt.";
         preview = null;
-        restoreButton.hidden = true;
+        showRestoreButton(false);
         return;
       }
       if (localHasMeaningfulProgress()) {
         feedback.textContent = "Den här datorn har redan parkframsteg. Ingenting återställdes.";
-        restoreButton.hidden = true;
+        showRestoreButton(false);
         return;
       }
       const accepted = window.confirm(
