@@ -218,11 +218,11 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
                 <option value="multiplication:1">1:ans tabell</option><option value="multiplication:2">2:ans tabell</option><option value="multiplication:3">3:ans tabell</option><option value="multiplication:4">4:ans tabell</option><option value="multiplication:5">5:ans tabell</option><option value="multiplication:6">6:ans tabell</option><option value="multiplication:7">7:ans tabell</option><option value="multiplication:8">8:ans tabell</option><option value="multiplication:9">9:ans tabell</option><option value="multiplication:10">10:ans tabell</option>
               </optgroup>
               <optgroup label="Övriga spel">
-                <option value="equations">Ekvationer</option><option value="pow10">× och ÷ med 10, 100, 1000</option><option value="fractionDecimal">Bråk ↔ Decimal</option><option value="fractionArithmetic">Räkna med bråk</option><option value="percentConvert">Bråk · Decimal · Procent</option><option value="sharePart">Hur stor andel?</option><option value="prefixMatch">Prefix</option><option value="unitConvert">Enhetsomvandling</option><option value="statistics">Statistik</option><option value="scientificNotation">Grundpotensform</option>
+                <option value="equations">Ekvationer</option><option value="pow10">× och ÷ med 10, 100, 1000</option><option value="fractionDecimal">Bråk ↔ Decimal</option><option value="fractionArithmetic">Räkna med bråk</option><option value="percentConvert">Bråk · Decimal · Procent</option><option value="percentChange">Beräkna förändring</option><option value="whole">Hitta det hela</option><option value="sharePart">Hur stor andel?</option><option value="prefixMatch">Prefix</option><option value="unitConvert">Enhetsomvandling</option><option value="statistics">Statistik</option><option value="scientificNotation">Grundpotensform</option>
               </optgroup>
             </select>
           </label>
-          <label>Antal frågor<input id="quizQuestions" type="number" min="5" max="20" value="10"></label>
+          <label>Antal frågor<input id="quizQuestions" type="number" min="1" max="20" value="10"></label>
           <label class="toggle"><input id="quizEnabled" type="checkbox" checked> Aktivt</label>
           <label>Öppnar<input id="quizOpens" type="datetime-local"></label>
           <label>Deadline<input id="quizDue" type="datetime-local"></label>
@@ -788,7 +788,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   }
 
   async function createQuiz(){
-    if(!classId)return;const selected=parseGameSelection($("quizGame").value),questions=Math.max(5,Math.min(20,Number($("quizQuestions").value)||10));
+    if(!classId)return;const selected=parseGameSelection($("quizGame").value),questions=Math.max(1,Math.min(20,Number($("quizQuestions").value)||10));
     $("createQuizBtn").disabled=true;setFeedback("quizFeedback","Sparar läxförhör …");
     try{
       const r=await sb.rpc("teacher_create_quiz",{p_class_id:classId,p_game_id:selected.gameId,p_title:$("quizTitle").value.trim()||"Veckans läxförhör",p_game_config:selected.gameConfig,p_question_count:questions,p_opens_at:toIsoOrNull("quizOpens"),p_due_at:toIsoOrNull("quizDue"),p_enabled:$("quizEnabled").checked});
