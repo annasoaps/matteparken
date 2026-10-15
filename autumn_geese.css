@@ -77,6 +77,24 @@
 }
 .mz-goose-score[hidden] {display: none !important}
 .mz-goose-title {font-size: 13px;font-weight: 900;line-height: 1.15}
+.mz-goose-title {display:flex;align-items:center;justify-content:center;gap:5px}
+.mz-goose-sound-toggle {
+  flex: 0 0 auto;
+  width: 31px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid #b5a27b;
+  border-radius: 8px;
+  background: #fff9e9;
+  cursor: pointer;
+  pointer-events: auto;
+  font-size: 17px;
+  line-height: 1;
+}
+.mz-goose-sound-toggle:hover {background:#fff}
+.mz-goose-sound-toggle:focus-visible {outline:3px solid #526f47;outline-offset:2px}
 .mz-goose-points {font-size: 16px;line-height: 1.3}
 .mz-goose-points strong {font-size: 24px; font-variant-numeric: tabular-nums}
 .mz-goose-caption {font-size: 11px;line-height: 1.15;max-width: 170px;margin: 0 auto}
