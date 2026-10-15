@@ -23,11 +23,70 @@
     button.type = "button";
     button.className = "secondary";
     button.textContent = "Säkerhetskopiera min park";
+    const checkButton = document.createElement("button");
+    checkButton.type = "button";
+    checkButton.className = "secondary";
+    checkButton.textContent = "Kontrollera min molnkopia";
+    checkButton.style.marginLeft = "8px";
     const feedback = document.createElement("p");
     feedback.setAttribute("role", "status");
     feedback.style.cssText = "margin:8px 0 0;font-size:0.9em;";
-    panel.append(explanation, button, feedback);
+    panel.append(explanation, button, checkButton, feedback);
     heading.insertAdjacentElement("afterend", panel);
+
+    // Andra datorn: bara visa vad som finns i molnet. Inga lokala skrivningar.
+    checkButton.addEventListener("click", async () => {
+      if (button.disabled || checkButton.disabled) return;
+      const currentStudent = MZ.cloudStudent?.currentState?.()?.student?.id;
+      if (!currentStudent || MZ.teacherTest?.enabled) {
+        feedback.textContent = "Logga in med samma elevkod som på första datorn.";
+        return;
+      }
+      checkButton.disabled = true;
+      feedback.textContent = "☁️ Hämtar uppgifter om din molnkopia …";
+      try {
+        const client = MZ.cloudStudent.getClient();
+        const {data, error} = await client.from("student_park_snapshots")
+          .select("saved_at,snapshot")
+          .order("saved_at", {ascending:false}).limit(1).maybeSingle();
+        if (error) throw error;
+        if (MZ.cloudStudent?.currentState?.()?.student?.id !== currentStudent)
+          throw new Error("Elevkontot ändrades under kontrollen.");
+        if (!data) {
+          feedback.textContent = "Det finns ännu ingen molnkopia för det här elevkontot.";
+          return;
+        }
+        const snap = data.snapshot;
+        if (snap?.format !== "matteparken-localstorage-v1" ||
+            !snap.values || typeof snap.values !== "object")
+          throw new Error("Okänt säkerhetskopieformat.");
+        const parsePart = (name, fallback) => {
+          try { return JSON.parse(snap.values[name]?.value ?? ""); }
+          catch { return fallback; }
+        };
+        const itemCount = Array.isArray(parsePart("parkItems", []))
+          ? parsePart("parkItems", []).length : 0;
+        const rewards = parsePart("rewards", {});
+        const deliveries = Array.isArray(rewards?.deliveries)
+          ? rewards.deliveries.length : 0;
+        const wildlife = parsePart("wildlife", {});
+        const discoveries = Object.values(wildlife?.discovered || {})
+          .filter(Boolean).length;
+        const when = new Date(data.saved_at).toLocaleString("sv-SE");
+        feedback.textContent =
+          "✓ Molnkopian hittad (" + when + "). " +
+          Object.keys(snap.values).length + " sparade delar, " +
+          itemCount + " utplacerade parksaker, " +
+          discoveries + " upptäckta djur och " +
+          deliveries + " väntande leveranser. " +
+          "Ingenting på den här datorn har ändrats.";
+      } catch(error) {
+        console.warn("Molnkopia kunde inte kontrolleras:", error);
+        feedback.textContent = "⚠️ Kunde inte läsa kopian. Ingenting har ändrats.";
+      } finally {
+        checkButton.disabled = false;
+      }
+    });
 
     button.addEventListener("click", async () => {
       if (button.disabled) return;
