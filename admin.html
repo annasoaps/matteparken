@@ -247,6 +247,15 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
         <div><div class="muted small">ELEVAKTIVITET</div><h2 id="detailTitle">Elev</h2><p class="muted" id="detailSubtitle"></p></div>
         <button class="btn secondary" id="closeDetailBtn" type="button">Stäng</button>
       </div>
+      <div class="student-task" style="margin-bottom:18px;border:1px solid #d7e1d1;background:#fffdf7">
+        <h3 style="margin:0 0 7px">💌 Skicka meddelande till eleven</h3>
+        <p class="small muted" style="margin:0 0 10px">Fristående meddelande, utan koppling till prov eller läxa. Visas under Dagens uppdrag på elevens anslagstavla.</p>
+        <textarea id="directMessageInput" maxlength="1200" rows="3" placeholder="Skriv ett personligt meddelande …" style="width:100%;min-height:92px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical"></textarea>
+        <div class="schoolwork-actions" style="margin-top:9px;align-items:center">
+          <button class="btn primary" id="directMessageSend" type="button">💌 Skicka meddelande</button>
+          <span class="small muted" id="directMessageStatus" role="status"></span>
+        </div>
+      </div>
       <div class="schoolwork-grid" style="margin-bottom:18px">
         <div><h3>🏠 Läxor</h3><div class="student-assignment-detail" id="detailHomeworks"></div></div>
         <div><h3>📄 Läxförhör</h3><div class="student-assignment-detail" id="detailQuizzes"></div></div>
@@ -728,9 +737,35 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     return [...map.values()].sort((a,b)=>b.count-a.count||String(a.label).localeCompare(String(b.label),"sv"));
   }
   function fillList(id,items){const el=$(id);el.innerHTML="";if(!items.length){el.innerHTML='<div class="empty">Ingen registrerad träning ännu.</div>';return;}items.forEach(item=>{const row=document.createElement("div");row.className="activity-row";row.innerHTML="<strong>"+escapeHtml(item.label)+"</strong><span>"+item.count+"</span>";el.appendChild(row);});}
+  function renderDirectMessageComposer(student){
+    const input=$("directMessageInput"),send=$("directMessageSend"),status=$("directMessageStatus");
+    if(!input||!send||!status)return;
+    const key=feedbackDraftKey(student.id,"direct-message");
+    const draft=readFeedbackDraft(key);
+    input.value=draft===null?"":draft;
+    input.oninput=()=>saveFeedbackDraft(key,input.value);
+    send.disabled=false;status.textContent="";
+    send.onclick=async()=>{
+      const message=input.value.trim();
+      if(!message){status.textContent="Skriv ett meddelande först.";return;}
+      if(message.length>1200){status.textContent="Meddelandet får vara högst 1200 tecken.";return;}
+      send.disabled=true;status.textContent="Skickar …";
+      try{
+        const result=await sb.rpc("teacher_send_direct_message",{p_student_id:student.id,p_body:message});
+        if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte skicka");
+        clearFeedbackDraft(key);
+        input.value="";status.textContent="✓ Meddelandet är skickat till elevens anslagstavla.";
+      }catch(error){
+        console.error("Could not send direct message",error);
+        status.textContent="Kunde inte skicka. Texten finns kvar, försök igen.";
+        saveFeedbackDraft(key,input.value);
+      }finally{send.disabled=false;}
+    };
+  }
   function renderDetail(){
     const student=students.find(s=>s.id===selectedStudentId);if(!student){$("studentDetail").classList.add("hidden");return;}
     $("studentDetail").classList.remove("hidden");$("detailTitle").textContent=(classes.find(c=>c.id===classId)?.code||"")+" · "+(student.list_number?"nr "+student.list_number+" · ":"")+student.code;$("detailSubtitle").textContent="Dagens uppdrag räknas om från början varje dag. Aktiviteten visar samtidigt elevens enskilda rätta svar.";
+    renderDirectMessageComposer(student);
     const taskBox=$("detailAssignments");taskBox.innerHTML="";
     const normalAssignments=assignments.filter(a=>!a.homework_id);
     if(!normalAssignments.length)taskBox.innerHTML='<div class="empty">Inga läraruppdrag.</div>';
