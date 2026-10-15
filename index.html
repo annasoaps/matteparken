@@ -12588,7 +12588,10 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   function current(){return MZ.cloudStudent?.currentState?.()||null;}
   function availableQuizzes(){return current()?.quizzes||[];}
   function attemptFor(id){return current()?.quizAttempts?.find(a=>a.quiz_id===id)||null;}
-  function quizGroupKey(q){return [String(q?.title||"").trim().toLocaleLowerCase("sv-SE"),q?.opens_at||"",q?.due_at||""].join("|");}
+  function quizGroupKey(q){
+    const day=!q?.opens_at&&!q?.due_at?String(q?.created_at||"").slice(0,10):"";
+    return [String(q?.title||"").trim().toLocaleLowerCase("sv-SE"),q?.opens_at||"",q?.due_at||"",day].join("|");
+  }
   function quizGroups(){
     const groups=new Map();
     availableQuizzes().forEach(q=>{
