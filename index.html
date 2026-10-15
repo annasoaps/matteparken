@@ -2425,7 +2425,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   </div>
 <header class="topbar">
     <div class="brand"><span>🌿</span><span>Matteparken</span></div>
-    <div class="pill">🌰 <span id="np">0</span> kottar</div>
+    <div class="pill">🌰 <span id="np">…</span> kottar</div>
     <div class="pill badge-pill">🏅 <span id="parkBadgeCount">0</span> Parkmärken</div>
     <div class="pill">📅 <span id="realDate">—</span> · 🌱 Parkdag <span id="parkDay">1</span></div>
   </header>
@@ -2542,7 +2542,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
             <h2>Välkommen till parkkontoret</h2>
           </div>
           <div class="office-room-badges">
-            <span>🌰 <strong id="officeNpMirror">0</strong> kottar</span>
+            <span>🌰 <strong id="officeNpMirror">…</strong> kottar</span>
             <span>🐾 <strong id="officeCatalogSummary">0</strong> arter</span>
           </div>
         </div>
@@ -3209,7 +3209,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
             <h2 style="margin-top:16px">✖️ Multiplikationstränaren</h2>
             <div class="muted">Ett helt tabellvarv ger 10 kottar.</div>
           </div>
-          <div class="pill">🌰 <span id="trainerNp">0</span> kottar</div>
+          <div class="pill">🌰 <span id="trainerNp">…</span> kottar</div>
         </div>
 
         <div class="weekly-required-panel hidden" id="weeklyRequiredPanel">
@@ -5535,7 +5535,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     renderBlindBagShelf();
     renderSeasonPoster();
     const np=document.querySelector("#officeNpMirror");
-    if(np) np.textContent=String(storage.getNaturePoints());
+    if(np) np.textContent=MZ.cloudCones?.isBalancePending?.() ? "…" : String(storage.getNaturePoints());
 
     const wildlifeCount=typeof MZ.wildlife?.discoveryCount === "function" ? MZ.wildlife.discoveryCount() : 0;
     const catalogSummary=document.querySelector("#officeCatalogSummary");
@@ -6805,10 +6805,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const zoneName = (zoneId) => zoneNames[zoneId] || "Startgläntan";
 
   function updateNaturePointsUI(){
-    const value = storage.getNaturePoints();
-    $("#np").textContent = String(value);
-    $("#trainerNp").textContent = String(value);
-    if($("#equationNp")) $("#equationNp").textContent = String(value);
+    // Visa aldrig ett missvisande nollsaldo medan elevens molnsaldo hämtas.
+    const value = MZ.cloudCones?.isBalancePending?.() ? "…" : String(storage.getNaturePoints());
+    $("#np").textContent = value;
+    $("#trainerNp").textContent = value;
+    if($("#equationNp")) $("#equationNp").textContent = value;
   }
 
   function tutorialStage(){
@@ -12320,7 +12321,7 @@ function init(){
  if(homeworkClockTimer)window.clearInterval(homeworkClockTimer);homeworkClockTimer=window.setInterval(()=>{if(current?.student)render();},60*1000);
  render();restore();
 }
-MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,getClient:client,currentState:()=>current,formatMoment,afterWrites:(fn)=>writeQueue.then(fn),ensureStudentConnection,reconnectSaved};
+MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,getClient:client,currentState:()=>current,hasSavedSelection:()=>Boolean(getSelection()),formatMoment,afterWrites:(fn)=>writeQueue.then(fn),ensureStudentConnection,reconnectSaved};
 })();
 </script>
 
@@ -12333,6 +12334,9 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   const student=()=>MZ.cloudStudent?.currentState?.()?.student||null;
   const inTeacherTest=()=>Boolean(MZ.teacherTest?.enabled);
   function isActive(){return ready&&Boolean(student());}
+  function isBalancePending(){
+    return !inTeacherTest() && !ready && Boolean(student() || MZ.cloudStudent?.hasSavedSelection?.());
+  }
   function balance(){return Math.max(0,Number(inTeacherTest()?testConeBalance:coneBalance)||0);}
   function emitBalance(extra={}){
     const value=balance();
@@ -12466,7 +12470,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(MZ.cloudStudent?.afterWrites)MZ.cloudStudent.afterWrites(run).catch(error=>console.warn(error));else run();
     });
   }
-  MZ.cloudCones={init,sync,isActive,balance,spend,redeem,setTestBalance,addTestCones};
+  MZ.cloudCones={init,sync,isActive,isBalancePending,balance,spend,redeem,setTestBalance,addTestCones};
 })();
 </script>
 
