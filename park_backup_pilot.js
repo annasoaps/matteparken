@@ -72,10 +72,16 @@
       const inventory = getPart("inventory", {});
       if (Object.values(inventory || {}).some(count => Number(count) > 0)) return true;
       const onboarding = getPart("onboarding", {});
-      if (["keyTaken", "seedBagTaken", "seedPlaced", "seedGrown",
-            "tutorialBirdhouseOrdered", "tutorialComplete"].some(k => onboarding?.[k]))
+      // Att hämta nyckeln/startfröpåsen eller välja ett frö är bara
+      // tutorialens första steg. Det behövs för att öppna Parkkontoret
+      // även på en helt ny dator och får inte blockera molnåterställning.
+      // Först när fröet planteras, matte räknas eller ett köp påbörjas
+      // finns faktiska framsteg som måste skyddas.
+      if (["seedPlaced", "seedGrown", "tutorialBirdhouseOrdered",
+            "tutorialBirdhousePlaced", "tutorialComplete",
+            "tutorialStarterRewardGranted"].some(k => onboarding?.[k]))
         return true;
-      if (onboarding?.selectedSeed) return true;
+      if (Number(onboarding?.seedQuestCorrect) > 0) return true;
       const rewards = getPart("rewards", {});
       if (["seedPacks", "crates", "bonusBlindBags"].some(k => Number(rewards?.[k]) > 0))
         return true;
