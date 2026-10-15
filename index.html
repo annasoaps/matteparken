@@ -12394,8 +12394,17 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       setTestBalance(testConeBalance-price);
       return {ok:true,balance:balance(),test:true};
     }
-    try{return await rpc("student_spend_cones",{p_purchase_kind:kind,p_item_id:itemId});}
-    catch(error){console.warn("Kottköp:",error);return {ok:false,reason:"network"};}
+    // Samma beställnings-ID används även om svaret försvinner på nätverket.
+    // Ett nytt ID skapas endast för en ny, uttrycklig beställning.
+    const requestId=crypto.randomUUID();
+    try{
+      return await rpc("student_spend_cones_v2",{
+        p_purchase_kind:kind,p_item_id:itemId,p_request_id:requestId
+      });
+    }catch(error){
+      console.warn("Kottköp:",error);
+      return {ok:false,reason:"network_uncertain",requestId};
+    }
   }
   function rewardText(type,amount){
     if(type==="cones")return amount+" kottar";
