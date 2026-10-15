@@ -4,7 +4,8 @@
 
   function init() {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("parkbackup") !== "1") return;
+    const backupMode = params.get("parkbackup");
+    if (backupMode !== "1" && backupMode !== "verify") return;
 
     const MZ = window.Mattezoo;
     const heading = document.querySelector("#officeHome .office-room-heading");
@@ -16,9 +17,10 @@
       "border-radius:10px;background:#f4f5e9;color:#30442f;";
     const explanation = document.createElement("p");
     explanation.style.margin = "0 0 8px";
-    explanation.textContent =
-      "☁️ Test: spara en extra kopia av den här datorns park i molnet. " +
-      "Ingen park eller dekoration ändras.";
+    explanation.textContent = backupMode === "verify"
+      ? "☁️ Kontrollera din befintliga molnkopia. Den här datorns park ändras inte."
+      : "☁️ Test: spara en extra kopia av den här datorns park i molnet. " +
+        "Ingen park eller dekoration ändras.";
     const button = document.createElement("button");
     button.type = "button";
     button.className = "secondary";
@@ -31,7 +33,11 @@
     const feedback = document.createElement("p");
     feedback.setAttribute("role", "status");
     feedback.style.cssText = "margin:8px 0 0;font-size:0.9em;";
-    panel.append(explanation, button, checkButton, feedback);
+    if (backupMode === "verify") {
+      panel.append(explanation, checkButton, feedback);
+    } else {
+      panel.append(explanation, button, checkButton, feedback);
+    }
     heading.insertAdjacentElement("afterend", panel);
 
     // Andra datorn: bara visa vad som finns i molnet. Inga lokala skrivningar.
