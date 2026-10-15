@@ -1,10 +1,11 @@
-// Matteparken: automatisk säkerhetskopiering/återläsning, försiktig pilot.
-// Aktiveras endast med ?parksync=1. Molnkopior är INTE bevis för äganderätt.
+// Matteparken: automatisk säkerhetskopiering/återläsning per elevkod.
+// Aktiv som standard, kan tillfälligt inaktiveras med ?parksync=0.
+// Molnkopior är INTE bevis för äganderätt. Första parken kräver elevens bekräftelse.
 (() => {
   "use strict";
   const MZ = window.Mattezoo;
   if (!MZ) return;
-  const enabled = new URLSearchParams(window.location.search).get("parksync") === "1";
+  const enabled = new URLSearchParams(window.location.search).get("parksync") !== "0";
   const ownerKey = "matteparken-park-sync-owner-v1";
   const backupPrefix = "matteparken-park-sync-before-restore-";
   let studentId = null, headId = null, ready = false, blocked = false;
@@ -114,8 +115,15 @@
       [notice,noticeText,actions],[modalNotice,modalNoticeText,modalActions]
     ]) {
       if (!panel) continue;
-      copy.textContent=text;
+      copy.textContent=panel===notice && !needsAttention
+        ? (ready ? "☁️✓ Parken synkas" : "☁️ Parken sparas")
+        : text;
       panel.style.borderColor=needsAttention ? "#b76e42" : "#9bad9c";
+      if (panel===notice) {
+        panel.style.maxWidth=needsAttention
+          ? "min(390px,calc(100% - 20px))" : "max-content";
+        if (buttons) buttons.style.display=needsAttention ? "" : "none";
+      }
       buttons?.replaceChildren();
     }
   }
@@ -361,7 +369,7 @@
       "border-radius:10px;padding:8px 12px;box-shadow:0 4px 15px #293b3040;" +
       "background:#f4f5e9;color:#30442f;font-size:13px;";
     noticeText=document.createElement("span");
-    noticeText.textContent="☁️ Kopplar ihop parken med molnet …";
+    noticeText.textContent="☁️ Logga in för att synka";
     actions=document.createElement("div");
     notice.append(noticeText,actions);
     document.querySelector(".game")?.appendChild(notice);
