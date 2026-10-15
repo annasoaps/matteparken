@@ -7,8 +7,8 @@
   const LAST_DAY = "2026-10-25"; // Höstlovet (v.44) börjar 26 oktober.
   const MIN_FIRST_WAIT = 5 * 60 * 1000;
   const EXTRA_FIRST_WAIT = 3 * 60 * 1000;
-  const MIN_NEXT_WAIT = 12 * 60 * 1000;
-  const EXTRA_NEXT_WAIT = 4 * 60 * 1000;
+  const MIN_NEXT_WAIT = 2 * 60 * 1000;
+  const EXTRA_NEXT_WAIT = 2 * 60 * 1000;
   const MAX_FLOCKS = 2;
   const IDLE_AFTER = 2 * 60 * 1000;
   const GOOSE_SVG = [
