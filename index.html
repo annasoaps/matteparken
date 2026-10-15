@@ -12588,6 +12588,27 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   function current(){return MZ.cloudStudent?.currentState?.()||null;}
   function availableQuizzes(){return current()?.quizzes||[];}
   function attemptFor(id){return current()?.quizAttempts?.find(a=>a.quiz_id===id)||null;}
+  function quizGroupKey(q){return [String(q?.title||"").trim().toLocaleLowerCase("sv-SE"),q?.opens_at||"",q?.due_at||""].join("|");}
+  function quizGroups(){
+    const groups=new Map();
+    availableQuizzes().forEach(q=>{
+      const key=quizGroupKey(q);
+      if(!groups.has(key))groups.set(key,{key,title:q.title,opens_at:q.opens_at,due_at:q.due_at,quizzes:[]});
+      groups.get(key).quizzes.push(q);
+    });
+    return [...groups.values()];
+  }
+  const quizAreaNames={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"× och ÷ med 10, 100, 1000",fractionDecimal:"Bråk ↔ Decimal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",percentChange:"Beräkna förändring",whole:"Hitta det hela",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform"};
+  function quizAreaName(q){
+    const table=Number(q?.game_config?.table);
+    return q?.game_id==="multiplication"&&Number.isInteger(table)&&table>=1&&table<=10?table+":ans tabell":quizAreaNames[q?.game_id]||q?.game_id||"Matematik";
+  }
+  function groupAttemptStatus(group){
+    const attempts=group.quizzes.map(q=>attemptFor(q.id)).filter(Boolean);
+    return {attempts,complete:attempts.length===group.quizzes.length,
+      score:attempts.reduce((sum,a)=>sum+Number(a.score||0),0),
+      total:group.quizzes.reduce((sum,q)=>sum+Number(q.question_count||0),0)};
+  }
   function isLocked(q){return Boolean(q.opens_at&&Date.now()<new Date(q.opens_at).getTime());}
   function isLate(q){return Boolean(q.due_at&&Date.now()>new Date(q.due_at).getTime());}
 
@@ -12604,15 +12625,33 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     test.classList.add("hidden");result.classList.add("hidden");$("homeworkQuizReflection").classList.add("hidden");list.classList.remove("hidden");list.innerHTML="";
     const c=current();
     if(!c?.student){list.innerHTML='<div class="assignment-empty-cloud">Logga in med klass och elevkod på anslagstavlan först.</div>';return;}
-    const qs=availableQuizzes();
-    if(!qs.length){list.innerHTML='<div class="assignment-empty-cloud">Inget läxförhör väntar just nu.</div>';return;}
-    qs.forEach(q=>{
-      const attempt=attemptFor(q.id),locked=isLocked(q),late=isLate(q);
-      const row=document.createElement("div");row.className="quiz-list-item"+(attempt?" done":"");
-      const info=document.createElement("div"),h=document.createElement("strong");h.textContent=(attempt?"✓ ":"📄 ")+q.title;info.appendChild(h);
-      const meta=document.createElement("div");meta.className="muted";meta.textContent=attempt?("Första resultatet: "+attempt.score+" / "+attempt.total+" · "+MZ.cloudStudent.formatMoment(attempt.completed_at)):(locked?"Öppnar "+MZ.cloudStudent.formatMoment(q.opens_at):(q.due_at?(late?"Deadline passerad · kan fortfarande lämnas in":"Senast "+MZ.cloudStudent.formatMoment(q.due_at)):"Kan göras nu"));info.appendChild(meta);
-      const actions=document.createElement("div"),btn=document.createElement("button");btn.className="primary";btn.type="button";btn.disabled=Boolean(attempt||locked);btn.textContent=attempt?"Genomfört":locked?"Låst":"Starta";if(!attempt&&!locked)btn.addEventListener("click",()=>startQuiz(q.id));actions.appendChild(btn);
-      row.append(info,actions);list.appendChild(row);
+    const groups=quizGroups();
+    if(!groups.length){list.innerHTML='<div class="assignment-empty-cloud">Inget läxförhör väntar just nu.</div>';return;}
+    groups.forEach(group=>{
+      const status=groupAttemptStatus(group),locked=isLocked(group),late=isLate(group);
+      const row=document.createElement("div");row.className="quiz-list-item"+(status.complete?" done":"");
+      const info=document.createElement("div"),heading=document.createElement("strong");
+      heading.textContent=(status.complete?"✓ ":"📄 ")+group.title;info.appendChild(heading);
+      const area=document.createElement("div");area.className="muted";
+      area.textContent=group.quizzes.map(q=>quizAreaName(q)+" ("+q.question_count+")").join(" · ");
+      info.appendChild(area);
+      const meta=document.createElement("div");meta.className="muted";
+      if(status.complete){
+        const latest=status.attempts.map(a=>a.completed_at).filter(Boolean).sort().at(-1);
+        meta.textContent="Första resultatet: "+status.score+" / "+status.total+(latest?" · "+MZ.cloudStudent.formatMoment(latest):"");
+      }else if(locked){
+        meta.textContent="Öppnar "+MZ.cloudStudent.formatMoment(group.opens_at);
+      }else{
+        const parts=group.quizzes.length,done=status.attempts.length;
+        meta.textContent=(parts>1?(done+" av "+parts+" delar klara · "):"")+
+          (group.due_at?(late?"Deadline passerad · kan fortfarande lämnas in":"Senast "+MZ.cloudStudent.formatMoment(group.due_at)):"Kan göras nu");
+      }
+      info.appendChild(meta);
+      const actions=document.createElement("div"),btn=document.createElement("button");
+      btn.className="primary";btn.type="button";btn.disabled=Boolean(status.complete||locked);
+      btn.textContent=status.complete?"Genomfört":locked?"Låst":status.attempts.length?"Fortsätt":"Starta";
+      if(!status.complete&&!locked)btn.addEventListener("click",()=>startQuiz(group.quizzes[0].id));
+      actions.appendChild(btn);row.append(info,actions);list.appendChild(row);
     });
   }
 
@@ -12621,12 +12660,21 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   }
 
   function startQuiz(id){
-    const q=availableQuizzes().find(x=>x.id===id);if(!q||attemptFor(id)||isLocked(q))return;
-    activeQuiz=q;questions=Array.from({length:q.question_count},()=>makeQuestion(q.game_id,q.game_config||{}));index=0;score=0;answered=false;savedAnswers=[];startedAt=new Date().toISOString();
+    const group=quizGroups().find(g=>g.quizzes.some(q=>q.id===id));
+    if(!group||isLocked(group)||groupAttemptStatus(group).complete)return;
+    const parts=[],allQuestions=[];
+    group.quizzes.filter(q=>!attemptFor(q.id)).forEach(q=>{
+      const start=allQuestions.length;
+      for(let i=0;i<q.question_count;i++)allQuestions.push(makeQuestion(q.game_id,q.game_config||{}));
+      parts.push({quiz:q,start,end:allQuestions.length});
+    });
+    if(!allQuestions.length)return;
+    activeQuiz={...group,parts};questions=allQuestions;index=0;score=0;answered=false;savedAnswers=[];startedAt=new Date().toISOString();
     document.querySelectorAll('#homeworkQuizReflection input').forEach(input=>input.checked=false);
     $("quizReflectionTip").value="";$("quizReflectionFeedback").textContent="";$("quizReflectionSubmit").disabled=false;
     $("homeworkQuizReflection").classList.add("hidden");
-    $("homeworkQuizList").classList.add("hidden");$("homeworkQuizResult").classList.add("hidden");$("homeworkQuizTest").classList.remove("hidden");$("quizTestTitle").textContent=q.title;showQuestion();
+    $("homeworkQuizList").classList.add("hidden");$("homeworkQuizResult").classList.add("hidden");$("homeworkQuizTest").classList.remove("hidden");
+    showQuestion();
   }
 
   function renderSharePartQuestion(q){
@@ -12637,6 +12685,8 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   }
   function showQuestion(){
     answered=false;const q=questions[index];
+    const part=activeQuiz?.parts?.find(p=>index>=p.start&&index<p.end);
+    $("quizTestTitle").textContent=activeQuiz.title+(part?" · "+quizAreaName(part.quiz):"");
     $("quizTestProgress").textContent=(index+1)+" / "+questions.length;
     $("quizQuestionText").textContent=q.prompt;
     $("quizFeedback").textContent="";$("quizFeedback").className="feedback";
@@ -12708,28 +12758,41 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     submitButton.disabled=true;
     $("quizReflectionFeedback").textContent="Sparar ditt läxförhör …";
     try{
-      const c=MZ.cloudStudent.getClient();
-      const r=await c.rpc("submit_quiz_attempt",{
-        p_quiz_id:activeQuiz.id,p_score:score,p_total:questions.length,p_started_at:startedAt
-      });
-      if(r.error)throw r.error;
-      if(r.data?.ok===false)throw new Error(r.data?.reason||"Kunde inte spara resultatet.");
+      const c=MZ.cloudStudent.getClient(),group=activeQuiz;
+      if(!group?.parts?.length)throw new Error("Inga förhörsdelar att spara.");
+      const savedResults=new Map(group.quizzes.map(q=>[q.id,attemptFor(q.id)]).filter(([,a])=>Boolean(a)));
+      let answersStored=true;
+      for(const part of group.parts){
+        const answers=savedAnswers.slice(part.start,part.end),total=part.end-part.start;
+        if(answers.length!==total||total!==part.quiz.question_count)throw new Error("Antalet svar stämmer inte.");
+        const partScore=answers.filter(a=>a.correct).length;
+        const r=await c.rpc("submit_quiz_attempt",{
+          p_quiz_id:part.quiz.id,p_score:partScore,p_total:total,p_started_at:startedAt
+        });
+        if(r.error)throw r.error;
+        if(r.data?.ok!==true)throw new Error(r.data?.reason||"Kunde inte spara ett delresultat.");
+        savedResults.set(part.quiz.id,{score:Number(r.data.score),total:Number(r.data.total)});
+        try{
+          const detail=await c.rpc("student_save_quiz_review",{p_quiz_id:part.quiz.id,p_answers:answers});
+          if(detail.error||detail.data?.ok!==true){
+            answersStored=false;
+            console.warn("Quiz answers were not saved",detail.error||detail.data);
+          }
+        }catch(error){answersStored=false;console.warn("Quiz answers could not be saved",error);}
+      }
 
-      const first=Boolean(r.data?.first);
-      let answersStored=false,reflectionStored=false;
+      // En självskattning för hela förhöret, efter sista mattefrågan.
+      // Den sparas hos sista genomförda delen så att läraren ser den i elevdetaljerna.
+      const reflectionQuizId=group.parts.at(-1).quiz.id;
+      let reflectionStored=false;
       try{
-        const detail=await c.rpc("student_save_quiz_review",{p_quiz_id:activeQuiz.id,p_answers:savedAnswers});
-        answersStored=!detail.error&&detail.data?.ok===true;
-        if(!answersStored)console.warn("Quiz answers were not saved",detail.error||detail.data);
-      }catch(error){console.warn("Quiz answers could not be saved",error);}
-      try{
-        const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:activeQuiz.id,p_assessment:selfAssessment});
+        const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:reflectionQuizId,p_assessment:selfAssessment});
         reflectionStored=!response.error&&response.data?.ok===true;
         if(!reflectionStored)console.warn("Quiz self-assessment not saved",response.error||response.data);
       }catch(error){console.warn("Quiz self-assessment could not be saved",error);}
 
-      // Visa bekräftelsen direkt när inlämningen är registrerad.
-      // Eleven ska aldrig behöva skrolla förbi det gamla formuläret för att hitta den.
+      const finalScore=[...savedResults.values()].reduce((sum,a)=>sum+Number(a.score||0),0);
+      const finalTotal=group.quizzes.reduce((sum,q)=>sum+Number(q.question_count||0),0);
       $("quizReflectionFeedback").textContent="";
       $("homeworkQuizTest").classList.add("hidden");
       $("homeworkQuizReflection").classList.add("hidden");
@@ -12740,60 +12803,54 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       result.innerHTML=
         "<h3>"+(fullySaved?"✅ Klart och inlämnat!":"✅ Läxförhöret är inlämnat")+"</h3>"+
         "<p>Matteförhöret är sparat.</p>"+
-        "<p><strong>"+Number(r.data.score)+" av "+Number(r.data.total)+" rätt</strong></p>"+
+        "<p><strong>"+finalScore+" av "+finalTotal+" rätt</strong></p>"+
         (fullySaved?"<p>Din lärare kan nu se dina svar och din självskattning.</p>":"")+
-        (answersStored?"":"<p>⚠️ Dina detaljerade mattesvar kunde inte sparas för lärargranskning. Kontakta din lärare.</p>")+
+        (answersStored?"":"<p>⚠️ Vissa detaljerade mattesvar kunde inte sparas för lärargranskning. Kontakta din lärare.</p>")+
         (reflectionStored?"":"<p id='quizReflectionRetryMessage'>⚠️ Din självskattning sparades inte. Du kan försöka igen.</p><button class='secondary' id='quizReflectionRetry' type='button'>Försök spara självskattningen igen</button>")+
-        (first?"<p id='quizRewardStatus' class='muted'>🎁 Kontrollerar din blind bag …</p>":"")+
+        "<p id='quizRewardStatus' class='muted'>🎁 Kontrollerar din blind bag …</p>"+
         "<div class='quiz-result-actions'><button class='primary' id='quizCloseAfterSubmit' type='button'>Stäng och gå tillbaka till Parkkontoret</button></div>";
-
       const modal=$("homeworkQuizModal").querySelector(".modal");
       if(modal)modal.scrollTop=0;
       result.querySelector("#quizCloseAfterSubmit").addEventListener("click",()=>{
-        MZ.closeModal("homeworkQuizModal");
-        MZ.office?.render?.();
+        MZ.closeModal("homeworkQuizModal");MZ.office?.render?.();
       });
       result.querySelector("#quizCloseAfterSubmit").focus();
-
       result.querySelector("#quizReflectionRetry")?.addEventListener("click",async()=>{
-        const retry=result.querySelector("#quizReflectionRetry");
-        retry.disabled=true;
+        const retry=result.querySelector("#quizReflectionRetry");retry.disabled=true;
         try{
-          const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:activeQuiz.id,p_assessment:selfAssessment});
+          const response=await c.rpc("student_save_quiz_self_assessment",{p_quiz_id:reflectionQuizId,p_assessment:selfAssessment});
           if(response.error||response.data?.ok!==true)throw response.error||new Error("Save failed");
           retry.remove();
           result.querySelector("#quizReflectionRetryMessage").textContent="✓ Din självskattning är också sparad.";
         }catch(error){
-          console.warn("Quiz self-assessment retry",error);
-          retry.disabled=false;
+          console.warn("Quiz self-assessment retry",error);retry.disabled=false;
           result.querySelector("#quizReflectionRetryMessage").textContent="Kunde inte spara självskattningen ännu. Försök igen eller meddela läraren.";
         }
       });
 
-      // Belöning och uppdatering av listan får inte hålla kvar en redan sparad inlämning.
-      if(first){
-        const rewardNote=result.querySelector("#quizRewardStatus");
-        void (async()=>{
-          try{
-            const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:activeQuiz.id});
-            if(reward.error)throw reward.error;
-            if(reward.data?.granted){
-              MZ.rewards.addBonusBlindBag(1);
-              MZ.office?.render?.();
-              rewardNote.textContent="🎁 Du fick en blind bag! Den väntar bland Överraskningar.";
-            }else rewardNote.remove();
-          }catch(error){
-            console.warn("Quiz reward status",error);
-            rewardNote.textContent="🎁 Belöningen kunde inte kontrolleras just nu.";
-          }
-        })();
-      }
+      // En blind bag för hela gruppen. Första delens id används som
+      // beständig belöningsnyckel även om några delar redan var gjorda.
+      const rewardNote=result.querySelector("#quizRewardStatus");
+      void (async()=>{
+        try{
+          const reward=await c.rpc("claim_quiz_reward",{p_quiz_id:group.quizzes[0].id});
+          if(reward.error||reward.data?.ok!==true)throw reward.error||new Error(reward.data?.reason||"Reward failed");
+          if(reward.data?.granted){
+            MZ.rewards.addBonusBlindBag(1);
+            MZ.office?.render?.();
+            rewardNote.textContent="🎁 Du fick en blind bag! Den väntar bland Överraskningar.";
+          }else rewardNote.remove();
+        }catch(error){
+          console.warn("Quiz reward status",error);
+          rewardNote.textContent="🎁 Belöningen kunde inte kontrolleras just nu.";
+        }
+      })();
       void MZ.cloudStudent.readCloudState()
         .then(()=>renderPaper())
         .catch(error=>console.warn("Quiz list refresh",error));
     }catch(error){
       console.error("Quiz submit:",error);
-      $("quizReflectionFeedback").textContent="Kunde inte bekräfta inlämningen. Försök igen.";
+      $("quizReflectionFeedback").textContent="Kunde inte bekräfta hela inlämningen. Försök igen.";
       submitButton.disabled=false;
     }
   }
