@@ -208,7 +208,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
 
       <section class="card">
         <div class="section-head"><div><h2>📄 Läxförhör</h2><p class="muted">Första genomförandet räknas. Resultatet sparas med tid.</p></div></div>
-        <div class="callout">Förhöret ger <strong>1 blind bag för genomförande</strong>, oavsett resultat.</div>
+        <div class="callout">Lägg till flera matteområden med <strong>samma rubrik, öppningstid och deadline</strong>. De blir ett sammanhängande läxförhör med <strong>en självskattning sist</strong> och <strong>1 blind bag totalt</strong>.</div>
         <div class="form-grid">
           <label class="wide">Rubrik<input id="quizTitle" value="Veckans läxförhör" maxlength="80"></label>
           <label class="wide">Matteområde
@@ -342,7 +342,10 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     );
   }
   function overviewQuiz(){
-    return chooseOverviewItem(quizzes.filter(q=>q.enabled));
+    return chooseOverviewItem(
+      quizGroups(quizzes.filter(q=>q.enabled)),
+      group=>Math.max(0,...group.quizzes.map(q=>Date.parse(q.created_at)||0))
+    );
   }
   function homeworkGroupTasks(group){return (group?.homeworks||[]).flatMap(hw=>homeworkTasks(hw.id));}
   function homeworkGroupStatus(studentId,group){
@@ -359,6 +362,24 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       counts.set(label,(counts.get(label)||0)+1);
     });
     return Array.from(counts.entries()).map(([label,count])=>label+(count>1?" × "+count:"")).join(" · ");
+  }
+  function quizGroupKey(q){return [String(q?.title||"").trim().toLocaleLowerCase("sv-SE"),q?.opens_at||"",q?.due_at||""].join("|");}
+  function quizGroups(list=quizzes){
+    const groups=new Map();
+    (list||[]).forEach(q=>{
+      const key=quizGroupKey(q);
+      if(!groups.has(key))groups.set(key,{key,title:q.title,opens_at:q.opens_at,due_at:q.due_at,quizzes:[]});
+      groups.get(key).quizzes.push(q);
+    });
+    return [...groups.values()];
+  }
+  function quizPartName(q){
+    const t=Number(q?.game_config?.table);
+    return q?.game_id==="multiplication"&&Number.isInteger(t)&&t>=1&&t<=10?t+":ans tabell":(gameMeta[q?.game_id]?.title||q?.game_id||"Matematik");
+  }
+  function quizGroupStatus(studentId,group){
+    const done=group.quizzes.filter(q=>Boolean(quizAttempt(studentId,q.id)));
+    return {done:done.length,total:group.quizzes.length,complete:done.length===group.quizzes.length};
   }
   function quizAttempt(studentId,quizId){return quizAttempts.find(a=>a.student_id===studentId&&a.quiz_id===quizId)||null;}
   function windowText(item){const parts=[];if(item.opens_at)parts.push("öppnar "+formatMoment(item.opens_at));if(item.due_at)parts.push("senast "+formatMoment(item.due_at));return parts.join(" · ")||"Ingen tidsgräns";}
@@ -559,12 +580,32 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   function renderQuizzes(){
     const box=$("quizList");if(!box)return;box.innerHTML="";
     if(!quizzes.length){box.innerHTML='<div class="empty">Inget läxförhör skapat ännu.</div>';return;}
-    quizzes.forEach(q=>{
-      const attempts=quizAttempts.filter(a=>a.quiz_id===q.id),avg=attempts.length?Math.round(attempts.reduce((sum,a)=>sum+Number(a.score)/Math.max(1,Number(a.total))*100,0)/attempts.length):null;
-      const item=document.createElement("div");item.className="schoolwork-item"+(q.enabled?"":" paused");
-      item.innerHTML="<h3>"+escapeHtml(q.title)+"</h3><div class='time-note'>"+escapeHtml(windowText(q))+"</div><div class='schoolwork-meta'><span class='mini-pill'>"+q.question_count+(Number(q.question_count)===1?" fråga":" frågor")+"</span><span class='mini-pill'>✓ "+attempts.length+" / "+students.length+" genomförda</span>"+(avg===null?"":"<span class='mini-pill'>snitt "+avg+" %</span>")+"<span class='mini-pill'>🎁 Blind bag</span></div><div class='schoolwork-actions'><button class='btn secondary quiz-toggle'>"+(q.enabled?"Pausa":"Aktivera")+"</button><button class='btn danger quiz-delete'>Ta bort</button></div>";
-      item.querySelector(".quiz-toggle").addEventListener("click",()=>toggleQuiz(q.id));
-      item.querySelector(".quiz-delete").addEventListener("click",()=>deleteQuiz(q.id));
+    quizGroups().forEach(group=>{
+      const total=group.quizzes.reduce((sum,q)=>sum+Number(q.question_count||0),0);
+      const completed=students.filter(s=>quizGroupStatus(s.id,group).complete).length;
+      const allPaused=group.quizzes.every(q=>!q.enabled);
+      const item=document.createElement("div");item.className="schoolwork-item"+(allPaused?" paused":"");
+      item.innerHTML="<h3>"+escapeHtml(group.title)+"</h3><div class='time-note'>"+escapeHtml(windowText(group))+
+        "</div><div class='schoolwork-meta'><span class='mini-pill'>"+group.quizzes.length+
+        (group.quizzes.length===1?" del":" delar")+"</span><span class='mini-pill'>"+total+
+        (total===1?" fråga":" frågor")+"</span><span class='mini-pill'>✓ "+completed+" / "+students.length+
+        " genomförda</span><span class='mini-pill'>🎁 1 blind bag totalt</span></div>";
+      group.quizzes.forEach((q,i)=>{
+        const attempts=quizAttempts.filter(a=>a.quiz_id===q.id);
+        const part=document.createElement("div");part.className="schoolwork-actions";
+        part.style.cssText="margin-top:8px;padding-top:9px;border-top:1px solid #d4dece;align-items:center";
+        const info=document.createElement("div");info.style.cssText="flex:1;min-width:160px";
+        const heading=document.createElement("strong");
+        heading.textContent=(group.quizzes.length>1?"Del "+(i+1)+": ":"")+quizPartName(q);
+        const note=document.createElement("div");note.className="muted small";
+        note.textContent=q.question_count+(q.question_count===1?" fråga":" frågor")+" · "+attempts.length+" / "+students.length+" genomförda"+(q.enabled?"":" · pausad");
+        info.append(heading,note);
+        const toggle=document.createElement("button");toggle.className="btn secondary";toggle.textContent=q.enabled?"Pausa":"Aktivera";
+        toggle.addEventListener("click",()=>toggleQuiz(q.id));
+        const remove=document.createElement("button");remove.className="btn danger";remove.textContent="Ta bort";
+        remove.addEventListener("click",()=>deleteQuiz(q.id));
+        part.append(info,toggle,remove);item.appendChild(part);
+      });
       box.appendChild(item);
     });
   }
@@ -593,7 +634,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       const hwDone=hwStatus?.done||0,hwTotal=hwStatus?.total||0;
       const hwPct=hwTotal?Math.round(hwDone/hwTotal*100):0;
       const hwComplete=!activeHomework||hwStatus.complete;
-      const qDone=activeQuiz&&quizAttempt(student.id,activeQuiz.id)?1:0;
+      const qDone=activeQuiz&&quizGroupStatus(student.id,activeQuiz).complete?1:0;
       const qTotal=activeQuiz?1:0;
       const allComplete=(!total||done===total)&&hwComplete&&qDone===qTotal;
       const hasAnything=Boolean(total||activeHomework||activeQuiz);
@@ -667,8 +708,9 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     hwGroups.forEach(group=>{const st=homeworkGroupStatus(student.id,group),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(group.title)+"</strong><div>"+escapeHtml(homeworkGroupSummary(group))+"</div><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
     const qBox=$("detailQuizzes");qBox.innerHTML="";
     if(!quizzes.length)qBox.innerHTML='<div class="empty">Inga läxförhör.</div>';
-    const newestQuizId=quizzes.length?quizzes.reduce((latest,q)=>String(q.created_at||"")>String(latest.created_at||"")?q:latest).id:null;
-    const olderQuizzes=quizzes.filter(q=>q.id!==newestQuizId);
+    const newestQuiz=quizzes.length?quizzes.reduce((latest,q)=>String(q.created_at||"")>String(latest.created_at||"")?q:latest):null;
+    const newestQuizKey=newestQuiz?quizGroupKey(newestQuiz):null;
+    const olderQuizzes=quizzes.filter(q=>quizGroupKey(q)!==newestQuizKey);
     const history=olderQuizzes.length?document.createElement("details"):null;
     if(history){
       history.style.cssText="margin-top:14px;border:1px solid #d4dece;border-radius:12px;padding:12px;background:#f7faf4";
@@ -676,7 +718,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     }
     [...quizzes].sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||""))).forEach(q=>{
       const a=quizAttempt(student.id,q.id),row=document.createElement("div");row.className="student-task";
-      row.innerHTML="<strong>"+escapeHtml(q.title)+"</strong><div>"+(a?"✓ "+a.score+" / "+a.total+" · "+formatMoment(a.completed_at):"○ Inte genomfört")+"</div>";
+      row.innerHTML="<strong>"+escapeHtml(q.title)+" · "+escapeHtml(quizPartName(q))+"</strong><div>"+(a?"✓ "+a.score+" / "+a.total+" · "+formatMoment(a.completed_at):"○ Inte genomfört")+"</div>";
       if(a){
         const review=quizReviews.find(r=>r.quiz_id===q.id&&r.student_id===student.id);
         const button=document.createElement("button");button.className="btn secondary";button.style.marginTop="9px";button.textContent="Visa svar och återkoppling";
@@ -701,7 +743,9 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
         }else{
           const empty=document.createElement("p");empty.className="small muted";empty.textContent="Ingen självskattning inskickad för det här förhöret.";reflectionBox.appendChild(empty);
         }
-        panel.appendChild(reflectionBox);
+        const group=quizGroups().find(g=>quizGroupKey(q)===g.key);
+        const lastPart=group?.quizzes?.at(-1)?.id===q.id;
+        if(reflection||lastPart||!group||group.quizzes.length===1)panel.appendChild(reflectionBox);
         const label=document.createElement("label");label.textContent="Återkoppling till eleven";
         const input=document.createElement("textarea");input.style.cssText="width:100%;min-height:90px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical";input.maxLength=1500;input.value=review?.teacher_feedback||"";label.appendChild(input);panel.appendChild(label);
         const status=document.createElement("p");status.className="small muted";status.textContent=review?.teacher_feedback?(review.feedback_read_at?"✓ Eleven har läst återkopplingen.":"Väntar på att eleven ska läsa. "):"";
@@ -709,7 +753,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
         send.addEventListener("click",async()=>{send.disabled=true;status.textContent="Skickar …";try{const result=await sb.rpc("teacher_send_quiz_feedback",{p_quiz_id:q.id,p_student_id:student.id,p_feedback:input.value});if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte spara");status.textContent="✓ Återkopplingen är skickad till anslagstavlan.";await loadClassData({silent:true});}catch(error){console.error(error);status.textContent="Kunde inte skicka. Kontrollera att supabase_quiz_feedback.sql har körts.";}finally{send.disabled=false;}});
         panel.append(send,status);row.append(button,panel);
       }
-      (history&&q.id!==newestQuizId?history:qBox).appendChild(row);
+      (history&&quizGroupKey(q)!==newestQuizKey?history:qBox).appendChild(row);
     });
     if(history)qBox.appendChild(history);
     fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
