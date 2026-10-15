@@ -11988,6 +11988,8 @@ async function readCloudState(){
  const active=getActiveAssignment();if(active&&!allAssignments.some(x=>x.id===active))setActiveAssignment(null);
  await syncLocalHomeworkCompletions();
  if(MZ.cloudCones?.sync)await MZ.cloudCones.sync();
+ // Opt-in park sync pilot; NEVER import into a park with real progress.
+ if(MZ.cloudParkSync?.onStudentReady)await MZ.cloudParkSync.onStudentReady();
  render();MZ.homeworkQuiz?.render?.();return current;
 }
 function activeStudent(){
@@ -12897,6 +12899,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.Mattezoo.games.percentChange.init();
   window.Mattezoo.games.whole.init();
   window.Mattezoo.activity.init();
+  window.Mattezoo.cloudParkSync?.init?.();
   window.Mattezoo.cloudStudent.init();
   window.Mattezoo.cloudCones.init();
   window.Mattezoo.homeworkQuiz.init();
@@ -13165,5 +13168,6 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 </script><script defer src="svampstigen.js"></script>
 <script defer src="park_backup_pilot.js"></script>
+<script defer src="park_cloud_sync_pilot.js"></script>
 </body>
 </html>
