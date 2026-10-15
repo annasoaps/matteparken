@@ -11,6 +11,10 @@
   const EXTRA_NEXT_WAIT = 2 * 60 * 1000;
   const MAX_FLOCKS = 2;
   const IDLE_AFTER = 2 * 60 * 1000;
+  const MUTE_KEY = "matteparkenAutumnGeeseMuted_v1";
+  // Public domain: U.S. Fish and Wildlife Service, via Wikimedia Commons.
+  // https://commons.wikimedia.org/wiki/File:Geese_Honking_(distant).ogg
+  const HONK_URL = "https://upload.wikimedia.org/wikipedia/commons/transcoded/d/d1/Geese_Honking_%28distant%29.ogg/Geese_Honking_%28distant%29.ogg.mp3";
   const GOOSE_SVG = [
     '<svg viewBox="0 0 64 46" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">',
     '<path d="M4 24L16 18H29L39 22L44 28L34 32H20L12 29L5 30L10 26Z" fill="#887861" stroke="#52483c" stroke-width="2" stroke-linejoin="round"/>',
@@ -33,6 +37,9 @@
   let lastInput = performance.now();
   let messageTimer = 0;
   let timer = 0;
+  let gooseAudio = null;
+  let soundButton = null;
+  let soundEnabled = true;
   const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function stockholmToday() {
@@ -55,6 +62,36 @@
 
   function hasStudent() {
     return Boolean(window.Mattezoo?.cloudStudent?.activeStudent?.());
+  }
+
+  function saveSoundPreference() {
+    try { localStorage.setItem(MUTE_KEY, soundEnabled ? "0" : "1"); }
+    catch { /* Neka lokal lagring utan att stoppa spelet. */ }
+  }
+
+  function updateSoundButton() {
+    if (!soundButton) return;
+    soundButton.textContent = soundEnabled ? "🔊" : "🔇";
+    soundButton.setAttribute("aria-pressed", String(soundEnabled));
+    soundButton.setAttribute("aria-label", soundEnabled ? "Stäng av gåsljud" : "Sätt på gåsljud");
+    soundButton.title = soundEnabled ? "Stäng av gåsljud" : "Sätt på gåsljud";
+  }
+
+  function stopGooseSound() {
+    if (!gooseAudio) return;
+    gooseAudio.pause();
+    try { gooseAudio.currentTime = 0; } catch { /* Ej laddat ännu. */ }
+  }
+
+  function playGooseSound() {
+    if (!gooseAudio || !soundEnabled || document.hidden) return;
+    stopGooseSound();
+    try {
+      const playing = gooseAudio.play();
+      if (playing && typeof playing.catch === "function") {
+        playing.catch(() => { /* Vissa webbläsare/skolnät tillåter inte ljudstart. */ });
+      }
+    } catch { /* Fortsätt med fågelspelet utan ljud. */ }
   }
 
   function clearPark() {
@@ -81,6 +118,7 @@
     const count = flock.hits;
     const total = flock.birds.length;
     flock = null;
+    stopGooseSound();
     if (layer) layer.replaceChildren();
     setCaption("Sträcket är förbi: " + count + " av " + total + "!");
     messageTimer = window.setTimeout(() => {
@@ -153,6 +191,7 @@
     scorePanel.hidden = false;
     updateScore();
     setCaption("Gässen kommer! Klicka på dem!");
+    playGooseSound();
     window.requestAnimationFrame(animate);
     return true;
   }
@@ -187,10 +226,27 @@
     scorePanel.setAttribute("role", "status");
     scorePanel.setAttribute("aria-live", "polite");
     scorePanel.hidden = true;
-    scorePanel.innerHTML = '<div class="mz-goose-title">🪿 Gåssträcket</div><div class="mz-goose-points"><strong>0</strong> poäng</div><div class="mz-goose-caption">Höstens flyttfåglar</div>';
+    scorePanel.innerHTML = '<div class="mz-goose-title"><span>🪿 Gåssträcket</span><button type="button" class="mz-goose-sound-toggle" aria-label="Stäng av gåsljud" aria-pressed="true" title="Stäng av gåsljud">🔊</button></div><div class="mz-goose-points"><strong>0</strong> poäng</div><div class="mz-goose-caption">Höstens flyttfåglar</div>';
     park.appendChild(scorePanel);
     scoreNumber = scorePanel.querySelector(".mz-goose-points strong");
     scoreCaption = scorePanel.querySelector(".mz-goose-caption");
+    soundButton = scorePanel.querySelector(".mz-goose-sound-toggle");
+    try { soundEnabled = localStorage.getItem(MUTE_KEY) !== "1"; }
+    catch { soundEnabled = true; }
+    updateSoundButton();
+    soundButton.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      soundEnabled = !soundEnabled;
+      saveSoundPreference();
+      updateSoundButton();
+      if (!soundEnabled) stopGooseSound();
+      else if (flock) playGooseSound();
+    });
+    gooseAudio = new Audio(HONK_URL);
+    gooseAudio.preload = "auto";
+    gooseAudio.volume = 0.22; // Låg volym, lämplig i klassrum.
+    gooseAudio.load();
 
     function recordInput() { lastInput = performance.now(); }
     document.addEventListener("pointerdown", recordInput, {passive: true});
