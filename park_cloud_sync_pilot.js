@@ -10,6 +10,7 @@
   let studentId = null, headId = null, ready = false, blocked = false;
   let syncing = null, connecting = null, timer = null, lastPushAt = 0;
   let lastCloudValues = null, notice = null, noticeText = null, actions = null;
+  let modalNotice=null, modalNoticeText=null, modalActions=null;
 
   function keys() {
     return Object.entries(MZ.keys).filter(([name]) => name !== "naturePoints");
@@ -109,19 +110,31 @@
     return snap.values;
   }
   function message(text, needsAttention=false) {
-    if (!notice) return;
-    noticeText.textContent = text;
-    notice.style.borderColor = needsAttention ? "#b76e42" : "#9bad9c";
-    if (actions) actions.replaceChildren();
+    for (const [panel,copy,buttons] of [
+      [notice,noticeText,actions],[modalNotice,modalNoticeText,modalActions]
+    ]) {
+      if (!panel) continue;
+      copy.textContent=text;
+      panel.style.borderColor=needsAttention ? "#b76e42" : "#9bad9c";
+      buttons?.replaceChildren();
+    }
   }
   function action(label, fn) {
-    if (!actions) return;
-    const b = document.createElement("button");
-    b.className = "secondary"; b.type = "button";
-    b.style.margin = "4px";
-    b.textContent = label;
-    b.addEventListener("click", () => { b.disabled = true; Promise.resolve(fn()).finally(() => { b.disabled = false; }); });
-    actions.appendChild(b);
+    for (const dest of [actions,modalActions]) {
+      if (!dest) continue;
+      const b=document.createElement("button");
+      b.className="secondary"; b.type="button";
+      b.style.margin="4px";
+      b.textContent=label;
+      b.addEventListener("click", () => {
+        b.disabled=true;
+        Promise.resolve().then(fn).catch(error => {
+          console.warn("Parkåtgärd:",error);
+          message("⚠️ Försök igen. Din nuvarande park är skyddad.",true);
+        }).finally(() => {b.disabled=false;});
+      });
+      dest.appendChild(b);
+    }
   }
   function client() { return MZ.cloudStudent?.getClient?.(); }
   function sameStudent() {
@@ -352,6 +365,22 @@
     actions=document.createElement("div");
     notice.append(noticeText,actions);
     document.querySelector(".game")?.appendChild(notice);
+    const studentPanel=document.getElementById("studentAssignmentsPanel");
+    if (studentPanel) {
+      modalNotice=document.createElement("div");
+      modalNotice.style.cssText="border:2px solid #9bad9c;border-radius:10px;" +
+        "padding:12px;margin:8px 0 16px;background:#f4f5e9;color:#30442f;font-size:14px;";
+      modalNotice.setAttribute("role","status");
+      modalNoticeText=document.createElement("p");
+      modalNoticeText.style.margin="0 0 4px";
+      modalNoticeText.textContent="☁️ Kopplar ihop parken med molnet …";
+      modalActions=document.createElement("div");
+      modalNotice.append(modalNoticeText,modalActions);
+      studentPanel.prepend(modalNotice);
+    }
+    const loginInfo=document.querySelector("#studentLoginPanel .assignment-demo-note");
+    if (loginInfo) loginInfo.textContent=
+      "☁️ Efter inloggningen kan du koppla din befintliga park till elevkoden och hämta den på andra enheter.";
 
     for (const [name,fn] of Object.entries(MZ.storage)) {
       if (!name.startsWith("save") || typeof fn !== "function") continue;
