@@ -20,6 +20,11 @@
       const value = localStorage.getItem(key);
       if (value !== null) result[name] = { key, value };
     }
+    const state=MZ.state || {};
+    // RPC:n kräver både park och introduktion även när inget har placerats.
+    for (const [name,fallback] of [["parkItems",[]],["onboarding",{}]]) {
+      if (!result[name]) result[name]={key:MZ.keys[name],value:JSON.stringify(state[name]??fallback)};
+    }
     return result;
   }
   function sameValues(a, b) {
@@ -67,7 +72,7 @@
     if (Object.values(stats || {}).some(g => Number(g?.rounds) > 0)) return true;
     const activity = getPart("activityLog", {});
     if (Object.values(activity?.days || {}).some(day =>
-        Number(day?.activeSeconds) > 0 || Number(day?.mathNP) > 0 ||
+        Number(day?.mathNP) > 0 ||
         Object.values(day?.games || {}).some(g =>
           Number(g?.completed) > 0 || Number(g?.activities) > 0))) return true;
     if (Object.keys(getPart("multiplicationBest", {}) || {}).length ||
@@ -150,8 +155,10 @@
     return r.data.id;
   }
 
-  async function restoreCloud(record) {
-    if (!sameStudent() || hasProgress()) throw new Error("Befintlig park skyddas");
+  async function restoreCloud(record,{allowNonempty=false}={}) {
+    // Endast tom park, uttryckligt godkännande eller oförändrad ägarpark får ersättas.
+    if (!sameStudent() || (hasProgress() && !allowNonempty))
+      throw new Error("Befintlig park skyddas");
     const values = validSnapshot(record.snapshot);
     const previous = {};
     for (const [name,key] of keys()) previous[name] = localStorage.getItem(key);
@@ -181,7 +188,7 @@
 
   async function push({force=false}={}) {
     if (!ready || blocked || !sameStudent() || syncing) return;
-    if (!force && Date.now()-lastPushAt < 30000) return;
+    if (!force && Date.now()-lastPushAt < 12000) return;
     const values = localValues();
     if (sameValues(values,lastCloudValues) || !hasProgress()) return;
     const head = headId;
@@ -193,6 +200,7 @@
         markOwner(studentId,headId,values);
         lastPushAt = Date.now();
         message("☁️ Parken sparad i molnet.");
+        action("Spara nu",()=>push({force:true}));
       } catch (error) {
         console.warn("Matteparken molnsparning",error);
         if (!blocked) message("☁️ Molnet kunde inte nås. Parken finns kvar på datorn.",true);
@@ -209,9 +217,9 @@
     if (timer) window.clearTimeout(timer);
     timer=window.setTimeout(() => {
       timer=null;
-      if(Date.now()-lastPushAt < 30000) { schedule(); return; }
+      if(Date.now()-lastPushAt < 12000) { schedule(); return; }
       void push();
-    },4000);
+    },2500);
   }
 
   async function onStudentReady() {
@@ -238,16 +246,32 @@
         if (!record) {
           headId=null;
           if (hasProgress()) {
-            const newHead=await append(null,current);
-            headId=newHead;lastCloudValues=current;
-            markOwner(id,newHead,current);lastPushAt=Date.now();
-            message("✓ Din befintliga park har fått sin första molnbackup.");
-          } else {
-            lastCloudValues=current;
-            markOwner(id,null,current);
-            message("☁️ Parken sparas när du börjar bygga.");
+            // Lägg aldrig en gammal lokal park på fel elevkonto utan uttryckligt val.
+            blocked=true;
+            message("🌳 Den här enheten har en park som inte tidigare kopplats till ett elevkonto. Kontrollera att den är din.",true);
+            action("Det är min park – spara i molnet",async () => {
+              if (!sameStudent() || readOwner()?.studentId) return;
+              if (!window.confirm("Är det här din egen park från skoldatorn? Den kopplas till elevkoden som du är inloggad med. Ingen lokal park raderas.")) return;
+              try {
+                const values=localValues();
+                const newHead=await append(null,values);
+                if (!sameStudent()) return;
+                blocked=false;ready=true;headId=newHead;lastCloudValues=values;
+                markOwner(id,newHead,values);lastPushAt=Date.now();
+                message("✓ Din park är kopierad till molnet. Nu kan du logga in med samma elevkod på mobilen.");
+                action("Spara nu",()=>push({force:true}));
+              } catch(error) {
+                console.warn("Koppla park till elevkod:",error);
+                message("⚠️ Kunde inte spara kopian. Den lokala parken är oförändrad.",true);
+                action("Försök igen",()=>onStudentReady());
+              }
+            });
+            return;
           }
+          lastCloudValues=current;
+          markOwner(id,null,current);
           ready=true;
+          message("☁️ Din park sparas automatiskt när du börjar bygga.");
           return;
         }
         headId=record.id;
@@ -257,19 +281,21 @@
           markOwner(id,headId,remote);
           ready=true;
           message("✓ Din park är kopplad till molnet.");
+          action("Spara nu",()=>push({force:true}));
           return;
         }
-        if (!hasProgress() ||
-            (savedOwner?.studentId===id &&
-             savedOwner.snapshotId !== record.id &&
-             sameValues(current,savedOwner.savedValues))) {
-          await restoreCloud(record);
+        const ownUnmodified=savedOwner?.studentId===id &&
+          savedOwner.snapshotId !== record.id &&
+          sameValues(current,savedOwner.savedValues);
+        if (!hasProgress() || ownUnmodified) {
+          await restoreCloud(record,{allowNonempty:ownUnmodified});
           return;
         }
         if (savedOwner?.studentId===id && savedOwner.snapshotId===record.id) {
           lastCloudValues=savedOwner.savedValues || remote;
           ready=true;
           message("☁️ Din park är kopplad till molnet. Senaste ändringarna säkerhetskopieras.");
+          action("Spara nu",()=>push({force:true}));
           schedule();
           return;
         }
@@ -278,7 +304,16 @@
         blocked=true;
         message("⚠️ Den lokala parken skiljer sig från molnkopian. Båda sparas orörda tills du väljer.",true);
         const seenHead=record.id;
-        action("Använd parken på den här datorn",async () => {
+        action("Hämta min molnpark till denna enhet",async () => {
+          if (!sameStudent() || !window.confirm(
+            "Hämta din park från molnet? En extra säkerhetskopia av den nuvarande parken sparas på enheten före bytet.")) return;
+          try { await restoreCloud(record,{allowNonempty:true}); }
+          catch(error) {
+            console.warn("Hämta molnpark:",error);
+            message("⚠️ Återställningen gick inte. Din gamla park finns kvar.",true);
+          }
+        });
+        if (savedOwner?.studentId===id) action("Använd parken på den här datorn",async () => {
           if (!sameStudent() || !window.confirm(
             "Spara den här datorns park som senaste molnversion? Den gamla molnkopian sparas som historik.")) return;
           try {
@@ -287,6 +322,7 @@
             blocked=false;ready=true;headId=newHead;lastCloudValues=values;
             markOwner(id,newHead,values);lastPushAt=Date.now();
             message("✓ Den här datorns park sparas nu automatiskt.");
+            action("Spara nu",()=>push({force:true}));
           } catch(e) {
             message("⚠️ Nyare molnversion eller anslutningsfel. Ingenting ändrades.",true);
           }
@@ -307,13 +343,15 @@
     if (!enabled) return;
     notice=document.createElement("div");
     notice.setAttribute("role","status");
-    notice.style.cssText="border:1px solid #9bad9c;border-radius:10px;padding:8px 12px;" +
-      "margin:8px 10px;background:#f4f5e9;color:#30442f;font-size:13px;";
+    notice.style.cssText="position:absolute;z-index:28;top:68px;right:10px;" +
+      "max-width:min(390px,calc(100% - 20px));border:1px solid #9bad9c;" +
+      "border-radius:10px;padding:8px 12px;box-shadow:0 4px 15px #293b3040;" +
+      "background:#f4f5e9;color:#30442f;font-size:13px;";
     noticeText=document.createElement("span");
     noticeText.textContent="☁️ Kopplar ihop parken med molnet …";
     actions=document.createElement("div");
     notice.append(noticeText,actions);
-    document.querySelector("header.topbar")?.insertAdjacentElement("afterend",notice);
+    document.querySelector(".game")?.appendChild(notice);
 
     for (const [name,fn] of Object.entries(MZ.storage)) {
       if (!name.startsWith("save") || typeof fn !== "function") continue;
@@ -326,7 +364,9 @@
     window.addEventListener("online",() => { if (ready) schedule(); else void onStudentReady(); });
     document.addEventListener("visibilitychange",() => {
       if (!document.hidden && ready) schedule();
+      else if (document.hidden && ready) void push({force:true});
     });
+    window.addEventListener("pagehide",() => {if (ready) void push({force:true});});
     window.setInterval(() => {
       if (ready) schedule();
       else if (!blocked) void onStudentReady();
