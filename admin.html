@@ -710,28 +710,72 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     if(!hwGroups.length)hwBox.innerHTML='<div class="empty">Inga läxor.</div>';
     hwGroups.forEach(group=>{const st=homeworkGroupStatus(student.id,group),row=document.createElement("div");row.className="student-task";row.innerHTML="<strong>"+escapeHtml(group.title)+"</strong><div>"+escapeHtml(homeworkGroupSummary(group))+"</div><div>"+st.done+" av "+st.total+" omgångar"+(st.complete?" · ✓ klar "+formatMoment(st.completedAt)+(st.late?" · efter deadline":""):"")+"</div>";hwBox.appendChild(row);});
     const qBox=$("detailQuizzes");qBox.innerHTML="";
-    if(!quizzes.length)qBox.innerHTML='<div class="empty">Inga läxförhör.</div>';
-    const newestQuiz=quizzes.length?quizzes.reduce((latest,q)=>String(q.created_at||"")>String(latest.created_at||"")?q:latest):null;
-    const newestQuizKey=newestQuiz?quizGroupKey(newestQuiz):null;
-    const olderQuizzes=quizzes.filter(q=>quizGroupKey(q)!==newestQuizKey);
-    const history=olderQuizzes.length?document.createElement("details"):null;
+    const groups=quizGroups().sort((a,b)=>{
+      const newest=g=>Math.max(0,...g.quizzes.map(q=>Date.parse(q.created_at)||0));
+      return newest(b)-newest(a);
+    });
+    if(!groups.length)qBox.innerHTML='<div class="empty">Inga läxförhör.</div>';
+    const newestQuizKey=groups[0]?.key||null;
+    const olderGroups=groups.filter(g=>g.key!==newestQuizKey);
+    const history=olderGroups.length?document.createElement("details"):null;
     if(history){
       history.style.cssText="margin-top:14px;border:1px solid #d4dece;border-radius:12px;padding:12px;background:#f7faf4";
-      const summary=document.createElement("summary");summary.style.cssText="cursor:pointer;font-weight:700";summary.textContent="📚 Visa tidigare läxförhör ("+olderQuizzes.length+")";history.appendChild(summary);
+      const summary=document.createElement("summary");
+      summary.style.cssText="cursor:pointer;font-weight:700";
+      summary.textContent="📚 Visa tidigare läxförhör ("+olderGroups.length+")";history.appendChild(summary);
     }
-    [...quizzes].sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||""))).forEach(q=>{
-      const a=quizAttempt(student.id,q.id),row=document.createElement("div");row.className="student-task";
-      row.innerHTML="<strong>"+escapeHtml(q.title)+" · "+escapeHtml(quizPartName(q))+"</strong><div>"+(a?"✓ "+a.score+" / "+a.total+" · "+formatMoment(a.completed_at):"○ Inte genomfört")+"</div>";
-      if(a){
-        const review=quizReviews.find(r=>r.quiz_id===q.id&&r.student_id===student.id);
-        const button=document.createElement("button");button.className="btn secondary";button.style.marginTop="9px";button.textContent="Visa svar och återkoppling";
-        const panel=document.createElement("div");panel.hidden=true;panel.style.cssText="padding:12px;margin-top:9px;background:white;border:1px solid #d4dece;border-radius:12px";
-        button.addEventListener("click",()=>{panel.hidden=!panel.hidden;button.textContent=panel.hidden?"Visa svar och återkoppling":"Dölj svar och återkoppling";});
-        if(Array.isArray(review?.answers)&&review.answers.length){
-          review.answers.forEach((entry,i)=>{const p=document.createElement("p");p.style.cssText="margin:0 0 10px;white-space:pre-wrap";p.textContent=(i+1)+". "+entry.question+"\nElevens svar: "+entry.answer+"\nRätt svar: "+entry.correct_answer+" "+(entry.correct?"✓":"✗");panel.appendChild(p);});
-        }else{const empty=document.createElement("p");empty.className="muted";empty.textContent="Inga detaljsvar sparade ännu. Äldre förhör har bara poäng.";panel.appendChild(empty);}
-        // Elevens självskattning visas bredvid resultaten utan att påverka poängen.
-        const reflection=review?.self_assessment;
+    groups.forEach(group=>{
+      const parts=group.quizzes.map(q=>({
+        quiz:q,
+        attempt:quizAttempt(student.id,q.id),
+        review:quizReviews.find(r=>r.quiz_id===q.id&&r.student_id===student.id)||null
+      }));
+      const finished=parts.filter(p=>Boolean(p.attempt));
+      const complete=finished.length===parts.length;
+      const total=parts.reduce((sum,p)=>sum+Number(p.quiz.question_count||0),0);
+      const score=finished.reduce((sum,p)=>sum+Number(p.attempt.score||0),0);
+      const latest=finished.map(p=>p.attempt.completed_at).filter(Boolean).sort().at(-1);
+      const row=document.createElement("div");row.className="student-task";
+      row.innerHTML="<strong>"+escapeHtml(group.title)+"</strong><div>"+
+        (finished.length?(complete?"✓ "+score+" / "+total+" rätt":"○ "+finished.length+" / "+parts.length+" delar klara · "+score+" rätt hittills"):"○ Inte genomfört")+
+        (complete&&latest?" · "+formatMoment(latest):"")+"</div>";
+      if(finished.length){
+        const button=document.createElement("button");button.className="btn secondary";
+        button.style.marginTop="9px";button.textContent="Visa svar och återkoppling";
+        const panel=document.createElement("div");panel.hidden=true;
+        panel.style.cssText="padding:12px;margin-top:9px;background:white;border:1px solid #d4dece;border-radius:12px";
+        button.addEventListener("click",()=>{
+          panel.hidden=!panel.hidden;
+          button.textContent=panel.hidden?"Visa svar och återkoppling":"Dölj svar och återkoppling";
+        });
+        parts.forEach(part=>{
+          const section=document.createElement("div");
+          section.style.cssText="margin:0 0 13px;padding-bottom:12px;border-bottom:1px solid #e0e9dc";
+          const title=document.createElement("strong");
+          title.textContent=quizPartName(part.quiz)+" · "+(part.attempt?(part.attempt.score+" / "+part.attempt.total+" rätt"):"Inte genomfört");
+          section.appendChild(title);
+          if(part.attempt){
+            if(Array.isArray(part.review?.answers)&&part.review.answers.length){
+              part.review.answers.forEach((entry,i)=>{
+                const p=document.createElement("p");p.style.cssText="margin:10px 0 0;white-space:pre-wrap";
+                p.textContent=(i+1)+". "+entry.question+"\nElevens svar: "+entry.answer+"\nRätt svar: "+entry.correct_answer+" "+(entry.correct?"✓":"✗");
+                section.appendChild(p);
+              });
+            }else{
+              const empty=document.createElement("p");empty.className="muted";
+              empty.textContent="Inga detaljsvar sparade ännu. Äldre förhör har bara poäng.";
+              section.appendChild(empty);
+            }
+          }
+          panel.appendChild(section);
+        });
+        // Självskattning och läraråterkoppling hör till hela förhöret.
+        // Spara återkopplingen på sista delen, samma del som självskattningen.
+        const lastPart=parts.at(-1);
+        const reflectionReview=lastPart.review?.self_assessment
+          ? lastPart.review
+          : parts.map(p=>p.review).find(r=>r?.self_assessment)||null;
+        const reflection=reflectionReview?.self_assessment;
         const reflectionBox=document.createElement("div");reflectionBox.style.cssText="background:#edf3e8;border:1px solid #cfdbc9;border-radius:10px;padding:12px;margin:14px 0";
         const reflectionTitle=document.createElement("strong");reflectionTitle.textContent="🌱 Min mattevecka";reflectionBox.appendChild(reflectionTitle);
         if(reflection && typeof reflection==="object"){
@@ -746,17 +790,45 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
         }else{
           const empty=document.createElement("p");empty.className="small muted";empty.textContent="Ingen självskattning inskickad för det här förhöret.";reflectionBox.appendChild(empty);
         }
-        const group=quizGroups().find(g=>quizGroupKey(q)===g.key);
-        const lastPart=group?.quizzes?.at(-1)?.id===q.id;
-        if(reflection||lastPart||!group||group.quizzes.length===1)panel.appendChild(reflectionBox);
-        const label=document.createElement("label");label.textContent="Återkoppling till eleven";
-        const input=document.createElement("textarea");input.style.cssText="width:100%;min-height:90px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical";input.maxLength=1500;input.value=review?.teacher_feedback||"";label.appendChild(input);panel.appendChild(label);
-        const status=document.createElement("p");status.className="small muted";status.textContent=review?.teacher_feedback?(review.feedback_read_at?"✓ Eleven har läst återkopplingen.":"Väntar på att eleven ska läsa. "):"";
-        const send=document.createElement("button");send.className="btn primary";send.style.marginTop="9px";send.textContent="Skicka återkoppling";
-        send.addEventListener("click",async()=>{send.disabled=true;status.textContent="Skickar …";try{const result=await sb.rpc("teacher_send_quiz_feedback",{p_quiz_id:q.id,p_student_id:student.id,p_feedback:input.value});if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte spara");status.textContent="✓ Återkopplingen är skickad till anslagstavlan.";await loadClassData({silent:true});}catch(error){console.error(error);status.textContent="Kunde inte skicka. Kontrollera att supabase_quiz_feedback.sql har körts.";}finally{send.disabled=false;}});
-        panel.append(send,status);row.append(button,panel);
+
+        panel.appendChild(reflectionBox);
+        if(complete){
+          const feedbackReview=lastPart.review;
+          const label=document.createElement("label");
+          label.textContent="Gemensam återkoppling för hela förhöret";
+          const input=document.createElement("textarea");
+          input.style.cssText="width:100%;min-height:90px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical";
+          input.maxLength=1500;input.value=feedbackReview?.teacher_feedback||"";
+          label.appendChild(input);panel.appendChild(label);
+          const status=document.createElement("p");status.className="small muted";
+          status.textContent=feedbackReview?.teacher_feedback
+            ?(feedbackReview.feedback_read_at?"✓ Eleven har läst återkopplingen.":"Väntar på att eleven ska läsa.")
+            :"";
+          const send=document.createElement("button");send.className="btn primary";
+          send.style.marginTop="9px";send.textContent="Skicka återkoppling";
+          send.addEventListener("click",async()=>{
+            send.disabled=true;status.textContent="Skickar …";
+            try{
+              const result=await sb.rpc("teacher_send_quiz_feedback",{
+                p_quiz_id:lastPart.quiz.id,p_student_id:student.id,p_feedback:input.value
+              });
+              if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte spara");
+              status.textContent="✓ Gemensam återkoppling skickad till elevens anslagstavla.";
+              await loadClassData({silent:true});
+            }catch(error){
+              console.error(error);
+              status.textContent="Kunde inte skicka återkopplingen. Försök igen.";
+            }finally{send.disabled=false;}
+          });
+          panel.append(send,status);
+        }else{
+          const notice=document.createElement("p");notice.className="muted";
+          notice.textContent="Gemensam återkoppling kan skickas när alla delar är genomförda.";
+          panel.appendChild(notice);
+        }
+        row.append(button,panel);
       }
-      (history&&quizGroupKey(q)!==newestQuizKey?history:qBox).appendChild(row);
+      (history&&group.key!==newestQuizKey?history:qBox).appendChild(row);
     });
     if(history)qBox.appendChild(history);
     fillList("todayList",aggregateFor(student.id,"today"));fillList("weekList",aggregateFor(student.id,"week"));
