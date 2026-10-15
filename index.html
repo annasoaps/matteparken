@@ -2434,6 +2434,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 .placed-item.mushroomBasket .placed-sprite{width:68px;height:68px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 0 rgba(45,65,45,.16))}
 </style>
 <link rel="stylesheet" href="percent_change.css" />
+<link rel="stylesheet" href="percent_part_interest.css" />
 <link rel="stylesheet" href="svampstigen.css" />
 <link rel="stylesheet" href="autumn_geese.css" />
 <link rel="stylesheet" href="mobile-park.css" />
@@ -3802,7 +3803,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   state.daily.version = Math.max(0, Number(state.daily.version) || 0);
 
   if(!state.simpleGameStats || typeof state.simpleGameStats !== "object" || Array.isArray(state.simpleGameStats)) state.simpleGameStats = {};
-  ["pow10","fractionDecimal","fractionArithmetic","mgn","percentConvert","percentChange","sharePart","prefixMatch","unitConvert","statistics"].forEach((gameId) => {
+  ["pow10","fractionDecimal","fractionArithmetic","mgn","percentConvert","percentChange","percentPart","interest","sharePart","prefixMatch","unitConvert","statistics"].forEach((gameId) => {
     const entry = state.simpleGameStats[gameId];
     state.simpleGameStats[gameId] = entry && typeof entry === "object" && !Array.isArray(entry) ? entry : {};
     state.simpleGameStats[gameId].rounds = Math.max(0, Number(state.simpleGameStats[gameId].rounds) || 0);
@@ -4080,6 +4081,19 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         const entry = state.simpleGameStats.whole || (state.simpleGameStats.whole = {rounds:0, correct:0});
         entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
         entry.correct = Math.max(0, Number(entry.correct) || 0) + 4;
+        storage.saveSimpleGameStats();
+        const rewardNP = config.standardRoundRewardNP;
+        storage.addNaturePoints(rewardNP);
+        return {progress:0,rewarded:true,rewardNP,rounds:entry.rounds,correct:entry.correct,progressionRound:true};
+      }
+
+      if(((activity.gameId === "percentPart" && activity.type === "four-part-round") ||
+          (activity.gameId === "interest" && activity.type === "four-interest-round")) &&
+          Number(activity.questions) === 4){
+        const entry = state.simpleGameStats[activity.gameId] ||
+          (state.simpleGameStats[activity.gameId] = {rounds:0,correct:0});
+        entry.rounds = Math.max(0,Number(entry.rounds)||0) + 1;
+        entry.correct = Math.max(0,Number(entry.correct)||0) + 4;
         storage.saveSimpleGameStats();
         const rewardNP = config.standardRoundRewardNP;
         storage.addNaturePoints(rewardNP);
@@ -4709,6 +4723,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       make(){return {label:"Bråk • Decimal • Procent",description:"Gör ett helt omvandlingsvarv",detailText:"6 kompletta trior"};}},
     {gameId:"percentChange", icon:"%", target:1,
       make(){return {label:"Beräkna förändring",description:"Räkna procentuell ökning och minskning",detailText:"3 uppgifter med mindre och mindre stöd"};}},
+    {gameId:"percentPart", icon:"🎯", target:1,
+      make(){return {label:"Procentjakten",description:"Beräkna delen med procent",detailText:"4 uppgifter i en omgång"};}},
+    {gameId:"interest", icon:"🏦", target:1,
+      make(){return {label:"Räntebanken",description:"Räkna med ränta vid sparande och lån",detailText:"4 uppgifter i en omgång"};}},
     {gameId:"prefixMatch", icon:"📏", target:1,
       make(){return {label:"Prefix",description:"Gör ett helt prefix-varv",detailText:"10 uppgifter"};}},
     {gameId:"unitConvert", icon:"🔁", target:1,
@@ -4791,6 +4809,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     if(task.gameId==="percentConvert") return activity.type==="six-trio-round";
     if(task.gameId==="percentChange") return activity.type==="three-change-round";
     if(task.gameId==="whole") return activity.type==="four-whole-round";
+    if(task.gameId==="percentPart") return activity.type==="four-part-round";
+    if(task.gameId==="interest") return activity.type==="four-interest-round";
     return activity.type==="ten-question-round";
   }
 
@@ -8513,7 +8533,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const buttonByGame={
       pow10:"#openPow10",fractionDecimal:"#openFractionDecimal",fractionArithmetic:"#openFractionArithmetic",
       percentConvert:"#openPercentConvert",prefixMatch:"#openPrefixMatch",
-      unitConvert:"#openUnitConvert",statistics:"#openStatistics",percentChange:"#openPercentChange"
+      unitConvert:"#openUnitConvert",statistics:"#openStatistics",percentChange:"#openPercentChange",percentPart:"#openPercentPart",interest:"#openInterest"
     };
     $(buttonByGame[task.gameId])?.click();
   }
@@ -8577,7 +8597,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       const backByGame={
         multiplication:"#backToShelf",equations:"#backFromEquations",pow10:"#backFromPow10",
         fractionDecimal:"#backFromFractionDecimal",mgn:"#backFromMgn",percentConvert:"#backFromPercentConvert",
-        prefixMatch:"#backFromPrefixMatch",unitConvert:"#backFromUnitConvert",statistics:"#backFromStatistics",percentChange:"#pcBack"
+        prefixMatch:"#backFromPrefixMatch",unitConvert:"#backFromUnitConvert",statistics:"#backFromStatistics",percentChange:"#pcBack",percentPart:"#percentPartView .pp-back",interest:"#interestView .pp-back"
       };
       window.setTimeout(()=>{
         $(backByGame[task.gameId])?.click();
@@ -11968,9 +11988,9 @@ const expectedRoundTypes={
  multiplication:"table-round",equations:"solved-random-equation",pow10:"ten-question-round",
  fractionDecimal:"matching-board",fractionArithmetic:"three-calculation-round",
  percentConvert:"six-trio-round",sharePart:"ten-question-round",prefixMatch:"ten-question-round",
- unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round",percentChange:"three-change-round",whole:"four-whole-round"
+ unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round",percentChange:"three-change-round",whole:"four-whole-round",percentPart:"four-part-round",interest:"four-interest-round"
 };
-const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform",percentChange:"Beräkna förändring",whole:"Hitta det hela"};
+const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform",percentChange:"Beräkna förändring",whole:"Hitta det hela",percentPart:"Procentjakten",interest:"Räntebanken"};
 
 const norm=v=>String(v||"").trim().toUpperCase().replace(/\s+/g,"");
 const cleanDisplayName=v=>String(v||"").trim().replace(/\s+/g," ").slice(0,24);
@@ -12027,7 +12047,7 @@ function homeworkGroupSummary(group){
  return Array.from(counts.entries()).map(([label,count])=>label+(count>1?" × "+count:"")).join(" · ");
 }
 function activityDescriptor(d){if(d.gameId==="multiplication"&&Number.isFinite(Number(d.table))){const t=Number(d.table);return{key:"multiplication:"+t,label:t+":ans tabell"};}return{key:d.gameId,label:gameTitle(d.gameId)};}
-function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 10 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt.",percentChange:"En omgång = 3 uppgifter: välj, skriv med stöd, lös själv.",whole:"En omgång = 4 uppgifter med Y-bokens sätt eller algebra."};return x[a?.game_id]||"En hel omgång.";}
+function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 10 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt.",percentChange:"En omgång = 3 uppgifter: välj, skriv med stöd, lös själv.",whole:"En omgång = 4 uppgifter med Y-bokens sätt eller algebra.",percentPart:"En omgång = 4 uppgifter om delen.",interest:"En omgång = 4 uppgifter om ränta."};return x[a?.game_id]||"En hel omgång.";}
 
 function getSelection(){try{return JSON.parse(localStorage.getItem(SELECTION_KEY)||"null");}catch{return null;}}
 function setSelection(v){v?localStorage.setItem(SELECTION_KEY,JSON.stringify(v)):localStorage.removeItem(SELECTION_KEY);}
@@ -12700,6 +12720,17 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       const after=before+(increase?1:-1)*before*change/100;
       return{prompt:"I Matteparken var "+subject+" först "+before+" "+unit+" och sedan "+svNum(after)+" "+unit+". Hur många procent har "+subject+" "+(increase?"ökat":"minskat")+"?",kind:"number",answer:change,display:change+" %"};
     }
+    if(gameId==="percentPart"){
+      const p=[5,10,15,20,25,30,50][rand(0,6)],whole=[100,200,240,400,450,500,600,800][rand(0,7)];
+      return{prompt:"Hur mycket är "+p+" % av "+whole+"?",kind:"number",answer:p*whole/100,display:svNum(p*whole/100)};
+    }
+    if(gameId==="interest"){
+      const n=[2000,3000,4000,5000,6000,8000][rand(0,5)];
+      const p=[2,3,4,5,6,10][rand(0,5)],months=[3,6,12][rand(0,2)];
+      const interest=p*n/100*months/12,period=months===12?"ett år":months===6?"sex månader":"tre månader";
+      const loan=Math.random()<.5,total=loan&&Math.random()<.5;
+      return{prompt:(loan?"Ett lån":"Ett sparkonto")+" på "+n+" kr har räntesatsen "+p+" % per år. Vad är "+(total?"summan att betala tillbaka":"räntan")+" efter "+period+"? (Svara i kronor.)",kind:"number",answer:total?n+interest:interest,display:svNum(total?n+interest:interest)+" kr"};
+    }
     if(gameId==="whole"){
       if(Math.random()<.5){
         const denominators=[3,4,5,6,8],den=denominators[rand(0,denominators.length-1)],num=rand(2,den-1);
@@ -13035,6 +13066,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 
 <script src="percent_change.js"></script>
 <script src="hitta_det_hela_integration.js"></script>
+<script src="percent_part_interest.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
@@ -13056,6 +13088,8 @@ document.addEventListener("DOMContentLoaded", () => {
   window.Mattezoo.games.scientificNotation.init();
   window.Mattezoo.games.percentChange.init();
   window.Mattezoo.games.whole.init();
+  window.Mattezoo.games.percentPart.init();
+  window.Mattezoo.games.interest.init();
   window.Mattezoo.activity.init();
   window.Mattezoo.cloudParkSync?.init?.();
   window.Mattezoo.cloudStudent.init();
@@ -13210,6 +13244,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const games={
     percentChange:["Beräkna förändring","openPercentChange"],
     whole:["Hitta det hela","openWhole"],
+    percentPart:["Procentjakten","openPercentPart"],
+    interest:["Räntebanken","openInterest"],
     multiplication:['Multiplikation','openMultiplication'],
     equations:['Ekvationer','openEquations'],
     pow10:['× och ÷ med 10, 100, 1000','openPow10'],
