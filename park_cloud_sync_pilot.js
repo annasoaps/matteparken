@@ -9,7 +9,7 @@
   const backupPrefix = "matteparken-park-sync-before-restore-";
   let studentId = null, headId = null, ready = false, blocked = false;
   let syncing = null, connecting = null, timer = null, lastPushAt = 0;
-  let lastCloudValues = null, notice = null, actions = null;
+  let lastCloudValues = null, notice = null, noticeText = null, actions = null;
 
   function keys() {
     return Object.entries(MZ.keys).filter(([name]) => name !== "naturePoints");
@@ -105,7 +105,7 @@
   }
   function message(text, needsAttention=false) {
     if (!notice) return;
-    notice.textContent = text;
+    noticeText.textContent = text;
     notice.style.borderColor = needsAttention ? "#b76e42" : "#9bad9c";
     if (actions) actions.replaceChildren();
   }
@@ -126,7 +126,7 @@
   async function latest() {
     const r = await client().from("student_park_snapshots")
       .select("id,saved_at,snapshot").order("saved_at", {ascending:false})
-      .limit(1).maybeSingle();
+      .order("id",{ascending:false}).limit(1).maybeSingle();
     if (r.error) throw r.error;
     if (r.data) validSnapshot(r.data.snapshot);
     return r.data;
@@ -309,9 +309,10 @@
     notice.setAttribute("role","status");
     notice.style.cssText="border:1px solid #9bad9c;border-radius:10px;padding:8px 12px;" +
       "margin:8px 10px;background:#f4f5e9;color:#30442f;font-size:13px;";
-    notice.textContent="☁️ Kopplar ihop parken med molnet …";
+    noticeText=document.createElement("span");
+    noticeText.textContent="☁️ Kopplar ihop parken med molnet …";
     actions=document.createElement("div");
-    notice.appendChild(actions);
+    notice.append(noticeText,actions);
     document.querySelector("header.topbar")?.insertAdjacentElement("afterend",notice);
 
     for (const [name,fn] of Object.entries(MZ.storage)) {
