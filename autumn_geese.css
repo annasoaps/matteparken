@@ -100,7 +100,8 @@
 .mz-goose-caption {font-size: 11px;line-height: 1.15;max-width: 170px;margin: 0 auto}
 @media (max-width: 650px) {
   .mz-goose-score {right: 5px;top: 5px;min-width: 105px;padding: 5px 6px}
-  .mz-goose-title {font-size: 11px}
+  .mz-goose-title {font-size: 10px;gap:3px}
+  .mz-goose-sound-toggle {width:26px;height:26px;font-size:14px}
   .mz-goose-points strong {font-size: 20px}
   .mz-goose-caption {font-size: 10px}
 }
