@@ -12335,7 +12335,7 @@ function recordQuestion(event){
 }
 function matchingRound(a,x){if(!a||!x||a.game_id!==x.gameId||expectedRoundTypes[a.game_id]!==x.type)return false;const t=Number(a.game_config?.table);return !(a.game_id==="multiplication"&&t>=1&&t<=10)||Number(x.table)===t;}
 async function assignmentRoundRpc(id,x,roundType=x.type){
- return client().rpc(x.gameId==="percentChange"?"record_percent_change_round":x.gameId==="whole"?"record_whole_round":"record_assignment_round",{p_assignment_id:id,p_game_id:x.gameId,p_round_type:roundType,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});
+ return client().rpc(x.gameId==="percentChange"?"record_percent_change_round":x.gameId==="whole"?"record_whole_round":(["percentPart","interest"].includes(x.gameId)?"record_percent_part_interest_round":"record_assignment_round"),{p_assignment_id:id,p_game_id:x.gameId,p_round_type:roundType,p_table:Number.isFinite(Number(x.table))?Number(x.table):null});
 }
 async function recordAssignmentRound(id,x){
  let r=await assignmentRoundRpc(id,x);if(r.error)throw r.error;
