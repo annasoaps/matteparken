@@ -6955,6 +6955,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   async function renderQuizFeedbackNotes(){
     const panel=document.getElementById("quizFeedbackNotes");if(!panel)return;
+    // Behåll öppet brev och arkiv när Dagens uppdrag uppdateras i bakgrunden.
+    const archiveWasOpen=Boolean(panel.querySelector("[data-teacher-mail-archive]")?.open);
+    const openLetterKeys=new Set([...panel.querySelectorAll("[data-teacher-mail-key]")]
+      .filter(note=>note.open).map(note=>note.dataset.teacherMailKey));
     panel.replaceChildren();panel.style.display="none";
     const studentId=teacherMailStudentId();if(!studentId){updateTeacherMailBadge();return;}
     try{
@@ -6968,10 +6972,41 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       panel.style.display="block";
       const heading=document.createElement("strong");
       heading.textContent="💌 Brev från din lärare";panel.appendChild(heading);
+
+      const unreadSection=document.createElement("section");
+      const unreadTitle=document.createElement("strong");
+      unreadTitle.style.cssText="display:block;margin-top:12px;font-size:14px";
+      const unreadList=document.createElement("div");
+      unreadSection.append(unreadTitle,unreadList);
+      panel.appendChild(unreadSection);
+
+      const archive=document.createElement("details");
+      archive.dataset.teacherMailArchive="true";
+      archive.style.cssText="margin-top:12px;padding:12px;background:#f3ecd9;border:2px solid #baa27d;border-radius:8px";
+      archive.open=archiveWasOpen;
+      const archiveTitle=document.createElement("summary");
+      archiveTitle.style.cssText="cursor:pointer;font-weight:800";
+      const archiveIntro=document.createElement("p");
+      archiveIntro.className="muted";
+      archiveIntro.style.cssText="margin:9px 0 3px;font-size:13px";
+      archiveIntro.textContent="Här finns dina tidigare lästa brev och återkopplingar.";
+      const archiveList=document.createElement("div");
+      archive.append(archiveTitle,archiveIntro,archiveList);
+      panel.appendChild(archive);
+
+      function updateSections(){
+        const unreadCount=unreadList.children.length,readCount=archiveList.children.length;
+        unreadTitle.textContent="Nya brev ("+unreadCount+")";
+        unreadSection.hidden=unreadCount===0;
+        archiveTitle.textContent="📚 Brevarkiv ("+readCount+")";
+        archive.hidden=readCount===0;
+      }
+
       letters.forEach(letter=>{
         const entry=letter.entry,isDirect=letter.type==="direct";
         const readProp=isDirect?"read_at":"feedback_read_at";
         const note=document.createElement("details");
+        note.dataset.teacherMailKey=letter.type+":"+(isDirect?entry.id:entry.quiz_id);
         note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
         const title=document.createElement("summary");
         title.style.cursor="pointer";
@@ -6987,8 +7022,16 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           });
           note.appendChild(review);
         }
+        // Låt eleven läsa färdigt innan brevet flyttas till det hopfällbara arkivet.
+        const moveToArchive=()=>{
+          if(entry[readProp]&&note.parentElement===unreadList&&!note.open){
+            archiveList.appendChild(note);
+            updateSections();
+          }
+        };
         note.addEventListener("toggle",async()=>{
-          if(!note.open||entry[readProp])return;
+          if(!note.open){moveToArchive();return;}
+          if(entry[readProp])return;
           try{
             const rpc=isDirect?"student_mark_direct_message_read":"student_mark_quiz_feedback_read";
             const args=isDirect?{p_message_id:entry.id}:{p_quiz_id:entry.quiz_id};
@@ -6997,11 +7040,14 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
             entry[readProp]=new Date().toISOString();
             title.textContent=letter.title;
             updateTeacherMailBadge();
+            moveToArchive();
             void refreshTeacherMailStatus(true);
           }catch(error){console.warn("Brev kunde inte markeras som läst",error);}
         });
-        panel.appendChild(note);
+        (entry[readProp]?archiveList:unreadList).appendChild(note);
+        if(openLetterKeys.has(note.dataset.teacherMailKey))note.open=true;
       });
+      updateSections();
     }catch(error){console.warn("Brev kunde inte hämtas",error);}
   }
   MZ.renderQuizFeedbackNotes=renderQuizFeedbackNotes;
