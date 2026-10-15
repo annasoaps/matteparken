@@ -2195,6 +2195,25 @@ button.office-fixture:focus-visible{outline:4px solid #fff4a6;outline-offset:4px
 #homeworkQuizModal{z-index:140}#homeworkQuizModal .modal{max-width:760px}.quiz-list{display:grid;gap:10px;margin:14px 0}.quiz-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:2px solid #c8b78e;border-radius:9px;background:#fffaf0}.quiz-list-item.done{background:#eef5e9}.quiz-test-card{padding:18px;border:3px solid #8d7959;border-radius:10px;background:#fbf6e8}.quiz-test-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}.quiz-question{font-size:clamp(22px,4vw,34px);font-weight:850;text-align:center;padding:24px 12px}.quiz-answer-row{display:grid;grid-template-columns:1fr auto;gap:10px;max-width:520px;margin:auto}.quiz-answer-row input{font-size:20px;text-align:center}.quiz-share-part{display:none}.quiz-share-part.open{display:block}.quiz-share-part-visual{display:flex;justify-content:center;margin:4px auto 16px}.quiz-share-part-grid{display:grid;gap:3px;width:min(100%,360px)}.quiz-share-part-cell{aspect-ratio:1/1;border:1px solid #9e987f;border-radius:2px;background:#fffdf5}.quiz-share-part-cell.filled{background:#dc7449;border-color:#a95031}.quiz-share-part-answers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px;margin:0 auto}.quiz-share-part-answers label{display:flex;flex-direction:column;gap:6px;font-weight:850;text-align:center}.quiz-share-part-answers input{min-height:46px;border:2px solid #b8ad8e;border-radius:10px;background:#fffdf6;padding:8px 10px;font:inherit;font-size:18px;text-align:center}.quiz-share-part-fraction{display:grid;grid-template-rows:auto 2px auto;gap:5px;width:96px;margin:auto}.quiz-share-part-fraction .line{background:#405441}.quiz-share-part-percent{display:flex;align-items:center;gap:7px}.quiz-share-part-percent input{min-width:0;width:100%}.quiz-share-part-percent strong{font-size:21px}.quiz-result{padding:16px;border-radius:10px;background:#eef5e9;text-align:center}
 .quiz-result h3{font-size:25px;color:#345d3d;margin:8px 0 12px}.quiz-result p{line-height:1.5}.quiz-result-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}.quiz-result-actions .primary{font-size:16px;padding:13px 18px}.quiz-result strong{font-size:28px}.quiz-warning{padding:10px 12px;border-radius:8px;background:#f7eed8;color:#71572e;font-weight:750;font-size:13px}
 @media(max-width:720px){.student-homework-card,.quiz-list-item{grid-template-columns:1fr}.office-homework-quiz{left:17.2%;top:58.5%;width:13.5%;height:15.5%}.quiz-share-part-answers{grid-template-columns:1fr;max-width:210px}}
+
+/* Hjärtkuvert ovanpå anslagstavlan, även i pixelartläget. */
+#teacherMailBadge:not(.hidden){
+ position:absolute;z-index:35;right:-11%;top:-21%;
+ display:flex!important;align-items:center;justify-content:center;
+ font-size:clamp(30px,3vw,48px);line-height:1;
+ width:1.2em;height:1.2em;padding:0!important;
+ color:initial!important;text-shadow:none!important;
+ pointer-events:none;filter:drop-shadow(0 4px 2px rgba(37,25,18,.72));
+ animation:teacherMailWiggle 3.5s ease-in-out infinite;
+}
+.office-room.pixel-art-mode #officeDailyBoard > #teacherMailBadge:not(.hidden){
+ display:flex!important;top:-26%;right:-24%;font-size:clamp(33px,3.5vw,56px);
+}
+@keyframes teacherMailWiggle{
+ 0%,88%,100%{transform:rotate(-10deg) translateY(0)}
+ 93%{transform:rotate(5deg) translateY(-3px)}
+}
+@media(prefers-reduced-motion:reduce){#teacherMailBadge{animation:none!important}}
 </style>
 <style>
 /* Matteparken v0447 — an actual noticeboard, with the welcome gift attached. */
@@ -2565,6 +2584,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           </button>
 
           <section class="office-fixture office-daily-board" id="officeDailyBoard" role="button" tabindex="0" aria-label="Dagens uppdrag">
+            <span class="teacher-mail-indicator hidden" id="teacherMailBadge" aria-hidden="true">💌</span>
             <span class="fixture-sign" id="dailyMissionTitle">🎯 Dagens uppdrag</span>
             <p id="dailyMissionDescription">Klara tre korta matteomgångar.</p>
             <div class="daily-board-reward"><strong>Belöning:</strong> <span id="dailyMissionReward">Blind bag</span></div>
@@ -6877,28 +6897,114 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#seedChoices button")?.focus();
   }
 
+  const teacherMailState={studentId:null,feedback:[],messages:[],checkedAt:0,pending:null};
+  function teacherMailStudentId(){return MZ.cloudStudent?.currentState?.()?.student?.id||null;}
+  function updateTeacherMailBadge(){
+    const badge=document.getElementById("teacherMailBadge");
+    const currentId=teacherMailStudentId();
+    const count=currentId&&teacherMailState.studentId===currentId
+      ?teacherMailState.feedback.filter(x=>!x.feedback_read_at).length+
+       teacherMailState.messages.filter(x=>!x.read_at).length:0;
+    badge?.classList.toggle("hidden",!count);
+    const board=document.getElementById("officeDailyBoard");
+    if(board){
+      const label=count?("Dagens uppdrag – "+count+" "+(count===1?"oläst brev":"olästa brev")+" från din lärare"):"Dagens uppdrag – uppdrag och framsteg";
+      board.setAttribute("aria-label",label);
+      board.title=label;
+    }
+    return count;
+  }
+  async function refreshTeacherMailStatus(force=false){
+    const studentId=teacherMailStudentId();
+    if(!studentId){
+      teacherMailState.studentId=null;teacherMailState.feedback=[];teacherMailState.messages=[];teacherMailState.checkedAt=0;
+      updateTeacherMailBadge();return teacherMailState;
+    }
+    if(teacherMailState.studentId!==studentId){
+      teacherMailState.studentId=studentId;teacherMailState.feedback=[];teacherMailState.messages=[];
+      teacherMailState.checkedAt=0;teacherMailState.pending=null;
+      updateTeacherMailBadge();
+    }
+    if(teacherMailState.pending)return teacherMailState.pending;
+    if(!force&&teacherMailState.checkedAt&&Date.now()-teacherMailState.checkedAt<30000)return teacherMailState;
+    const request=(async()=>{
+      const client=MZ.cloudStudent.getClient();
+      const [feedback,messages]=await Promise.allSettled([
+        client.rpc("student_list_quiz_feedback"),
+        client.rpc("student_list_direct_messages")
+      ]);
+      if(teacherMailStudentId()!==studentId)return teacherMailState;
+      if(feedback.status==="fulfilled"&&!feedback.value.error&&Array.isArray(feedback.value.data))
+        teacherMailState.feedback=feedback.value.data;
+      else console.warn("Läraråterkoppling kunde inte hämtas",feedback.status==="rejected"?feedback.reason:feedback.value?.error);
+      if(messages.status==="fulfilled"&&!messages.value.error&&Array.isArray(messages.value.data))
+        teacherMailState.messages=messages.value.data;
+      else console.warn("Lärarmeddelanden kunde inte hämtas",messages.status==="rejected"?messages.reason:messages.value?.error);
+      teacherMailState.checkedAt=Date.now();
+      updateTeacherMailBadge();return teacherMailState;
+    })();
+    teacherMailState.pending=request;
+    try{return await request;}finally{if(teacherMailState.pending===request)teacherMailState.pending=null;}
+  }
+  MZ.teacherMail={refreshUnread:refreshTeacherMailStatus,updateBadge:updateTeacherMailBadge};
+  // Kontrollera ibland också när eleven redan har Parkkontoret öppet.
+  window.setInterval(()=>{
+    if(!document.hidden&&teacherMailStudentId())void refreshTeacherMailStatus();
+  },45000);
+
   async function renderQuizFeedbackNotes(){
     const panel=document.getElementById("quizFeedbackNotes");if(!panel)return;
-    const student=MZ.cloudStudent?.activeStudent?.();panel.replaceChildren();panel.style.display="none";if(!student)return;
+    panel.replaceChildren();panel.style.display="none";
+    const studentId=teacherMailStudentId();if(!studentId){updateTeacherMailBadge();return;}
     try{
-      const result=await MZ.cloudStudent.getClient().rpc("student_list_quiz_feedback");
-      if(result.error)throw result.error;
-      const entries=Array.isArray(result.data)?result.data:[];if(!entries.length)return;
-      panel.style.display="block";const heading=document.createElement("strong");heading.textContent="💌 Återkoppling från din lärare";panel.appendChild(heading);
-      entries.forEach(entry=>{
-        const note=document.createElement("details");note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
-        const title=document.createElement("summary");title.style.cursor="pointer";title.textContent=(entry.feedback_read_at?"":"● ")+entry.title;note.appendChild(title);
-        const body=document.createElement("p");body.style.whiteSpace="pre-wrap";body.textContent=entry.teacher_feedback;note.appendChild(body);
-        if(Array.isArray(entry.answers)&&entry.answers.length){
-          const review=document.createElement("details");const summary=document.createElement("summary");summary.textContent="Se mina svar";review.appendChild(summary);
-          entry.answers.forEach((a,i)=>{const p=document.createElement("p");p.style.fontSize="14px";p.textContent=(i+1)+". "+a.question+" | Mitt svar: "+a.answer+" | Rätt: "+a.correct_answer+(a.correct?" ✓":" ✗");review.appendChild(p);});note.appendChild(review);
+      const state=await refreshTeacherMailStatus(true);
+      if(teacherMailStudentId()!==studentId)return;
+      const letters=[
+        ...state.messages.map(entry=>({type:"direct",entry,time:entry.created_at||"",title:"💌 Personligt meddelande",body:entry.body||""})),
+        ...state.feedback.map(entry=>({type:"quiz",entry,time:entry.feedback_at||"",title:"📄 Återkoppling: "+(entry.title||"Läxförhör"),body:entry.teacher_feedback||""}))
+      ].sort((a,b)=>String(b.time).localeCompare(String(a.time)));
+      if(!letters.length)return;
+      panel.style.display="block";
+      const heading=document.createElement("strong");
+      heading.textContent="💌 Brev från din lärare";panel.appendChild(heading);
+      letters.forEach(letter=>{
+        const entry=letter.entry,isDirect=letter.type==="direct";
+        const readProp=isDirect?"read_at":"feedback_read_at";
+        const note=document.createElement("details");
+        note.style.cssText="background:#fffdf4;padding:10px;margin-top:9px;border:1px solid #d6c9a7;border-radius:6px";
+        const title=document.createElement("summary");
+        title.style.cursor="pointer";
+        title.textContent=(entry[readProp]?"":"● ")+letter.title;note.appendChild(title);
+        const body=document.createElement("p");body.style.whiteSpace="pre-wrap";body.textContent=letter.body;note.appendChild(body);
+        if(!isDirect&&Array.isArray(entry.answers)&&entry.answers.length){
+          const review=document.createElement("details");
+          const reviewHeading=document.createElement("summary");reviewHeading.textContent="Se mina svar";review.appendChild(reviewHeading);
+          entry.answers.forEach((a,i)=>{
+            const p=document.createElement("p");p.style.fontSize="14px";
+            p.textContent=(i+1)+". "+a.question+" | Mitt svar: "+a.answer+" | Rätt: "+a.correct_answer+(a.correct?" ✓":" ✗");
+            review.appendChild(p);
+          });
+          note.appendChild(review);
         }
-        note.addEventListener("toggle",async()=>{if(note.open&&!entry.feedback_read_at){const rr=await MZ.cloudStudent.getClient().rpc("student_mark_quiz_feedback_read",{p_quiz_id:entry.quiz_id});if(!rr.error&&rr.data){entry.feedback_read_at=new Date().toISOString();title.textContent=entry.title;}}});
+        note.addEventListener("toggle",async()=>{
+          if(!note.open||entry[readProp])return;
+          try{
+            const rpc=isDirect?"student_mark_direct_message_read":"student_mark_quiz_feedback_read";
+            const args=isDirect?{p_message_id:entry.id}:{p_quiz_id:entry.quiz_id};
+            const marked=await MZ.cloudStudent.getClient().rpc(rpc,args);
+            if(marked.error||marked.data!==true)throw marked.error||new Error("Kunde inte markera som läst");
+            entry[readProp]=new Date().toISOString();
+            title.textContent=letter.title;
+            updateTeacherMailBadge();
+            void refreshTeacherMailStatus(true);
+          }catch(error){console.warn("Brev kunde inte markeras som läst",error);}
+        });
         panel.appendChild(note);
       });
-    }catch(error){console.warn("Feedback could not be loaded",error);}
+    }catch(error){console.warn("Brev kunde inte hämtas",error);}
   }
   MZ.renderQuizFeedbackNotes=renderQuizFeedbackNotes;
+
   function renderBoardMessage(){
     syncWelcomeBoard();
     const controls = $("#boardControls");
@@ -8650,6 +8756,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#officeBtn").addEventListener("click", () => {
       if(!state.onboarding.keyTaken){ renderBoardMessage(); MZ.openModal("boardModal"); $("#status").textContent="🔒 Parkkontoret är låst. Nyckeln finns på anslagstavlan."; return; }
       renderDailyMission(); renderHabitatProgress(); MZ.office.render(); MZ.openModal("officeModal");
+      void MZ.teacherMail?.refreshUnread?.(true);
     });
     $("#storageShedBtn").addEventListener("click", () => { updateShopUI(); MZ.openModal("storageModal"); });
     $("#catalogBtn").addEventListener("click", () => { resetCatalogOrderFeedback(); updateShopUI(); MZ.openModal("catalogModal"); });
@@ -12013,6 +12120,7 @@ async function claim(classCode,studentCode,displayName=""){
 
 function render(){
  const loggedIn=Boolean(current?.student);
+ void MZ.teacherMail?.refreshUnread?.();
  window.setTimeout(()=>MZ.missionBoard?.render?.(),0);
  $("#studentLoginPanel")?.classList.toggle("hidden",loggedIn);
  $("#studentAssignmentsPanel")?.classList.toggle("hidden",!loggedIn);
