@@ -527,7 +527,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     const action=$("teacherManageAction").value;
     const email=$("newTeacherEmail").value.trim().toLowerCase();
     const password=$("newTeacherPassword").value;
-    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
       setFeedback("teacherManagementFeedback","Skriv kollegans e-postadress.","bad");return;
     }
     if(action==="create"&&password.length<12){
