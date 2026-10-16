@@ -286,6 +286,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       <div class="student-task" style="margin-bottom:18px;border:1px solid #d7e1d1;background:#fffdf7">
         <h3 style="margin:0 0 7px">💌 Skicka meddelande till eleven</h3>
         <p class="small muted" style="margin:0 0 10px">Fristående meddelande, utan koppling till prov eller läxa. Visas under Dagens uppdrag på elevens anslagstavla.</p>
+        <input id="directMessageTitle" maxlength="80" placeholder="Rubrik, t.ex. Träna på bråk" style="margin-bottom:9px">
         <textarea id="directMessageInput" maxlength="1200" rows="3" placeholder="Skriv ett personligt meddelande …" style="width:100%;min-height:92px;border:1px solid #bac8b7;border-radius:10px;padding:10px;font:inherit;resize:vertical"></textarea>
         <div class="schoolwork-actions" style="margin-top:9px;align-items:center">
           <button class="btn primary" id="directMessageSend" type="button">💌 Skicka meddelande</button>
@@ -855,12 +856,15 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   }
   function fillList(id,items){const el=$(id);el.innerHTML="";if(!items.length){el.innerHTML='<div class="empty">Ingen registrerad träning ännu.</div>';return;}items.forEach(item=>{const row=document.createElement("div");row.className="activity-row";row.innerHTML="<strong>"+escapeHtml(item.label)+"</strong><span>"+item.count+"</span>";el.appendChild(row);});}
   function renderDirectMessageComposer(student){
-    const input=$("directMessageInput"),send=$("directMessageSend"),status=$("directMessageStatus");
-    if(!input||!send||!status)return;
+    const input=$("directMessageInput"),title=$("directMessageTitle"),send=$("directMessageSend"),status=$("directMessageStatus");
+    if(!input||!title||!send||!status)return;
     const key=feedbackDraftKey(student.id,"direct-message");
     const draft=readFeedbackDraft(key);
     input.value=draft===null?"":draft;
     input.oninput=()=>saveFeedbackDraft(key,input.value);
+    const titleKey=feedbackDraftKey(student.id,"direct-message-title");
+    title.value=readFeedbackDraft(titleKey)||"";
+    title.oninput=()=>saveFeedbackDraft(titleKey,title.value);
     send.disabled=false;status.textContent="";
     send.onclick=async()=>{
       const message=input.value.trim();
@@ -868,10 +872,10 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       if(message.length>1200){status.textContent="Meddelandet får vara högst 1200 tecken.";return;}
       send.disabled=true;status.textContent="Skickar …";
       try{
-        const result=await sb.rpc("teacher_send_direct_message",{p_student_id:student.id,p_body:message});
+        const result=await sb.rpc("teacher_send_titled_direct_message",{p_student_id:student.id,p_body:message,p_title:title.value.trim()});
         if(result.error||result.data?.ok!==true)throw result.error||new Error(result.data?.reason||"Kunde inte skicka");
-        clearFeedbackDraft(key);
-        input.value="";status.textContent="✓ Meddelandet är skickat till elevens anslagstavla.";
+        clearFeedbackDraft(key);clearFeedbackDraft(titleKey);
+        input.value="";title.value="";status.textContent="✓ Meddelandet är skickat till elevens anslagstavla.";
       }catch(error){
         console.error("Could not send direct message",error);
         status.textContent="Kunde inte skicka. Texten finns kvar, försök igen.";
