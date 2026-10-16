@@ -83,9 +83,45 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
         <select id="classSelect" aria-label="Välj klass"></select>
         <button class="btn primary" id="openTestModeBtn" type="button">🧪 Öppna testläge</button>
         <button class="btn secondary" id="refreshBtn" type="button">↻ Uppdatera</button>
+        <button class="btn secondary" id="changeMyPasswordBtn" type="button">🔐 Byt lösenord</button>
         <button class="btn secondary" id="logoutBtn" type="button">Logga ut</button>
       </div>
     </div>
+
+    <section id="selfPasswordCard" class="card hidden" style="margin-bottom:18px">
+      <div class="section-head"><div><h2>🔐 Byt mitt lösenord</h2><p class="muted">Välj ett eget lösenord och dela det inte med andra.</p></div></div>
+      <div class="form-grid">
+        <label>Nytt lösenord<input id="myNewPassword" type="password" autocomplete="new-password" minlength="12"></label>
+        <label>Upprepa lösenord<input id="myNewPasswordAgain" type="password" autocomplete="new-password" minlength="12"></label>
+        <div class="wide form-actions">
+          <button class="btn primary" id="saveMyPasswordBtn" type="button">Spara nytt lösenord</button>
+          <button class="btn secondary" id="cancelMyPasswordBtn" type="button">Avbryt</button>
+        </div>
+      </div>
+      <div class="feedback" id="myPasswordFeedback" aria-live="polite"></div>
+    </section>
+
+    <section id="teacherManagementCard" class="card hidden" style="margin-bottom:18px">
+      <div class="section-head">
+        <div><h2>👩‍🏫 Hantera lärare</h2>
+        <p class="muted">Endast skolans Matteparken-ägare kan skapa och godkänna lärarkonton. Varje lärare får sina egna klasser.</p></div>
+      </div>
+      <div class="form-grid">
+        <label class="wide">Vad vill du göra?
+          <select id="teacherManageAction">
+            <option value="create">Skapa nytt lärarkonto</option>
+            <option value="approve">Ge behörighet till ett konto som redan finns</option>
+          </select>
+        </label>
+        <label class="wide">Kollegans e-postadress<input id="newTeacherEmail" type="email" autocomplete="off" placeholder="kollega@skola.se"></label>
+        <label id="teacherPasswordRow" class="wide">Tillfälligt lösenord, minst 12 tecken
+          <input id="newTeacherPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Välj ett unikt, tillfälligt lösenord">
+        </label>
+        <p id="teacherManagementHint" class="muted small wide">Dela det tillfälliga lösenordet säkert med kollegan. Kollegan kan sedan byta det med knappen ”Byt lösenord” efter inloggning.</p>
+        <div class="wide"><button class="btn primary" id="saveTeacherBtn" type="button">+ Skapa lärare</button></div>
+      </div>
+      <div class="feedback" id="teacherManagementFeedback" aria-live="polite"></div>
+    </section>
 
     <div class="grid">
       <section class="card">
@@ -450,7 +486,87 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     catch(error){console.error(error);setFeedback("loginFeedback","Kunde inte logga in. Kontrollera e-post och lösenord.","bad");}
     finally{$("loginBtn").disabled=false;}
   }
-  async function logout(){await sb.auth.signOut();clearSessionFeedbackDrafts();user=null;classes=[];classId=null;assignments=[];students=[];studentNotes=new Map();selectedStudentId=null;if(refreshTimer)clearInterval(refreshTimer);$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden");setFeedback("loginFeedback","Utloggad.","good");}
+  function updateTeacherManagementMode(){
+    const existing=$("teacherManageAction").value==="approve";
+    $("teacherPasswordRow").classList.toggle("hidden",existing);
+    $("teacherManagementHint").textContent=existing
+      ?"Godkänn en kollega som redan har e-post och lösenord i Supabase. Kollegan behåller sitt lösenord."
+      :"Dela det tillfälliga lösenordet säkert med kollegan. Kollegan kan byta det med knappen ”Byt lösenord” efter inloggning.";
+    $("saveTeacherBtn").textContent=existing?"✓ Godkänn befintlig lärare":"+ Skapa lärare";
+    $("newTeacherPassword").value="";
+    setFeedback("teacherManagementFeedback","");
+  }
+
+  async function loadOwnerTeacherTools(){
+    const requestingUser=user?.id;
+    $("teacherManagementCard").classList.add("hidden");
+    try{
+      const {data,error}=await sb.functions.invoke("manage-teachers",{body:{action:"status"}});
+      if(error)throw error;
+      if(user?.id===requestingUser&&data?.ok&&data?.is_owner){
+        $("teacherManagementCard").classList.remove("hidden");
+      }
+    }catch(error){
+      // Other teachers do not have permission; keep owner tools hidden.
+      if(error?.name!=="FunctionsHttpError")console.warn("Ägarfunktionerna kunde inte hämtas:",error);
+    }
+  }
+
+  const teacherManageErrors={
+    invalid_email:"Ange en giltig e-postadress.",
+    password_length:"Lösenordet måste ha 12–128 tecken.",
+    account_already_exists:"Kontot finns redan. Välj ”Ge behörighet till ett konto som redan finns” i listan.",
+    account_not_found:"Ingen användare med den e-postadressen finns i Supabase. Välj ”Skapa nytt lärarkonto” i stället.",
+    forbidden:"Bara Matteparkens ägarkonto får lägga till lärare.",
+    not_authenticated:"Logga in igen och försök på nytt.",
+    create_failed:"Kunde inte skapa kontot. Kontrollera e-postadressen och försök igen.",
+    approval_failed:"Kontot kan ha skapats, men lärarbehörigheten kunde inte sparas. Välj ”Ge behörighet till ett konto som redan finns” och försök igen."
+  };
+  async function createOrApproveTeacher(){
+    if($("teacherManagementCard").classList.contains("hidden"))return;
+    const action=$("teacherManageAction").value;
+    const email=$("newTeacherEmail").value.trim().toLowerCase();
+    const password=$("newTeacherPassword").value;
+    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){
+      setFeedback("teacherManagementFeedback","Skriv kollegans e-postadress.","bad");return;
+    }
+    if(action==="create"&&password.length<12){
+      setFeedback("teacherManagementFeedback","Välj ett tillfälligt lösenord med minst 12 tecken.","bad");return;
+    }
+    $("saveTeacherBtn").disabled=true;
+    setFeedback("teacherManagementFeedback",action==="create"?"Skapar konto och lärarbehörighet …":"Godkänner lärarkontot …");
+    try{
+      const body=action==="create"?{action,email,password}:{action,email};
+      const {data,error}=await sb.functions.invoke("manage-teachers",{body});
+      if(error){
+        let code="network";
+        try{code=(await error.context?.json?.())?.error||code;}catch(_){}
+        throw new Error(teacherManageErrors[code]||"Kunde inte spara läraren. Försök igen.");
+      }
+      if(!data?.ok)throw new Error(teacherManageErrors[data?.error]||"Kunde inte spara läraren.");
+      $("newTeacherEmail").value="";$("newTeacherPassword").value="";
+      setFeedback("teacherManagementFeedback",action==="create"
+        ?"Lärarkontot är skapat! Ge kollegan e-postadress och det tillfälliga lösenordet på ett säkert sätt."
+        :"Klart! Kollegan har nu lärarbehörighet och kan skapa sin egen klass.","good");
+    }catch(error){console.error(error);setFeedback("teacherManagementFeedback",error?.message||"Kunde inte spara läraren.","bad");}
+    finally{$("saveTeacherBtn").disabled=false;}
+  }
+
+  async function changeMyPassword(){
+    const password=$("myNewPassword").value;
+    if(password.length<12){setFeedback("myPasswordFeedback","Använd minst 12 tecken.","bad");return;}
+    if(password!==$("myNewPasswordAgain").value){setFeedback("myPasswordFeedback","Lösenorden matchar inte.","bad");return;}
+    $("saveMyPasswordBtn").disabled=true;
+    try{
+      const {error}=await sb.auth.updateUser({password});
+      if(error)throw error;
+      $("myNewPassword").value="";$("myNewPasswordAgain").value="";
+      setFeedback("myPasswordFeedback","Ditt lösenord är uppdaterat.","good");
+    }catch(error){console.error(error);setFeedback("myPasswordFeedback","Kunde inte byta lösenord. Försök igen.","bad");}
+    finally{$("saveMyPasswordBtn").disabled=false;}
+  }
+
+  async function logout(){await sb.auth.signOut();$("teacherManagementCard").classList.add("hidden");$("selfPasswordCard").classList.add("hidden");$("newTeacherPassword").value="";clearSessionFeedbackDrafts();user=null;classes=[];classId=null;assignments=[];students=[];studentNotes=new Map();selectedStudentId=null;if(refreshTimer)clearInterval(refreshTimer);$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden");setFeedback("loginFeedback","Utloggad.","good");}
 
   async function loadClasses(){
     const tc=await sb.from("teacher_classes").select("class_id");if(tc.error)throw tc.error;
@@ -501,6 +617,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     }
     if(refreshTimer)clearInterval(refreshTimer);
     refreshTimer=setInterval(()=>{if(!document.hidden&&classId)loadClassData({silent:true});},20000);
+    await loadOwnerTeacherTools();
   }
 
   async function loadClassData({silent=false}={}){
@@ -1133,6 +1250,13 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     }
   }
 
+  $("teacherManageAction").addEventListener("change",updateTeacherManagementMode);
+  $("saveTeacherBtn").addEventListener("click",createOrApproveTeacher);
+  $("newTeacherPassword").addEventListener("keydown",e=>{if(e.key==="Enter")createOrApproveTeacher();});
+  $("changeMyPasswordBtn").addEventListener("click",()=>{$("selfPasswordCard").classList.toggle("hidden");});
+  $("saveMyPasswordBtn").addEventListener("click",changeMyPassword);
+  $("cancelMyPasswordBtn").addEventListener("click",()=>{$("selfPasswordCard").classList.add("hidden");$("myNewPassword").value="";$("myNewPasswordAgain").value="";setFeedback("myPasswordFeedback","");});
+  $("myNewPasswordAgain").addEventListener("keydown",e=>{if(e.key==="Enter")changeMyPassword();});
   $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("setInvitePasswordBtn").addEventListener("click",setInvitePassword);$("invitePasswordAgain").addEventListener("keydown",e=>{if(e.key==="Enter")setInvitePassword();});$("logoutBtn").addEventListener("click",logout);$("openTestModeBtn").addEventListener("click",openTeacherTestMode);$("refreshBtn").addEventListener("click",()=>loadClassData());
   $("saveAssignmentBtn").addEventListener("click",saveAssignment);$("cancelEditBtn").addEventListener("click",cancelEdit);$("createClassBtn").addEventListener("click",createClass);$("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
   $("generateCodesBtn").addEventListener("click",generateCodes);$("copyCodesBtn").addEventListener("click",copyCodes);$("createHomeworkBtn").addEventListener("click",createHomework);$("createQuizBtn").addEventListener("click",createQuiz);$("createRedeemBtn").addEventListener("click",createRedeemCode);$("redeemAdminCode").addEventListener("keydown",e=>{if(e.key==="Enter")createRedeemCode();});$("redeemRewardType").addEventListener("change",syncRedeemAmount);$("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;renderStudents();$("studentDetail").classList.add("hidden");});
