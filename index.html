@@ -6965,7 +6965,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       const state=await refreshTeacherMailStatus(true);
       if(teacherMailStudentId()!==studentId)return;
       const letters=[
-        ...state.messages.map(entry=>({type:"direct",entry,time:entry.created_at||"",title:"💌 Personligt meddelande",body:entry.body||""})),
+        ...state.messages.map(entry=>({type:"direct",entry,time:entry.created_at||"",title:"💌 "+(String(entry.title||"").trim()||"Personligt meddelande"),body:entry.body||""})),
         ...state.feedback.map(entry=>({type:"quiz",entry,time:entry.feedback_at||"",title:"📄 Återkoppling: "+(entry.title||"Läxförhör"),body:entry.teacher_feedback||""}))
       ].sort((a,b)=>String(b.time).localeCompare(String(a.time)));
       if(!letters.length)return;
