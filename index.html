@@ -1199,6 +1199,40 @@ window.MATTEZOO_TEACHER_PLAN = {
 .placed-item.boletes .placed-sprite{width:70px;height:56px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
 .placed-item.parasolMushroom .placed-sprite{width:53px;height:59px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
 
+/* Halloween items: independent transparent sprites; original autumn items keep their IDs. */
+.placed-item.halloweenBats{width:112px;height:82px}
+.placed-item.halloweenGhost{width:75px;height:85px}
+.placed-item.halloweenWeb{width:110px;height:105px}
+.placed-item.halloweenCauldron{width:81px;height:83px}
+.placed-item.halloweenTrailSign{width:112px;height:94px}
+.placed-item.halloweenBats .placed-sprite,.placed-item.halloweenGhost .placed-sprite,
+.placed-item.halloweenWeb .placed-sprite,.placed-item.halloweenCauldron .placed-sprite,
+.placed-item.halloweenTrailSign .placed-sprite{
+  display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;
+}
+.placed-item.halloweenBats .halloween-animation,.placed-item.halloweenGhost .halloween-animation{
+  position:relative;display:block;width:100%;height:100%;
+}
+.placed-item .halloween-animation .halloween-frame{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  image-rendering:pixelated;opacity:0;pointer-events:none;
+}
+.placed-item.halloweenBats .frame-1{animation:halloweenBatsOpen 5.6s steps(1,end) infinite}
+.placed-item.halloweenBats .frame-2{animation:halloweenBatsClosed 5.6s steps(1,end) infinite}
+@keyframes halloweenBatsOpen{0%,83.9%{opacity:1}84%,87.9%{opacity:0}88%,100%{opacity:1}}
+@keyframes halloweenBatsClosed{0%,83.9%{opacity:0}84%,87.9%{opacity:1}88%,100%{opacity:0}}
+.placed-item.halloweenGhost .halloween-animation{animation:halloweenGhostFloat 3.6s ease-in-out infinite}
+.placed-item.halloweenGhost .frame-1{animation:halloweenGhostLow 3.6s steps(1,end) infinite}
+.placed-item.halloweenGhost .frame-2{animation:halloweenGhostHigh 3.6s steps(1,end) infinite}
+@keyframes halloweenGhostFloat{0%,100%{transform:translateY(3px)}50%{transform:translateY(-4px)}}
+@keyframes halloweenGhostLow{0%,49.9%{opacity:1}50%,99.9%{opacity:0}100%{opacity:1}}
+@keyframes halloweenGhostHigh{0%,49.9%{opacity:0}50%,99.9%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+ .placed-item .halloween-animation,.placed-item .halloween-animation .halloween-frame{animation:none!important}
+ .placed-item .halloween-animation .frame-1{opacity:1}
+ .placed-item .halloween-animation .frame-2{opacity:0}
+}
+
 .placed-item.firePit .firepit-animation{position:relative;display:block;width:60px;height:52px}
 .placed-item.firePit .firepit-animation::before{content:"";position:absolute;left:50%;top:58%;width:42px;height:28px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle, rgba(255,214,120,.34) 0%, rgba(255,168,60,.18) 45%, rgba(255,120,30,.08) 68%, rgba(255,120,30,0) 100%);pointer-events:none;filter:blur(1px)}
 .placed-item.firePit .firepit-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges;opacity:0;filter:drop-shadow(0 0 3px rgba(255,190,90,.18)) drop-shadow(0 0 7px rgba(255,140,40,.10))}
@@ -3691,7 +3725,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   state.parkItems = state.parkItems.filter((item) => item?.type !== "parkSign");
   if(state.inventory && typeof state.inventory === "object") delete state.inventory.parkSign;
   if(!state.inventory || typeof state.inventory !== "object" || Array.isArray(state.inventory)) state.inventory = {};
-  ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom"].forEach((type) => {
+  ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom","halloweenBats","halloweenGhost","halloweenWeb","halloweenCauldron","halloweenTrailSign"].forEach((type) => {
     state.inventory[type] = Math.max(0, Number(state.inventory[type]) || 0);
   });
 
@@ -4469,7 +4503,14 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     {type:"hayBale", name:"Höbal", icon:"🌾", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
     {type:"leafPile", name:"Lövhög", icon:"🍂", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
     {type:"boletes", name:"Soppar", icon:"🍄", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
-    {type:"parasolMushroom", name:"Stolt fjällskivling", icon:"🍄", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true}
+    {type:"parasolMushroom", name:"Stolt fjällskivling", icon:"🍄", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
+
+    // Halloweenlådan. Separata typer: gamla höstköp bevaras i förråd och park.
+    {type:"halloweenBats", name:"Sovande fladdermöss", icon:"🦇", kind:"equipment", source:"seasonal", season:"halloween", habitat:"any", decorative:true},
+    {type:"halloweenGhost", name:"Svävande spöke", icon:"👻", kind:"equipment", source:"seasonal", season:"halloween", habitat:"any", decorative:true},
+    {type:"halloweenWeb", name:"Spindelnät", icon:"🕸️", kind:"equipment", source:"seasonal", season:"halloween", habitat:"any", decorative:true},
+    {type:"halloweenCauldron", name:"Häxkittel", icon:"🧙", kind:"equipment", source:"seasonal", season:"halloween", habitat:"any", decorative:true},
+    {type:"halloweenTrailSign", name:"Skylt mot Spökstigen", icon:"🪧", kind:"equipment", source:"seasonal", season:"halloween", habitat:"any", decorative:true}
   ]);
 
   const habitatOrder = Object.freeze(["southwest","northwest","northeast","southeast"]);
@@ -4482,8 +4523,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   // Templates. They remain hidden until enabled AND at least one seasonal item exists.
   const seasonalCrateDefinitions = Object.freeze({
-    autumn:{id:"autumn", name:"Halloweenlåda", icon:"🎃", price:100, enabled:true, start:"09-01", end:"11-30"},
-    halloween:{id:"halloween", name:"Halloweenlåda", icon:"🎃", price:100, enabled:false, start:"10-01", end:"11-03"},
+    autumn:{id:"autumn", name:"Höstlåda", icon:"🍂", price:100, enabled:false, start:"09-01", end:"11-30"},
+    halloween:{id:"halloween", name:"Halloweenlåda", icon:"🎃", price:100, enabled:true, start:"10-19", end:"11-01"},
     christmas:{id:"christmas", name:"Jullåda", icon:"🎄", price:100, enabled:false, start:"12-01", end:"01-06"},
     valentine:{id:"valentine", name:"Alla hjärtans-låda", icon:"💘", price:100, enabled:false, start:"02-01", end:"02-16"}
   });
@@ -5003,13 +5044,13 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     blackCat:{
       id:"blackCat", name:"Svart katt", icon:"🐈‍⬛", habitat:"park",
       anchorTypes:["leafPile","hayBale","pumpkinLantern","pumpkins","leafBasket","appleBasket","autumnPot","boletes","parasolMushroom"],
-      requirements:{minUniqueAutumnDecorations:3}, limitedSeason:"autumn", seasonalPriority:true,
+      requirements:{minUniqueAutumnDecorations:3}, seasonalPriority:true,
       minEligibleDays:1, guaranteedAfter:3, discoverChance:.45, visitOffset:1,
       clueHeadline:"Små tasspår bland höstlöven",
       clueBody:"Någon har tassat mellan höstdekorationerna. I löven syns små spår som inte fanns där igår.",
       discoveryHeadline:"En svart katt har hittat till parken!",
       discoveryBody:"Den höstiga parken har fått en ny besökare. En svart katt tassar försiktigt fram mellan dekorationerna.",
-      guideText:"En nyfiken svart katt som bara brukar visa sig under höstsäsongen när parken har fått ordentlig höstkänsla.",
+      guideText:"En nyfiken svart katt som kan lockas till parken året runt av minst tre olika höstdekorationer.",
       attractorName:"Minst tre olika dekorationer från Höstlådan",
       hint:"Någon verkar dras till en park med flera olika höstdekorationer.", offsetX:12, offsetY:7
     },
@@ -6290,7 +6331,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     fern:"ormbunke", blueberryBush:"blåbärsris", woodAnemone:"vitsippa", hepatica:"blåsippa", orchid:"skogsorkidé", spruce:"gran", pine:"tall", oak:"ek", heather:"ljung", rockThyme:"backtimjan", mountainShrub:"bergsbuske", reeds:"vass", cattails:"kaveldun", waterLily:"näckros", shoreGrass:"strandgräs"
   }[seed] || "växt");
 
-  const equipmentTypes = ["mushroomBasket","flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom"];
+  const equipmentTypes = ["mushroomBasket","flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom","halloweenBats","halloweenGhost","halloweenWeb","halloweenCauldron","halloweenTrailSign"];
   const natureTypes = ["daisy","tulip","lavender","sunflower","poppy","cornflower","marigold","fern","blueberryBush","woodAnemone","hepatica","orchid","spruce","pine","oak","heather","rockThyme","mountainShrub","reeds","cattails","waterLily","shoreGrass"];
   const isEquipment = (type) => equipmentTypes.includes(type);
   const isNature = (type) => natureTypes.includes(type);
@@ -6329,7 +6370,12 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     hayBale:{name:"Höbal", icon:"🌾"},
     leafPile:{name:"Lövhög", icon:"🍂"},
     boletes:{name:"Soppar", icon:"🍄"},
-    parasolMushroom:{name:"Stolt fjällskivling", icon:"🍄"}
+    parasolMushroom:{name:"Stolt fjällskivling", icon:"🍄"},
+    halloweenBats:{name:"Sovande fladdermöss", icon:"🦇"},
+    halloweenGhost:{name:"Svävande spöke", icon:"👻"},
+    halloweenWeb:{name:"Spindelnät", icon:"🕸️"},
+    halloweenCauldron:{name:"Häxkittel", icon:"🧙"},
+    halloweenTrailSign:{name:"Skylt mot Spökstigen", icon:"🪧"}
   };
 
   const itemSprites = {
@@ -6435,6 +6481,13 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     boletes:"assets/autumn/boletes.png",
     parasolMushroom:"assets/autumn/parasol_mushroom.png"
   });
+  Object.assign(itemSprites, {
+    halloweenBats:"assets/halloween/bats_open.webp",
+    halloweenGhost:"assets/halloween/ghost_low.webp",
+    halloweenWeb:"assets/halloween/cobweb.webp",
+    halloweenCauldron:"assets/halloween/cauldron.webp",
+    halloweenTrailSign:"assets/halloween/spooktrail_sign.webp"
+  });
 
   // Restore sprites for park lantern and forest mushroom cluster.
   // Forest mushroom cluster uses its own pixel-art sprite.
@@ -6484,6 +6537,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const frames = itemAnimationFrames[visualType];
     if(!frames || !frames.length) return "";
     if(visualType === "firePit") return `<span class="firepit-animation">${frames.map((src,index)=>`<img class="firepit-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
+    if(visualType === "halloweenBats" || visualType === "halloweenGhost"){
+      return `<span class="halloween-animation">${frames.map((src,index)=>`<img class="placed-sprite halloween-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
+    }
     return "";
   }
   const itemVisualMarkup = (type, icon, wrapperClass = "storage-icon") => itemHasSprite(type)
@@ -6496,7 +6552,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       "assets/asset_085_f0591029307c5ce1.png",
       "assets/asset_047_c474e6261ef81111.png",
       "assets/asset_086_ae365717c7246f56.png"
-    ]
+    ],
+    halloweenBats:["assets/halloween/bats_open.webp","assets/halloween/bats_closed.webp"],
+    halloweenGhost:["assets/halloween/ghost_low.webp","assets/halloween/ghost_high.webp"]
   };
 
   const seedMoundSprite = "assets/asset_087_7bbd83a1be9b2aa9.png";
