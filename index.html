@@ -1211,18 +1211,21 @@ window.MATTEZOO_TEACHER_PLAN = {
   display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;
 }
 
-/* Single ghost image bobbing up and down visibly, without swapping frames. */
+/* Bob the whole placed object, not just its nested image.
+   Animating margin-top leaves the park's saved x/y and its base-anchor transform intact.
+   Deliberately explicit for this Halloween ghost even if reduced motion is requested. */
+.placed-item.halloweenGhost:not(.placement-ghost){
+  animation:halloweenGhostBobbing 1.8s ease-in-out infinite;
+}
 .placed-item.halloweenGhost .halloween-ghost-float{
   position:relative;display:block;width:100%;height:100%;
-  animation:halloweenGhostFloat 2.8s ease-in-out infinite;
-  will-change:transform;
 }
 .placed-item.halloweenGhost .halloween-ghost-sprite{
   display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;
 }
-@keyframes halloweenGhostFloat{
-  0%,100%{transform:translateY(3px)}
-  50%{transform:translateY(-5px)}
+@keyframes halloweenGhostBobbing{
+  0%,100%{margin-top:5px}
+  50%{margin-top:-13px}
 }
 
 /* The awake bat briefly closes its eyes, then opens them again. */
