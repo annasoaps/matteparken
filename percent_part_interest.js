@@ -127,7 +127,7 @@
     if(!active)return;
     const spec=specs[active.id],host=$(spec.view),q=active.questions[active.index];
     const title=active.id==="percentPart"?"delen = andelen · det hela":"räntan = räntesatsen · kapitalet";
-    host.innerHTML='<div class="trainer-head pp-top"><div><button type="button" class="secondary pp-back">← Till parkkontoret</button><h2>'+spec.icon+' '+spec.title+'</h2><div class="muted">'+spec.lesson+' · Fyra uppgifter ger 10 kottar</div></div><div class="pill">🌰 <span class="pp-cones">'+MZ.storage.getNaturePoints()+'</span> kottar</div></div>'
+    host.innerHTML='<div class="trainer-head pp-top"><div><button id="backFrom'+(active.id==="percentPart"?"PercentPart":"Interest")+'" type="button" class="secondary pp-back">← Till parkkontoret</button><h2>'+spec.icon+' '+spec.title+'</h2><div class="muted">'+spec.lesson+' · Fyra uppgifter ger 10 kottar</div></div><div class="pill">🌰 <span class="pp-cones">'+MZ.storage.getNaturePoints()+'</span> kottar</div></div>'
       +'<div class="trainer-panel pp-board"><div class="pp-progress"><strong>Uppgift '+(active.index+1)+' av 4</strong><span>'+((active.index+1)===1?'Vi börjar tillsammans':(active.index+1)===2?'Följ stegen':(active.index+1)===3?'Nu provar du mer själv':'Sista utmaningen')+'</span></div>'
       +'<div class="pp-track"><div style="width:'+(active.index/4*100)+'%"></div></div>'
       +'<div class="pp-scene"><div class="pp-icon" aria-hidden="true">'+q.icon+'</div><div class="pp-context"><h3>'+q.title+'</h3><p>'+(active.id==="percentPart"?q.story:interestStory(q))+'</p></div></div>'
@@ -208,7 +208,7 @@
   function result(){
     if(!active||!active.completed)return;
     const spec=specs[active.id],host=$(spec.view);
-    host.innerHTML='<div class="trainer-head"><div><button type="button" class="secondary pp-back">← Till parkkontoret</button><h2>'+spec.icon+' '+spec.title+'</h2></div><div class="pill">🌰 <span class="pp-cones">'+MZ.storage.getNaturePoints()+'</span> kottar</div></div>'
+    host.innerHTML='<div class="trainer-head"><div><button id="backFrom'+(active.id==="percentPart"?"PercentPart":"Interest")+'" type="button" class="secondary pp-back">← Till parkkontoret</button><h2>'+spec.icon+' '+spec.title+'</h2></div><div class="pill">🌰 <span class="pp-cones">'+MZ.storage.getNaturePoints()+'</span> kottar</div></div>'
       +'<div class="trainer-panel pp-board pp-complete"><div class="pp-trophy">🌲🎉</div><h3>Fyra uppgifter klara!</h3><p>Du har övat på '+(active.id==="percentPart"?"att räkna ut delen.":"att räkna ut ränta för sparande och lån.")+'</p>'
       +'<div class="pp-reward">'+(active.reward?"+ "+active.reward+" kottar 🌰":"Ingen kottbelöning registrerad")+'</div><div class="pp-actions"><button class="primary pp-retry" type="button">Spela fyra nya</button><button class="secondary pp-exit" type="button">Till parkkontoret</button></div></div>';
     host.querySelector(".pp-back").addEventListener("click",back);
