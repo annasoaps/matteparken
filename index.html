@@ -2673,7 +2673,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
             <button class="game-card" id="openFractionArithmetic"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">05</span><span class="shelf-symbol">½ + ¼</span><span class="shelf-cover-rule"></span></span><strong>Räkna med bråk</strong><span class="shelf-description">Förläng, räkna och förkorta steg för steg.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             
             <button class="game-card" id="openPercentConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">06</span><span class="shelf-symbol">¼ = 0,25 = 25 %</span><span class="shelf-cover-rule"></span></span><strong>Bråk · Decimal · Procent</strong><span class="shelf-description">Fyll i de två former som saknas och se samma tal på tre sätt.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
-            <button class="game-card" id="openSharePart"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">07</span><span class="shelf-symbol">3/10 = 30 %</span><span class="shelf-cover-rule"></span></span><strong>Hur stor andel?</strong><span class="shelf-description">Se delen och det hela. Skriv andelen som bråk, decimal och procent. Tio uppgifter ger 10 kottar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
+            <button class="game-card" id="openSharePart"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">07</span><span class="shelf-symbol">3/10 = 30 %</span><span class="shelf-cover-rule"></span></span><strong>Hur stor andel?</strong><span class="shelf-description">Se delen och det hela. Skriv andelen som bråk, decimal och procent. Sex uppgifter ger 10 kottar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openPrefixMatch"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">08</span><span class="shelf-symbol">k · m</span><span class="shelf-cover-rule"></span></span><strong>Prefix – para ihop</strong><span class="shelf-description">Matcha kilo, hekto, deci, centi och milli med rätt värde.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openUnitConvert"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">09</span><span class="shelf-symbol">cm → m</span><span class="shelf-cover-rule"></span></span><strong>Enhetsomvandling</strong><span class="shelf-description">Omvandla längd, massa och volym mellan vanliga enheter.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
             <button class="game-card" id="openStatistics"><span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">10</span><span class="shelf-symbol">▂ ▅ ▃ ▇</span><span class="shelf-cover-rule"></span></span><strong>Statistik</strong><span class="shelf-description">Träna frekvens, relativ frekvens och lägesmått.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span></button>
@@ -3123,12 +3123,12 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
           <div>
             <button class="secondary" id="backFromSharePart">← Till parkkontoret</button>
             <h2 style="margin-top:16px">🟧 Hur stor andel?</h2>
-            <div class="muted">Se delen av det hela och skriv andelen i bråkform, decimalform och procentform. Tio uppgifter ger 10 kottar.</div>
+            <div class="muted">Se delen av det hela och skriv andelen i bråkform, decimalform och procentform. Sex uppgifter ger 10 kottar.</div>
           </div>
           <div class="pill">🌰 <span id="sharePartNp">0</span> kottar</div>
         </div>
         <div class="trainer-panel share-part-panel">
-          <div class="quest-progress-copy"><span>Det här varvet</span><span id="sharePartProgressText">0 / 10 uppgifter klara</span></div>
+          <div class="quest-progress-copy"><span>Det här varvet</span><span id="sharePartProgressText">0 / 6 uppgifter klara</span></div>
           <div class="progress"><div id="sharePartProgressFill"></div></div>
           <div class="simple-prompt">Hur stor andel är färgad?</div>
           <div class="share-part-visual"><div class="share-part-grid" id="sharePartGrid" role="img" aria-label=""></div></div>
@@ -3155,7 +3155,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
           <div class="percent-trio-actions"><button class="primary" id="sharePartCheck" type="button">Kontrollera</button></div>
           <div class="feedback" id="sharePartFeedback"></div>
-          <div class="round-actions" id="sharePartFinish"><strong id="sharePartFinishText">Varvet är klart.</strong><div class="action-buttons"><button class="primary" id="sharePartAgain" type="button">Kör 10 nya</button></div></div>
+          <div class="round-actions" id="sharePartFinish"><strong id="sharePartFinishText">Varvet är klart.</strong><div class="action-buttons"><button class="primary" id="sharePartAgain" type="button">Kör 6 nya</button></div></div>
         </div>
       </div>
 
@@ -4125,7 +4125,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         const gameId = activity.gameId;
         const entry = state.simpleGameStats[gameId] || (state.simpleGameStats[gameId] = {rounds:0, correct:0});
         entry.rounds = Math.max(0, Number(entry.rounds) || 0) + 1;
-        entry.correct = Math.max(0, Number(entry.correct) || 0) + config.standardRoundQuestions;
+        entry.correct = Math.max(0, Number(entry.correct) || 0) + (gameId==="sharePart" ? 6 : config.standardRoundQuestions);
         storage.saveSimpleGameStats();
         const rewardNP = config.standardRoundRewardNP;
         storage.addNaturePoints(rewardNP);
@@ -11057,7 +11057,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 (() => {
   "use strict";
   const MZ=window.Mattezoo, {$,storage}=MZ;
-  const ROUND_SIZE=10;
+  const ROUND_SIZE=6;
   let questions=[],index=0,completed=0,roundFinished=false,current=null;
 
   const guidedPool=[
@@ -11078,7 +11078,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function buildRound(){
     return shuffle(guidedPool).slice(0,2).map(q=>({...q,guided:true}))
-      .concat(shuffle(independentPool).slice(0,8).map(q=>({...q,guided:false})));
+      .concat(shuffle(independentPool).slice(0,ROUND_SIZE-2).map(q=>({...q,guided:false})));
   }
 
   function hideOthers(){
@@ -11208,9 +11208,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function finish(){
     roundFinished=true;
-    const r=MZ.math.completeActivity({gameId:"sharePart",type:"ten-question-round"});
+    const r=MZ.math.completeActivity({gameId:"sharePart",type:"ten-question-round",questions:ROUND_SIZE});
     $("#sharePartCheck").disabled=true;
-    $("#sharePartFeedback").textContent="🎉 Tio uppgifter klara! Du fick "+r.rewardNP+" kottar.";
+    $("#sharePartFeedback").textContent="🎉 Sex uppgifter klara! Du fick "+r.rewardNP+" kottar.";
     $("#sharePartFeedback").className="feedback good";
     $("#sharePartFinishText").textContent="Varvet är klart. Du fick "+r.rewardNP+" kottar.";
     $("#sharePartFinish").classList.add("open");
@@ -12047,7 +12047,7 @@ function homeworkGroupSummary(group){
  return Array.from(counts.entries()).map(([label,count])=>label+(count>1?" × "+count:"")).join(" · ");
 }
 function activityDescriptor(d){if(d.gameId==="multiplication"&&Number.isFinite(Number(d.table))){const t=Number(d.table);return{key:"multiplication:"+t,label:t+":ans tabell"};}return{key:d.gameId,label:gameTitle(d.gameId)};}
-function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 10 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt.",percentChange:"En omgång = 3 uppgifter: välj, skriv med stöd, lös själv.",whole:"En omgång = 4 uppgifter med Y-bokens sätt eller algebra.",percentPart:"En omgång = 4 uppgifter om delen.",interest:"En omgång = 4 uppgifter om ränta."};return x[a?.game_id]||"En hel omgång.";}
+function roundDescription(a){const t=Number(a?.game_config?.table);if(a?.game_id==="multiplication"&&t>=1&&t<=10)return"En omgång = hela "+t+":ans tabell, ×1–×10.";const x={multiplication:"En omgång = en hel vald tabell, ×1–×10.",equations:"En omgång = en färdig slumpad ekvation.",pow10:"En omgång = 10 rätt.",fractionDecimal:"En omgång = hela brädet med 8 par.",fractionArithmetic:"En omgång = 3 färdiga bråkberäkningar.",percentConvert:"En omgång = 6 kompletta trior.",sharePart:"En omgång = 6 uppgifter om delen och det hela.",prefixMatch:"En omgång = 10 rätt.",unitConvert:"En omgång = 10 rätt.",statistics:"En omgång = 10 rätt.",scientificNotation:"En omgång = 10 rätt.",percentChange:"En omgång = 3 uppgifter: välj, skriv med stöd, lös själv.",whole:"En omgång = 4 uppgifter med Y-bokens sätt eller algebra.",percentPart:"En omgång = 4 uppgifter om delen.",interest:"En omgång = 4 uppgifter om ränta."};return x[a?.game_id]||"En hel omgång.";}
 
 function getSelection(){try{return JSON.parse(localStorage.getItem(SELECTION_KEY)||"null");}catch{return null;}}
 function setSelection(v){v?localStorage.setItem(SELECTION_KEY,JSON.stringify(v)):localStorage.removeItem(SELECTION_KEY);}
