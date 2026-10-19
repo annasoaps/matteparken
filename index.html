@@ -1189,48 +1189,71 @@ window.MATTEZOO_TEACHER_PLAN = {
 .placed-item.firePit{width:60px;height:52px;display:flex;align-items:flex-end;justify-content:center;overflow:visible}
 .placed-item.firePit:before,.placed-item.firePit:after{content:none}
 .placed-item.firePit .placed-sprite{width:60px;height:52px;object-fit:contain;filter:drop-shadow(0 4px 0 rgba(45,65,45,.09))}
-.placed-item.autumnPot .placed-sprite{width:65px;height:64px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.pumpkins .placed-sprite{width:80px;height:58px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.pumpkinLantern .placed-sprite{width:70px;height:57px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.leafBasket .placed-sprite{width:78px;height:65px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.appleBasket .placed-sprite{width:78px;height:66px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.hayBale .placed-sprite{width:154px;height:96px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.leafPile .placed-sprite{width:105px;height:61px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.boletes .placed-sprite{width:70px;height:56px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.parasolMushroom .placed-sprite{width:53px;height:59px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.autumnPot .placed-sprite{width:32.5px;height:32px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
+.placed-item.pumpkins .placed-sprite{width:40px;height:29px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
+.placed-item.pumpkinLantern .placed-sprite{width:35px;height:28.5px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
+.placed-item.leafBasket .placed-sprite{width:39px;height:32.5px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
+.placed-item.appleBasket .placed-sprite{width:39px;height:33px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
+.placed-item.hayBale .placed-sprite{width:77px;height:48px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
+.placed-item.leafPile .placed-sprite{width:52.5px;height:30.5px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
+.placed-item.boletes .placed-sprite{width:35px;height:28px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
+.placed-item.parasolMushroom .placed-sprite{width:26.5px;height:29.5px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(45,65,45,.09))}
 
-/* Halloween items: independent transparent sprites; original autumn items keep their IDs. */
-.placed-item.halloweenBats{width:112px;height:82px}
-.placed-item.halloweenGhost{width:75px;height:85px}
-.placed-item.halloweenWeb{width:110px;height:105px}
-.placed-item.halloweenCauldron{width:81px;height:83px}
-.placed-item.halloweenTrailSign{width:112px;height:94px}
+/* Halloween items: 50% smaller. Keep saved item types and transparent assets intact. */
+.placed-item.halloweenBats{width:56px;height:41px}
+.placed-item.halloweenGhost{width:37.5px;height:42.5px}
+.placed-item.halloweenWeb{width:55px;height:52.5px}
+.placed-item.halloweenCauldron{width:40.5px;height:41.5px}
+.placed-item.halloweenTrailSign{width:56px;height:47px}
 .placed-item.halloweenBats .placed-sprite,.placed-item.halloweenGhost .placed-sprite,
 .placed-item.halloweenWeb .placed-sprite,.placed-item.halloweenCauldron .placed-sprite,
 .placed-item.halloweenTrailSign .placed-sprite{
   display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;
 }
-.placed-item.halloweenBats .halloween-animation,.placed-item.halloweenGhost .halloween-animation{
+
+/* Single ghost image bobbing up and down visibly, without swapping frames. */
+.placed-item.halloweenGhost .halloween-ghost-float{
+  position:relative;display:block;width:100%;height:100%;
+  animation:halloweenGhostFloat 2.8s ease-in-out infinite;
+  will-change:transform;
+}
+.placed-item.halloweenGhost .halloween-ghost-sprite{
+  display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;
+}
+@keyframes halloweenGhostFloat{
+  0%,100%{transform:translateY(3px)}
+  50%{transform:translateY(-5px)}
+}
+
+/* The awake bat briefly closes its eyes, then opens them again. */
+.placed-item.halloweenBats .halloween-animation{
   position:relative;display:block;width:100%;height:100%;
 }
-.placed-item .halloween-animation .halloween-frame{
-  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-  image-rendering:pixelated;opacity:0;pointer-events:none;
+.placed-item.halloweenBats .halloween-frame{
+  position:absolute;inset:0;display:block;width:100%;height:100%;
+  object-fit:contain;image-rendering:pixelated;pointer-events:none;
 }
-.placed-item.halloweenBats .frame-1{animation:halloweenBatsOpen 5.6s steps(1,end) infinite}
-.placed-item.halloweenBats .frame-2{animation:halloweenBatsClosed 5.6s steps(1,end) infinite}
-@keyframes halloweenBatsOpen{0%,83.9%{opacity:1}84%,87.9%{opacity:0}88%,100%{opacity:1}}
-@keyframes halloweenBatsClosed{0%,83.9%{opacity:0}84%,87.9%{opacity:1}88%,100%{opacity:0}}
-.placed-item.halloweenGhost .halloween-animation{animation:halloweenGhostFloat 3.6s ease-in-out infinite}
-.placed-item.halloweenGhost .frame-1{animation:halloweenGhostLow 3.6s steps(1,end) infinite}
-.placed-item.halloweenGhost .frame-2{animation:halloweenGhostHigh 3.6s steps(1,end) infinite}
-@keyframes halloweenGhostFloat{0%,100%{transform:translateY(3px)}50%{transform:translateY(-4px)}}
-@keyframes halloweenGhostLow{0%,49.9%{opacity:1}50%,99.9%{opacity:0}100%{opacity:1}}
-@keyframes halloweenGhostHigh{0%,49.9%{opacity:0}50%,99.9%{opacity:1}100%{opacity:0}}
-@media (prefers-reduced-motion:reduce){
- .placed-item .halloween-animation,.placed-item .halloween-animation .halloween-frame{animation:none!important}
- .placed-item .halloween-animation .frame-1{opacity:1}
- .placed-item .halloween-animation .frame-2{opacity:0}
+.placed-item.halloweenBats .frame-1{
+  opacity:1;animation:halloweenBatsOpen 4.8s steps(1,end) infinite;
+}
+.placed-item.halloweenBats .frame-2{
+  opacity:0;animation:halloweenBatsClosed 4.8s steps(1,end) infinite;
+}
+@keyframes halloweenBatsOpen{
+  0%,87.9%{opacity:1}
+  88%,94.9%{opacity:0}
+  95%,100%{opacity:1}
+}
+@keyframes halloweenBatsClosed{
+  0%,87.9%{opacity:0}
+  88%,94.9%{opacity:1}
+  95%,100%{opacity:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .placed-item.halloweenGhost .halloween-ghost-float,
+  .placed-item.halloweenBats .halloween-frame{animation:none!important}
+  .placed-item.halloweenBats .frame-1{opacity:1}
+  .placed-item.halloweenBats .frame-2{opacity:0}
 }
 
 .placed-item.firePit .firepit-animation{position:relative;display:block;width:60px;height:52px}
@@ -6537,7 +6560,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const frames = itemAnimationFrames[visualType];
     if(!frames || !frames.length) return "";
     if(visualType === "firePit") return `<span class="firepit-animation">${frames.map((src,index)=>`<img class="firepit-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
-    if(visualType === "halloweenBats" || visualType === "halloweenGhost"){
+    if(visualType === "halloweenGhost"){
+      // A single fully visible sprite avoids double-frame flicker while the wrapper floats.
+      return `<span class="halloween-ghost-float"><img class="placed-sprite halloween-ghost-sprite" src="${frames[0]}" alt="" /></span>`;
+    }
+    if(visualType === "halloweenBats"){
       return `<span class="halloween-animation">${frames.map((src,index)=>`<img class="placed-sprite halloween-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
     }
     return "";
