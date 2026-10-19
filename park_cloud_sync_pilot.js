@@ -8,6 +8,7 @@
   const enabled = new URLSearchParams(window.location.search).get("parksync") !== "0";
   const ownerKey = "matteparken-park-sync-owner-v1";
   const backupPrefix = "matteparken-park-sync-before-restore-";
+  const localEditKey = "matteparken-park-last-local-edit-v1";
   let studentId = null, headId = null, ready = false, blocked = false;
   let syncing = null, connecting = null, timer = null, lastPushAt = 0;
   let lastCloudValues = null, notice = null, noticeText = null, actions = null;
@@ -35,6 +36,20 @@
     return aNames.length === bNames.length &&
       aNames.every(name => b[name]?.key === a[name]?.key &&
                            b[name]?.value === a[name]?.value);
+  }
+  // Besöksdatum kan ändras utan att parkens verkliga framsteg förändras.
+  function sameProgress(a, b) {
+    if (!a || !b) return false;
+    const progress = value => Object.fromEntries(
+      Object.entries(value).filter(([name]) =>
+        name !== "parkDay" && name !== "lastVisitDate"));
+    return sameValues(progress(a), progress(b));
+  }
+  function formatSavedAt(iso) {
+    const date = iso && new Date(iso);
+    return date && Number.isFinite(date.getTime())
+      ? date.toLocaleString("sv-SE", {day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})
+      : "okänd tid";
   }
   function getPart(name, fallback) {
     try { return JSON.parse(localStorage.getItem(MZ.keys[name]) || ""); }
@@ -115,9 +130,8 @@
       [notice,noticeText,actions],[modalNotice,modalNoticeText,modalActions]
     ]) {
       if (!panel) continue;
-      copy.textContent=panel===notice && !needsAttention
-        ? (ready ? "☁️✓ Parken synkas" : "☁️ Parken sparas")
-        : text;
+      // Visa faktisk sparstatus så att en fördröjd sparning märks.
+      copy.textContent=text;
       panel.style.borderColor=needsAttention ? "#b76e42" : "#9bad9c";
       if (panel===notice) {
         panel.style.maxWidth=needsAttention
@@ -169,7 +183,7 @@
     if (r.data?.ok !== true) {
       if (r.data?.reason === "newer_cloud_version") {
         blocked = true; ready = false;
-        message("☁️ En annan dator har sparat en nyare park. Ingen park skrivs över.", true);
+        message("⚠️ En annan enhet har sparat nyare ändringar. Vi skyddar båda versionerna.", true);
       }
       throw new Error(r.data?.reason || "Molnsparningen misslyckades");
     }
@@ -211,7 +225,7 @@
     if (!ready || blocked || !sameStudent() || syncing) return;
     if (!force && Date.now()-lastPushAt < 12000) return;
     const values = localValues();
-    if (sameValues(values,lastCloudValues) || !hasProgress()) return;
+    if (sameProgress(values,lastCloudValues) || !hasProgress()) return;
     const head = headId;
     syncing = (async () => {
       try {
@@ -220,8 +234,7 @@
         headId = newHead; lastCloudValues = values;
         markOwner(studentId,headId,values);
         lastPushAt = Date.now();
-        message("☁️ Parken sparad i molnet.");
-        action("Spara nu",()=>push({force:true}));
+        message("☁️✓ Sparad i molnet: "+formatSavedAt(new Date().toISOString()));
       } catch (error) {
         console.warn("Matteparken molnsparning",error);
         if (!blocked) message("☁️ Molnet kunde inte nås. Parken finns kvar på datorn.",true);
@@ -230,7 +243,8 @@
     try { await syncing; }
     finally {
       syncing = null;
-      if (ready && !blocked && !sameValues(localValues(),lastCloudValues)) schedule();
+      if (ready && !blocked && !sameProgress(localValues(),lastCloudValues)) schedule();
+      if (blocked && sameStudent()) void onStudentReady();
     }
   }
   function schedule() {
@@ -269,7 +283,7 @@
           if (hasProgress()) {
             // Lägg aldrig en gammal lokal park på fel elevkonto utan uttryckligt val.
             blocked=true;
-            message("🌳 Den här enheten har en park som inte tidigare kopplats till ett elevkonto. Kontrollera att den är din.",true);
+            message("🌳 Här finns en park som ännu inte kopplats till din elevkod. Koppla den en gång för att använda samma park på alla enheter.",true);
             action("Det är min park – spara i molnet",async () => {
               if (!sameStudent() || readOwner()?.studentId) return;
               if (!window.confirm("Är det här din egen park från skoldatorn? Den kopplas till elevkoden som du är inloggad med. Ingen lokal park raderas.")) return;
@@ -279,8 +293,7 @@
                 if (!sameStudent()) return;
                 blocked=false;ready=true;headId=newHead;lastCloudValues=values;
                 markOwner(id,newHead,values);lastPushAt=Date.now();
-                message("✓ Din park är kopierad till molnet. Nu kan du logga in med samma elevkod på mobilen.");
-                action("Spara nu",()=>push({force:true}));
+                message("☁️✓ Din park är sparad i molnet. Samma park öppnas nu på alla enheter.");
               } catch(error) {
                 console.warn("Koppla park till elevkod:",error);
                 message("⚠️ Kunde inte spara kopian. Den lokala parken är oförändrad.",true);
@@ -297,17 +310,16 @@
         }
         headId=record.id;
         const remote=validSnapshot(record.snapshot);
-        if (sameValues(current,remote)) {
+        if (sameProgress(current,remote)) {
           lastCloudValues=remote;
           markOwner(id,headId,remote);
           ready=true;
-          message("✓ Din park är kopplad till molnet.");
-          action("Spara nu",()=>push({force:true}));
+          message("☁️✓ Sparad i molnet: "+formatSavedAt(record.saved_at));
           return;
         }
         const ownUnmodified=savedOwner?.studentId===id &&
           savedOwner.snapshotId !== record.id &&
-          sameValues(current,savedOwner.savedValues);
+          sameProgress(current,savedOwner.savedValues);
         if (!hasProgress() || ownUnmodified) {
           await restoreCloud(record,{allowNonempty:ownUnmodified});
           return;
@@ -315,41 +327,30 @@
         if (savedOwner?.studentId===id && savedOwner.snapshotId===record.id) {
           lastCloudValues=savedOwner.savedValues || remote;
           ready=true;
-          message("☁️ Din park är kopplad till molnet. Senaste ändringarna säkerhetskopieras.");
-          action("Spara nu",()=>push({force:true}));
+          message("☁️ Sparar dina senaste ändringar i molnet …");
           schedule();
           return;
         }
 
-        // Två olika fungerande parkversioner. Ingen automatisk överskrivning.
+        // Verklig konflikt: ingen äldre lokal park får ersätta molnversionen.
+        // Vid återläsning sparas en verifierad lokal backup FÖRST.
         blocked=true;
-        message("⚠️ Den lokala parken skiljer sig från molnkopian. Båda sparas orörda tills du väljer.",true);
         const seenHead=record.id;
-        action("Hämta min molnpark till denna enhet",async () => {
-          if (!sameStudent() || !window.confirm(
-            "Hämta din park från molnet? En extra säkerhetskopia av den nuvarande parken sparas på enheten före bytet.")) return;
-          try { await restoreCloud(record,{allowNonempty:true}); }
-          catch(error) {
-            console.warn("Hämta molnpark:",error);
-            message("⚠️ Återställningen gick inte. Din gamla park finns kvar.",true);
+        const localEdited=localStorage.getItem(localEditKey);
+        message("⚠️ Molnet har en annan park sparad "+formatSavedAt(record.saved_at)+
+          (localEdited?" och här finns ändringar från "+formatSavedAt(localEdited):" och här finns lokala ändringar")+
+          ". Ingenting skrivs över. Öppna senaste molnparken för att fortsätta på samma park. Den lokala parken säkerhetskopieras först.",true);
+        action("Öppna senaste molnparken",async () => {
+          if (!sameStudent()) return;
+          if (!window.confirm(
+            "Öppna den senast sparade molnparken ("+formatSavedAt(record.saved_at)+")? "+
+            "Parken på denna enhet säkerhetskopieras före bytet.")) return;
+          const currentHead=await latest();
+          if (!currentHead || currentHead.id!==seenHead) {
+            message("☁️ Molnparken har uppdaterats igen. Ladda om sidan för att öppna den senaste versionen.",true);
+            return;
           }
-        });
-        if (savedOwner?.studentId===id) action("Använd parken på den här datorn",async () => {
-          if (!sameStudent() || !window.confirm(
-            "Spara den här datorns park som senaste molnversion? Den gamla molnkopian sparas som historik.")) return;
-          try {
-            const values=localValues();
-            const newHead=await append(seenHead,values);
-            blocked=false;ready=true;headId=newHead;lastCloudValues=values;
-            markOwner(id,newHead,values);lastPushAt=Date.now();
-            message("✓ Den här datorns park sparas nu automatiskt.");
-            action("Spara nu",()=>push({force:true}));
-          } catch(e) {
-            message("⚠️ Nyare molnversion eller anslutningsfel. Ingenting ändrades.",true);
-          }
-        });
-        action("Behåll båda, gör inget",async () => {
-          message("Parkerna är oförändrade. Ingen automatisk synkning görs på den här datorn.",true);
+          await restoreCloud(currentHead,{allowNonempty:true});
         });
       } catch (error) {
         console.warn("Matteparken anslutning för park",error);
@@ -388,13 +389,20 @@
     }
     const loginInfo=document.querySelector("#studentLoginPanel .assignment-demo-note");
     if (loginInfo) loginInfo.textContent=
-      "☁️ Efter inloggningen kan du koppla din befintliga park till elevkoden och hämta den på andra enheter.";
+      "☁️ Din park sparas på elevkoden och följer med mellan dina enheter.";
+    const info=document.querySelector(".mission-local-note");
+    if (info) info.textContent="☁️ Din park och dina framsteg sparas på din elevkod. Du kan fortsätta på samma park på olika enheter.";
 
     for (const [name,fn] of Object.entries(MZ.storage)) {
       if (!name.startsWith("save") || typeof fn !== "function") continue;
       MZ.storage[name]=function(...args) {
+        const before=localValues();
         const result=fn.apply(this,args);
-        schedule();
+        if (!sameValues(before,localValues())) {
+          localStorage.setItem(localEditKey,new Date().toISOString());
+          if (ready && !blocked) message("☁️ Sparar ändringar …");
+          schedule();
+        }
         return result;
       };
     }
