@@ -12,6 +12,8 @@
   let studentId = null, headId = null, ready = false, blocked = false;
   let syncing = null, connecting = null, timer = null, lastPushAt = 0;
   let checkingCloud = null, lastCloudCheckAt = 0;
+  let urgentSavePending = false;
+  const urgentParkChanges = new Set(["parkItems","inventory","onboarding","rewards","wildlife","habitats","fishing"]);
   let lastCloudValues = null, notice = null, noticeText = null, actions = null;
   let modalNotice=null, modalNoticeText=null, modalActions=null;
 
@@ -222,9 +224,9 @@
     window.setTimeout(() => window.location.reload(),350);
   }
 
-  async function push({force=false}={}) {
+  async function push({force=false,urgent=false}={}) {
     if (!ready || blocked || !sameStudent() || syncing) return;
-    if (!force && Date.now()-lastPushAt < 12000) return;
+    if (!force && Date.now()-lastPushAt < (urgent ? 3000 : 12000)) return;
     const values = localValues();
     if (sameProgress(values,lastCloudValues) || !hasProgress()) return;
     const head = headId;
@@ -248,14 +250,21 @@
       if (blocked && sameStudent()) void onStudentReady();
     }
   }
-  function schedule() {
+  function schedule({urgent=false}={}) {
     if (!enabled || !ready || blocked || !sameStudent()) return;
+    urgentSavePending = urgentSavePending || urgent;
     if (timer) window.clearTimeout(timer);
     timer=window.setTimeout(() => {
       timer=null;
-      if(Date.now()-lastPushAt < 12000) { schedule(); return; }
-      void push();
-    },2500);
+      const priority=urgentSavePending;
+      const throttle=priority ? 3000 : 12000;
+      if (Date.now()-lastPushAt < throttle) {
+        schedule({urgent:priority});
+        return;
+      }
+      urgentSavePending=false;
+      void push({urgent:priority});
+    },urgentSavePending ? 1000 : 2500);
   }
 
   async function onStudentReady() {
@@ -426,7 +435,7 @@
         if (!sameValues(before,localValues())) {
           localStorage.setItem(localEditKey,new Date().toISOString());
           if (ready && !blocked) message("☁️ Sparar ändringar …");
-          schedule();
+          schedule({urgent:urgentParkChanges.has(name)});
         }
         return result;
       };
