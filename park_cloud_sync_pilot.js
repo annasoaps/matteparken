@@ -11,6 +11,7 @@
   const localEditKey = "matteparken-park-last-local-edit-v1";
   let studentId = null, headId = null, ready = false, blocked = false;
   let syncing = null, connecting = null, timer = null, lastPushAt = 0;
+  let checkingCloud = null, lastCloudCheckAt = 0;
   let lastCloudValues = null, notice = null, noticeText = null, actions = null;
   let modalNotice=null, modalNoticeText=null, modalActions=null;
 
@@ -361,6 +362,30 @@
     try { await connecting; } finally { connecting=null; }
   }
 
+  async function checkCloudFreshness() {
+    if (!ready || blocked || syncing || !sameStudent()) return;
+    if (checkingCloud) return checkingCloud;
+    if (Date.now()-lastCloudCheckAt < 15000) return;
+    lastCloudCheckAt=Date.now();
+    checkingCloud=(async () => {
+      try {
+        const record=await latest();
+        if (!sameStudent() || !ready || blocked || syncing) return;
+        if (record?.id && record.id!==headId) {
+          // Den andra enheten har hunnit spara. Återanvänd säkra
+          // återläsningsregler: automatisk uppdatering bara när
+          // inga osparade ändringar finns på denna enhet.
+          ready=false;
+          await onStudentReady();
+        }
+      } catch (error) {
+        console.warn("Kunde inte kontrollera senaste molnpark",error);
+      }
+    })();
+    try { await checkingCloud; }
+    finally { checkingCloud=null; }
+  }
+
   function init() {
     if (!enabled) return;
     notice=document.createElement("div");
@@ -406,14 +431,17 @@
         return result;
       };
     }
-    window.addEventListener("online",() => { if (ready) schedule(); else void onStudentReady(); });
+    window.addEventListener("online",() => {
+      if (ready) void checkCloudFreshness().then(() => schedule());
+      else if (!blocked) void onStudentReady();
+    });
     document.addEventListener("visibilitychange",() => {
-      if (!document.hidden && ready) schedule();
+      if (!document.hidden && ready) void checkCloudFreshness().then(() => schedule());
       else if (document.hidden && ready) void push({force:true});
     });
     window.addEventListener("pagehide",() => {if (ready) void push({force:true});});
     window.setInterval(() => {
-      if (ready) schedule();
+      if (ready) void checkCloudFreshness().then(() => schedule());
       else if (!blocked) void onStudentReady();
     },60000);
   }
