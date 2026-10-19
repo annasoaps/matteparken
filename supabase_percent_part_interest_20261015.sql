@@ -247,8 +247,8 @@ begin
      or trim(coalesce(p_game_id,'')) <> v_assignment.game_id then
     return jsonb_build_object('ok',false,'reason','game_mismatch');
   end if;
-  if trim(coalesce(p_round_type,'')) <>
-     case v_assignment.game_id when 'percentPart' then 'four-part-round' else 'four-interest-round' end then
+  if (v_assignment.game_id = 'percentPart' and trim(coalesce(p_round_type,'')) <> 'four-part-round')
+     or (v_assignment.game_id = 'interest' and trim(coalesce(p_round_type,'')) <> 'four-interest-round') then
     return jsonb_build_object('ok',false,'reason','round_type_mismatch');
   end if;
 
