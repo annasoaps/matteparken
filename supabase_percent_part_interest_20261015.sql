@@ -91,7 +91,7 @@ begin
 
   return jsonb_build_object('ok',true,'granted',true,'amount',v_reward,'balance',v_balance);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.student_complete_homework_assignment(p_assignment_id uuid, p_game_id text, p_round_type text, p_table integer DEFAULT NULL::integer)
@@ -207,7 +207,7 @@ begin
     'completed_at',v_completed_at
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.record_percent_part_interest_round(p_assignment_id uuid, p_game_id text, p_round_type text, p_table integer DEFAULT NULL::integer)
@@ -278,7 +278,7 @@ begin
     'done',v_completed>=v_target,'completed_at',v_completed_at
   );
 end;
-$function$
+$function$;
 
 
 revoke all on function public.record_percent_part_interest_round(uuid,text,text,integer) from public;
