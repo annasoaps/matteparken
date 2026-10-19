@@ -430,9 +430,12 @@
     for (const [name,fn] of Object.entries(MZ.storage)) {
       if (!name.startsWith("save") || typeof fn !== "function") continue;
       MZ.storage[name]=function(...args) {
-        const before=localValues();
+        // Jämför de faktiska lokala sparvärdena. MZ.state har ofta redan
+        // uppdaterats innan saveParkItems anropas: fallback från state
+        // skulle då felaktigt visa att inget ändrats och missa molnsparning.
+        const before=keys().map(([part,key])=>[part,key,localStorage.getItem(key)]);
         const result=fn.apply(this,args);
-        if (!sameValues(before,localValues())) {
+        if (before.some(([,key,oldValue])=>localStorage.getItem(key)!==oldValue)) {
           localStorage.setItem(localEditKey,new Date().toISOString());
           if (ready && !blocked) message("☁️ Sparar ändringar …");
           schedule({urgent:urgentParkChanges.has(name)});
