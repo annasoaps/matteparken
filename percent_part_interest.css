@@ -44,3 +44,26 @@
  .pp-game .pp-progress{font-size:12px}
  .pp-game .pp-field>span{min-height:0}
 }
+
+/* Frivillig miniräknare i Beräkna delen och Räntebanken. */
+.pp-game .pp-calculator{width:min(100%,350px);margin:17px auto 4px;border:2px solid #b6c5ab;border-radius:14px;background:#f4f3e7;box-shadow:0 3px 0 #d8dfcc;overflow:hidden}
+.pp-game .pp-calculator summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;font-weight:850;font-size:16px;color:#385943;cursor:pointer;list-style:none;user-select:none}
+.pp-game .pp-calculator summary::-webkit-details-marker{display:none}
+.pp-game .pp-calculator summary::after{content:"▾";font-size:17px;color:#597d60}
+.pp-game .pp-calculator[open] summary::after{content:"▴"}
+.pp-game .pp-calculator summary>span{font-size:12px;font-weight:600;color:#718070}
+.pp-game .pp-calculator summary:focus-visible{outline:3px solid #b6c17c;outline-offset:-4px;border-radius:10px}
+.pp-game .pp-calc-body{border-top:1px solid #ced7bd;padding:13px 14px 9px}
+.pp-game .pp-calc-screen{background:#e3e9d8;border:2px solid #a5b39e;border-radius:10px;min-height:76px;padding:8px 12px 7px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.pp-game .pp-calc-expression{color:#607361;font-size:12px;min-height:18px;text-align:right;white-space:nowrap;overflow:hidden}
+.pp-game .pp-calc-display{display:block;width:100%;color:#263e31;font-size:27px;line-height:1.25;font-weight:850;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;overflow-x:auto;outline-offset:3px}
+.pp-game .pp-calc-keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.pp-game .pp-calc-key{min-width:0;min-height:43px;border:1px solid #bbc6b0;border-bottom:3px solid #a4b49b;border-radius:9px;padding:5px 3px;background:#fffefa;color:#2d4635;font-size:19px;font-weight:800;cursor:pointer}
+.pp-game .pp-calc-key:hover{background:#eaf2e2;border-color:#86a580}
+.pp-game .pp-calc-key:active{transform:translateY(1px);border-bottom-width:2px}
+.pp-game .pp-calc-key.pp-calc-operator{background:#dfead8;color:#365c40}
+.pp-game .pp-calc-key.pp-calc-delete{grid-column:span 2;background:#eee9da;font-size:21px}
+.pp-game .pp-calc-key.pp-calc-equals{grid-column:span 2;background:#718f69;color:#fff;border-color:#5d7957;border-bottom-color:#4c6847;font-size:22px}
+.pp-game .pp-calc-key.pp-calc-equals:hover{background:#5e805a}
+.pp-game .pp-calc-help{font-size:11px;color:#617161;text-align:center;line-height:1.45;margin:10px 0 2px}
+@media(max-width:380px){.pp-game .pp-calculator summary{padding:10px 12px}.pp-game .pp-calculator summary>span{font-size:11px}.pp-game .pp-calc-body{padding:10px}.pp-game .pp-calc-key{min-height:42px}}
