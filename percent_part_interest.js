@@ -36,7 +36,7 @@
     {kind:"loan",p:6,n:6000,months:6,icon:"🏕️",title:"Lån för en utflykt"}
   ];
   const specs={
-    percentPart:{view:"percentPartView",open:"openPercentPart",title:"Procentjakten",icon:"🎯",lesson:"2.4 Delen",
+    percentPart:{view:"percentPartView",open:"openPercentPart",title:"Beräkna delen",icon:"🎯",lesson:"2.4 Delen",
       description:"Beräkna delen: andelen · det hela. Fyra uppgifter ger 10 kottar.",type:"four-part-round"},
     interest:{view:"interestView",open:"openInterest",title:"Räntebanken",icon:"🏦",lesson:"2.5 Ränta",
       description:"Spara, låna och beräkna ränta under ett år eller kortare tid. Fyra uppgifter ger 10 kottar.",type:"four-interest-round"}
