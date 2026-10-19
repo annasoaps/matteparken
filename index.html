@@ -4724,7 +4724,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     {gameId:"percentChange", icon:"%", target:1,
       make(){return {label:"Beräkna förändring",description:"Räkna procentuell ökning och minskning",detailText:"3 uppgifter med mindre och mindre stöd"};}},
     {gameId:"percentPart", icon:"🎯", target:1,
-      make(){return {label:"Procentjakten",description:"Beräkna delen med procent",detailText:"4 uppgifter i en omgång"};}},
+      make(){return {label:"Beräkna delen",description:"Beräkna delen med procent",detailText:"4 uppgifter i en omgång"};}},
     {gameId:"interest", icon:"🏦", target:1,
       make(){return {label:"Räntebanken",description:"Räkna med ränta vid sparande och lån",detailText:"4 uppgifter i en omgång"};}},
     {gameId:"prefixMatch", icon:"📏", target:1,
@@ -11990,7 +11990,7 @@ const expectedRoundTypes={
  percentConvert:"six-trio-round",sharePart:"ten-question-round",prefixMatch:"ten-question-round",
  unitConvert:"ten-question-round",statistics:"ten-question-round",scientificNotation:"ten-question-round",percentChange:"three-change-round",whole:"four-whole-round",percentPart:"four-part-round",interest:"four-interest-round"
 };
-const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform",percentChange:"Beräkna förändring",whole:"Hitta det hela",percentPart:"Procentjakten",interest:"Räntebanken"};
+const fallbackTitles={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"Tiopotenser",fractionDecimal:"Bråk och decimaltal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform",percentChange:"Beräkna förändring",whole:"Hitta det hela",percentPart:"Beräkna delen",interest:"Räntebanken"};
 
 const norm=v=>String(v||"").trim().toUpperCase().replace(/\s+/g,"");
 const cleanDisplayName=v=>String(v||"").trim().replace(/\s+/g," ").slice(0,24);
@@ -13244,7 +13244,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const games={
     percentChange:["Beräkna förändring","openPercentChange"],
     whole:["Hitta det hela","openWhole"],
-    percentPart:["Procentjakten","openPercentPart"],
+    percentPart:["Beräkna delen","openPercentPart"],
     interest:["Räntebanken","openInterest"],
     multiplication:['Multiplikation','openMultiplication'],
     equations:['Ekvationer','openEquations'],
