@@ -32,7 +32,7 @@
     show("wholeView");
     $("wholeNp").textContent=MZ.storage.getNaturePoints();
     // Ladda om inför varje besök så en avbruten omgång inte felaktigt får kottar.
-    $("wholeFrame").src="hitta_det_hela.html";
+    $("wholeFrame").src="hitta_det_hela.html?v=unified-20261019";
   }
   function back(){
     hide("wholeView");
