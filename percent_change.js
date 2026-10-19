@@ -228,19 +228,11 @@
       :"Du ska räkna ("+Math.max(q.start,q.end)+" − "+Math.min(q.start,q.end)+") ÷ "+q.start+" × 100. Kom ihåg att avrunda till hela procent.";
     $("pcHint").textContent=msg;show("pcHint",true);
   }
-  function calculate(){
-    const raw=String($("pcCalcExpression").value||"").trim().replace(/,/g,".");
-    const parts=raw.match(/^(\d+(?:\.\d+)?)\s*([+\-*/×÷])\s*(\d+(?:\.\d+)?)$/);
-    if(!parts){$("pcCalcResult").textContent="Skriv till exempel 50 / 200.";return;}
-    const a=Number(parts[1]),b=Number(parts[3]),op=parts[2];
-    const ans=(op==="/"||op==="÷")?(b===0?NaN:a/b):(op==="*"||op==="×")?a*b:op==="+"?a+b:a-b;
-    $("pcCalcResult").textContent=Number.isFinite(ans)?fmt(Number(ans.toFixed(6))):"Kan inte dividera med 0.";
-  }
   function init(){
     const location=$("statisticsView");
     if(!location || $("percentChangeView"))return;
     const view=document.createElement("div");
-    view.id="percentChangeView";view.className="hidden";
+    view.id="percentChangeView";view.className="hidden pp-game";
     view.innerHTML=[
       '<div class="trainer-head"><div><button class="secondary" id="pcBack" type="button">← Till parkkontoret</button><h2 style="margin-top:16px">Beräkna förändring</h2><div class="muted">Skillnaden ÷ värdet från början. Tre uppgifter med mindre och mindre stöd.</div></div><div class="pill">🌰 <span id="pcNp">0</span> kottar</div></div>',
       '<div class="trainer-panel pc-panel"><div class="pc-progress-top"><span id="pcMode">1 · Välj rätt svar</span><span id="pcProgressText">Uppgift 1 av 3</span></div><div class="pc-progress-track"><div class="pc-progress-fill" id="pcProgressFill"></div></div>',
@@ -249,9 +241,10 @@
       '<div class="pc-question" id="pcPrompt"></div><div id="pcResponse"></div>',
       '<div class="pc-actions"><button class="primary hidden" id="pcCheck" type="button">Kontrollera</button><button class="primary hidden" id="pcNext" type="button">Nästa steg →</button><button class="secondary hidden" id="pcHintBtn" type="button">Ledtråd</button></div>',
       '<div class="pc-feedback" id="pcFeedback" role="status" aria-live="polite"></div><div class="pc-hint hidden" id="pcHint"></div>',
-      '<div class="pc-actions"><button class="secondary" id="pcFormulaBtn" type="button">Dölj formeln</button><button class="secondary" id="pcCalcToggle" type="button">🧮 Miniräknare</button></div>',
+      '<div class="pc-actions"><button class="secondary" id="pcFormulaBtn" type="button">Dölj formeln</button></div>',
       '<div class="pc-formula" id="pcFormula">Procentuell förändring = <span class="fraction"><span>skillnaden</span><span>värdet från början</span></span> × 100</div>',
-      '<div class="pc-hint hidden" id="pcCalculator"><strong>Miniräknare</strong><div class="pc-inputs"><label>Beräkning<input id="pcCalcExpression" type="text" inputmode="decimal" placeholder="t.ex. 50 / 200"></label><button class="secondary" id="pcCalcGo" type="button">Räkna</button><strong id="pcCalcResult" role="status"></strong></div></div></div>',
+      window.MatteparkenCalculator.markup(),
+       '</div>',
       '<div id="pcFinished" class="pc-finished hidden"><h3>🌳 Tre av tre klara!</h3><p id="pcFinalText"></p><button class="primary" id="pcAgain" type="button">Spela tre nya uppgifter</button></div></div>'
     ].join("");
     location.parentElement.insertBefore(view,location);
@@ -264,9 +257,7 @@
     $("pcAgain").addEventListener("click",begin);
     $("pcHintBtn").addEventListener("click",hint);
     $("pcFormulaBtn").addEventListener("click",()=>{formulaVisible=!formulaVisible;showFormula();});
-    $("pcCalcToggle").addEventListener("click",()=>{const node=$("pcCalculator");node.classList.toggle("hidden");if(!node.classList.contains("hidden"))$("pcCalcExpression").focus();});
-    $("pcCalcGo").addEventListener("click",calculate);
-    $("pcCalcExpression").addEventListener("keydown",e=>{if(e.key==="Enter")calculate();});
+    window.MatteparkenCalculator.bind(view);
     MZ.events.addEventListener("npchange",()=>{$("pcNp").textContent=MZ.storage.getNaturePoints();});
   }
   MZ.math.registerGame({id:"percentChange",title:"Beräkna förändring",description:"Procentuell ökning och minskning: skillnaden delat med värdet från början."});
