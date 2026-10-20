@@ -147,7 +147,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       </section>
 
       <section class="card">
-        <div class="section-head"><div><h2>🎟️ Redeem-koder</h2><p class="muted">Skicka en kod till elever i vald klass. Varje elev kan lösa in samma kod högst en gång.</p></div></div>
+        <div class="section-head"><div><h2>🎟️ Redeem-koder</h2><p class="muted">Skicka en kod till elever i vald klass. Varje elev kan lösa in samma kod högst en gång. <strong>Ta bort</strong> döljer koden permanent från listan, men sparar elevernas utdelade belöningar och inlösningar.</p></div></div>
         <div class="form-grid">
           <label>Kod<input id="redeemAdminCode" maxlength="24" placeholder="t.ex. HOSTLOV26" style="text-transform:uppercase"></label>
           <label>Belöning
@@ -715,8 +715,9 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       const item=document.createElement("div");item.className="schoolwork-item"+(code.enabled?"":" paused");
       const expiry=code.expires_at?" · går ut "+formatMoment(code.expires_at):"";
       const uses=Number(code.uses)||0,max=code.max_uses==null?"∞":Number(code.max_uses);
-      item.innerHTML="<h3 style='font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em'>"+escapeHtml(code.code)+"</h3><div class='time-note'>"+escapeHtml(redeemRewardLabel(code))+expiry+"</div><div class='schoolwork-meta'><span class='mini-pill'>använd "+uses+" / "+max+"</span><span class='mini-pill'>"+(code.enabled?"Aktiv":"Avstängd")+"</span></div><div class='schoolwork-actions'><button class='btn secondary redeem-toggle'>"+(code.enabled?"Stäng av":"Aktivera")+"</button></div>";
+      item.innerHTML="<h3 style='font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em'>"+escapeHtml(code.code)+"</h3><div class='time-note'>"+escapeHtml(redeemRewardLabel(code))+expiry+"</div><div class='schoolwork-meta'><span class='mini-pill'>använd "+uses+" / "+max+"</span><span class='mini-pill'>"+(code.enabled?"Aktiv":"Avstängd")+"</span></div><div class='schoolwork-actions'><button class='btn secondary redeem-toggle' type='button'>"+(code.enabled?"Stäng av":"Aktivera")+"</button><button class='btn danger redeem-remove' type='button'>Ta bort</button></div>";
       item.querySelector(".redeem-toggle").addEventListener("click",()=>toggleRedeemCode(code));
+      item.querySelector(".redeem-remove").addEventListener("click",()=>archiveRedeemCode(code));
       box.appendChild(item);
     });
   }
@@ -1237,6 +1238,24 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       if(!r.data?.ok)throw new Error(r.data?.reason||"Kunde inte ändra koden.");
       await loadClassData({silent:true});
     }catch(error){console.error(error);setFeedback("redeemAdminFeedback",error?.message||"Kunde inte ändra koden.","bad");}
+  }
+  async function archiveRedeemCode(code){
+    if(!code?.id)return;
+    const message='Ta bort redeem-koden "'+code.code+'"?\n\nKoden försvinner från listan och kan inte användas eller aktiveras igen. Tidigare inlösningar och utdelade belöningar sparas.';
+    if(!window.confirm(message))return;
+    try{
+      const r=await sb.rpc("teacher_archive_redeem_code",{p_code_id:code.id});
+      if(r.error)throw r.error;
+      if(!r.data?.ok){
+        const reason=r.data?.reason;
+        throw new Error(reason==="forbidden"?"Du har inte behörighet att ta bort den här koden.":reason==="already_archived"?"Koden är redan borttagen.":"Kunde inte ta bort koden.");
+      }
+      await loadClassData({silent:true});
+      setFeedback("redeemAdminFeedback","Koden "+code.code+" har tagits bort från listan. Elevernas belöningar är kvar.","good");
+    }catch(error){
+      console.error("Redeem archive error:",error);
+      setFeedback("redeemAdminFeedback",error?.message||"Kunde inte ta bort koden.","bad");
+    }
   }
   function syncRedeemAmount(){
     const type=$("redeemRewardType").value;
