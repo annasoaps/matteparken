@@ -6579,7 +6579,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     halloweenBatFrameIndex=1-halloweenBatFrameIndex;
     const src=itemAnimationFrames.halloweenBats[halloweenBatFrameIndex];
     bats.forEach(img => { if(img.getAttribute("src") !== src) img.setAttribute("src", src); });
-  }, 330);
+  }, 180);
 
   const seedMoundSprite = "assets/asset_087_7bbd83a1be9b2aa9.png";
   const effectivePlantType = (item) => item?.type === "starterSeed" ? (item.variety || state.onboarding.selectedSeed || "daisy") : item?.type;
