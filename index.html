@@ -1228,33 +1228,17 @@ window.MATTEZOO_TEACHER_PLAN = {
   50%{margin-top:-4px}
 }
 
-/* The bat flock alternates two distinct wing poses for gentle flapping. */
+/* Halloween bats: a single sprite updated between real wing poses by JS.
+   This avoids CSS opacity timing conflicts and stays aligned after park re-renders. */
 .placed-item.halloweenBats .halloween-animation{
   position:relative;display:block;width:100%;height:100%;
 }
-.placed-item.halloweenBats .halloween-frame{
-  position:absolute;inset:0;display:block;width:100%;height:100%;
+.placed-item.halloweenBats .halloween-flap-sprite{
+  display:block;width:100%;height:100%;
   object-fit:contain;image-rendering:pixelated;pointer-events:none;
 }
-.placed-item.halloweenBats .frame-1{
-  opacity:1;animation:halloweenBatsOpen 1s steps(1,end) infinite;
-}
-.placed-item.halloweenBats .frame-2{
-  opacity:0;animation:halloweenBatsClosed 1s steps(1,end) infinite;
-}
-@keyframes halloweenBatsOpen{
-  0%,49.9%{opacity:1}
-  50%,100%{opacity:0}
-}
-@keyframes halloweenBatsClosed{
-  0%,49.9%{opacity:0}
-  50%,100%{opacity:1}
-}
 @media(prefers-reduced-motion:reduce){
-  .placed-item.halloweenGhost:not(.placement-ghost),
-  .placed-item.halloweenBats .halloween-frame{animation:none!important}
-  .placed-item.halloweenBats .frame-1{opacity:1}
-  .placed-item.halloweenBats .frame-2{opacity:0}
+  .placed-item.halloweenGhost:not(.placement-ghost){animation:none!important}
 }
 
 .placed-item.firePit .firepit-animation{position:relative;display:block;width:60px;height:52px}
@@ -6566,7 +6550,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       return `<span class="halloween-ghost-float"><img class="placed-sprite halloween-ghost-sprite" src="${frames[0]}" alt="" /></span>`;
     }
     if(visualType === "halloweenBats"){
-      return `<span class="halloween-animation">${frames.map((src,index)=>`<img class="placed-sprite halloween-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
+      return `<span class="halloween-animation"><img class="placed-sprite halloween-flap-sprite" src="${frames[0]}" alt="" /></span>`;
     }
     return "";
   }
@@ -6584,6 +6568,18 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     halloweenBats:["assets/halloween/bats_wings_up.png","assets/halloween/bats_wings_down.png"],
     halloweenGhost:["assets/halloween/ghost_lagom.png","assets/halloween/ghost_lagom.png"]
   };
+
+  // One shared timer updates bat sprites already placed in the park.
+  // The image changes, not the DOM node, so movement survives frequent re-renders.
+  let halloweenBatFrameIndex=0;
+  window.setInterval(() => {
+    if(document.hidden) return;
+    const bats=Array.from(document.querySelectorAll(".placed-item.halloweenBats .halloween-flap-sprite"));
+    if(!bats.length) return;
+    halloweenBatFrameIndex=1-halloweenBatFrameIndex;
+    const src=itemAnimationFrames.halloweenBats[halloweenBatFrameIndex];
+    bats.forEach(img => { if(img.getAttribute("src") !== src) img.setAttribute("src", src); });
+  }, 330);
 
   const seedMoundSprite = "assets/asset_087_7bbd83a1be9b2aa9.png";
   const effectivePlantType = (item) => item?.type === "starterSeed" ? (item.variety || state.onboarding.selectedSeed || "daisy") : item?.type;
