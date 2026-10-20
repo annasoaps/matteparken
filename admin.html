@@ -219,6 +219,23 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       <section class="card">
         <div class="section-head"><div><h2>🏠 Läxa</h2><p class="muted">Läxan öppnas först vid vald tid. Varje omgång är fortfarande ett eget uppdrag.</p></div></div>
         <div class="callout">Hela veckoläxan ger <strong>1 blind bag totalt</strong>. Vill du ha flera matteområden i samma läxa, lägg till dem med samma rubrik, öppningstid och deadline. De samlas automatiskt till en gemensam läxa.</div>
+        <div class="callout" style="background:#fafcf8">
+          <h3 style="margin:0 0 6px">🔒 Läxans låsta tider · vald klass</h3>
+          <p class="muted small" style="margin:0 0 12px">Ställ in tider då läxan INTE går att göra. Gäller varje vecka, svensk tid, endast läxan. Utanför tiderna går det bra att arbeta. En tom lista betyder att läxan aldrig är tidsspärrad.</p>
+          <div id="homeworkBlockedList" class="schoolwork-list" style="margin:0 0 12px"></div>
+          <div class="form-grid">
+            <label>Veckodag
+              <select id="homeworkBlockedDay"><option value="1">Måndag</option><option value="2">Tisdag</option><option value="3">Onsdag</option><option value="4">Torsdag</option><option value="5">Fredag</option><option value="6">Lördag</option><option value="7">Söndag</option></select>
+            </label>
+            <label>Från<input id="homeworkBlockedStart" type="time" value="09:00"></label>
+            <label>Till<input id="homeworkBlockedEnd" type="time" value="10:00"></label>
+            <div class="wide form-actions">
+              <button class="btn secondary" id="addHomeworkBlockedBtn" type="button">+ Lägg till låst tid</button>
+              <button class="btn primary" id="saveHomeworkBlockedBtn" type="button">Spara tider för klassen</button>
+            </div>
+          </div>
+          <div class="feedback" id="homeworkBlockedFeedback" aria-live="polite"></div>
+        </div>
         <div class="form-grid">
           <label class="wide">Rubrik<input id="homeworkTitle" value="Veckans läxa" maxlength="80"></label>
           <label class="wide">Matteområde
@@ -340,7 +357,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   const authUrlText=window.location.search+" "+window.location.hash;
   const inviteFlow=/type=(invite|recovery)/i.test(authUrlText);
   let user=null,classes=[],classId=null,assignments=[],homeworks=[],quizzes=[],quizAttempts=[],quizReviews=[],students=[],studentNotes=new Map(),notesEnabled=false,progressMap=new Map(),activity=[],redeemCodes=[],selectedStudentId=null,editingAssignmentId=null;
-  let refreshTimer=null,lastGeneratedCodes=[];
+  let refreshTimer=null,lastGeneratedCodes=[],homeworkBlockedDraft=null,homeworkBlockedClassId=null;
   const feedbackDrafts=new Map();
   const quizFeedbackStoragePrefix="matteparken:quiz-feedback-draft:v1:";
   function feedbackDraftKey(studentId,quizId){return quizFeedbackStoragePrefix+[user?.id||"teacher",classId,studentId,quizId].join(":");}
@@ -574,7 +591,8 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   async function loadClasses(){
     const tc=await sb.from("teacher_classes").select("class_id");if(tc.error)throw tc.error;
     const ids=(tc.data||[]).map(x=>x.class_id);if(!ids.length){classes=[];return;}
-    let cr=await sb.from("classes").select("id,code,name,archived").in("id",ids).order("code");
+    let cr=await sb.from("classes").select("id,code,name,archived,homework_blocked_times").in("id",ids).order("code");
+    if(cr.error&&String(cr.error.message||"").includes("homework_blocked_times"))cr=await sb.from("classes").select("id,code,name,archived").in("id",ids).order("code");
     if(cr.error&&String(cr.error.message||"").toLowerCase().includes("archived")){
       cr=await sb.from("classes").select("id,code,name").in("id",ids).order("code");
       if(!cr.error)cr.data=(cr.data||[]).map(c=>({...c,archived:false}));
@@ -678,7 +696,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
 
   function render(){
     const cls=classes.find(c=>c.id===classId);$("classPill").textContent=cls?"Klass "+cls.code:"Klass";
-    renderAssignments();renderHomeworks();renderQuizzes();renderRedeemCodes();renderStudents();if(selectedStudentId&&!isEditingStudentDetail())renderDetail();
+    renderAssignments();renderHomeworks();renderHomeworkBlockedSchedule();renderQuizzes();renderRedeemCodes();renderStudents();if(selectedStudentId&&!isEditingStudentDetail())renderDetail();
   }
 
   function redeemRewardLabel(code){
@@ -721,6 +739,70 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     });
   }
 
+  const homeworkBlockDays=["","Måndag","Tisdag","Onsdag","Torsdag","Fredag","Lördag","Söndag"];
+  function defaultHomeworkBlocks(){return [1,2,3,4,5].map(day=>({day,start:"08:20",end:"14:00"}));}
+  function classHomeworkBlocks(){
+    const c=classes.find(x=>x.id===classId);
+    return Array.isArray(c?.homework_blocked_times)?c.homework_blocked_times:defaultHomeworkBlocks();
+  }
+  function currentHomeworkBlocks(){
+    if(homeworkBlockedClassId!==classId){homeworkBlockedDraft=null;homeworkBlockedClassId=classId;setFeedback("homeworkBlockedFeedback","");}
+    if(!homeworkBlockedDraft)homeworkBlockedDraft=classHomeworkBlocks().map(x=>({...x}));
+    return homeworkBlockedDraft;
+  }
+  function renderHomeworkBlockedSchedule(){
+    const list=$("homeworkBlockedList");if(!list)return;
+    list.innerHTML="";
+    const blocks=currentHomeworkBlocks().slice().sort((a,b)=>a.day-b.day||a.start.localeCompare(b.start));
+    if(!blocks.length){
+      const empty=document.createElement("div");empty.className="empty";empty.textContent="Inga låsta tider. Läxan är tillgänglig hela veckan (mellan öppning och deadline).";list.appendChild(empty);
+    }
+    blocks.forEach(block=>{
+      const item=document.createElement("div");item.className="class-row";
+      const label=document.createElement("span");label.textContent=homeworkBlockDays[block.day]+" · "+block.start+"–"+block.end;
+      const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="Ta bort";
+      remove.addEventListener("click",()=>{
+        const i=currentHomeworkBlocks().indexOf(block);
+        // Raderna visas sorterade, men refererar till samma objekt i utkastet.
+        if(i>=0)homeworkBlockedDraft.splice(i,1);
+        setFeedback("homeworkBlockedFeedback","Ändringar ej sparade.");
+        renderHomeworkBlockedSchedule();
+      });
+      item.append(label,remove);list.appendChild(item);
+    });
+    $("saveHomeworkBlockedBtn").disabled=!classId;
+    $("addHomeworkBlockedBtn").disabled=!classId;
+  }
+  function addHomeworkBlockedTime(){
+    if(!classId)return;
+    const day=Number($("homeworkBlockedDay").value),start=$("homeworkBlockedStart").value,end=$("homeworkBlockedEnd").value;
+    if(!Number.isInteger(day)||day<1||day>7||!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(start)||!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(end)||start>=end){
+      setFeedback("homeworkBlockedFeedback","Ange en giltig veckodag och en sluttid som är senare än starttiden.","bad");return;
+    }
+    const blocks=currentHomeworkBlocks();
+    if(blocks.length>=40){setFeedback("homeworkBlockedFeedback","Högst 40 tidsintervall per klass.","bad");return;}
+    if(blocks.some(x=>x.day===day&&x.start===start&&x.end===end)){setFeedback("homeworkBlockedFeedback","Tiden finns redan.","bad");return;}
+    blocks.push({day,start,end});
+    setFeedback("homeworkBlockedFeedback","Ändringar ej sparade.");
+    renderHomeworkBlockedSchedule();
+  }
+  async function saveHomeworkBlockedTime(){
+    if(!classId)return;
+    const btn=$("saveHomeworkBlockedBtn"),savedClassId=classId;
+    const windows=currentHomeworkBlocks().map(x=>({day:Number(x.day),start:x.start,end:x.end}));
+    btn.disabled=true;setFeedback("homeworkBlockedFeedback","Sparar tider …");
+    try{
+      const res=await sb.rpc("teacher_set_homework_blocked_times",{p_class_id:savedClassId,p_windows:windows});
+      if(res.error)throw res.error;
+      if(!res.data?.ok)throw new Error(res.data?.reason||"Kunde inte spara schemat.");
+      const c=classes.find(x=>x.id===savedClassId);
+      if(c)c.homework_blocked_times=windows;
+      if(classId===savedClassId){homeworkBlockedDraft=null;renderHomeworkBlockedSchedule();setFeedback("homeworkBlockedFeedback","Tiderna är sparade för "+(c?.code||"klassen")+".","good");}
+    }catch(error){
+      console.error(error);
+      setFeedback("homeworkBlockedFeedback","Kunde inte spara. Kontrollera att SQL-filen för klassens läxtider är installerad.","bad");
+    }finally{btn.disabled=false;}
+  }
   function renderHomeworks(){
     const box=$("homeworkList");if(!box)return;box.innerHTML="";
     const groups=homeworkGroups();
@@ -1265,7 +1347,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   $("myNewPasswordAgain").addEventListener("keydown",e=>{if(e.key==="Enter")changeMyPassword();});
   $("loginBtn").addEventListener("click",login);$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login();});$("setInvitePasswordBtn").addEventListener("click",setInvitePassword);$("invitePasswordAgain").addEventListener("keydown",e=>{if(e.key==="Enter")setInvitePassword();});$("logoutBtn").addEventListener("click",logout);$("openTestModeBtn").addEventListener("click",openTeacherTestMode);$("refreshBtn").addEventListener("click",()=>loadClassData());
   $("saveAssignmentBtn").addEventListener("click",saveAssignment);$("cancelEditBtn").addEventListener("click",cancelEdit);$("createClassBtn").addEventListener("click",createClass);$("newClassCode").addEventListener("keydown",e=>{if(e.key==="Enter")createClass();});
-  $("generateCodesBtn").addEventListener("click",generateCodes);$("copyCodesBtn").addEventListener("click",copyCodes);$("createHomeworkBtn").addEventListener("click",createHomework);$("createQuizBtn").addEventListener("click",createQuiz);$("createRedeemBtn").addEventListener("click",createRedeemCode);$("redeemAdminCode").addEventListener("keydown",e=>{if(e.key==="Enter")createRedeemCode();});$("redeemRewardType").addEventListener("change",syncRedeemAmount);$("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;renderStudents();$("studentDetail").classList.add("hidden");});
+  $("generateCodesBtn").addEventListener("click",generateCodes);$("copyCodesBtn").addEventListener("click",copyCodes);$("addHomeworkBlockedBtn").addEventListener("click",addHomeworkBlockedTime);$("saveHomeworkBlockedBtn").addEventListener("click",saveHomeworkBlockedTime);$("createHomeworkBtn").addEventListener("click",createHomework);$("createQuizBtn").addEventListener("click",createQuiz);$("createRedeemBtn").addEventListener("click",createRedeemCode);$("redeemAdminCode").addEventListener("keydown",e=>{if(e.key==="Enter")createRedeemCode();});$("redeemRewardType").addEventListener("change",syncRedeemAmount);$("closeDetailBtn").addEventListener("click",()=>{selectedStudentId=null;renderStudents();$("studentDetail").classList.add("hidden");});
   $("classSelect").addEventListener("change",async()=>{classId=$("classSelect").value;selectedStudentId=null;editingAssignmentId=null;cancelEdit();await loadClassData();});
   restore();
 })();
