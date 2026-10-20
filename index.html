@@ -12182,6 +12182,11 @@ function markHomeworkAssignmentDone(id){
  x.all[x.who]=x.bucket;
  writeHomeworkAssignmentState(x.all);
 }
+function clearHomeworkAssignmentDone(id){
+ const x=homeworkAssignmentBucket(false);
+ if(!x?.bucket?.completed?.[id])return;
+ delete x.bucket.completed[id];x.all[x.who]=x.bucket;writeHomeworkAssignmentState(x.all);
+}
 function homeworkAssignmentCompletedAt(a){
  const server=current?.progressMap?.get(a?.id)?.completed_at;
  return server||homeworkAssignmentBucket(false)?.bucket?.completed?.[a?.id]||null;
@@ -12476,8 +12481,8 @@ async function recordHomeworkCompletion(a,x){
   r=await homeworkCompletionRpc(a,x);
   if(!r.error&&r.data?.ok!==false)return r;
  }
- // Om den nya SQL-funktionen ännu inte är installerad faller vi tillbaka på den gamla RPC:n.
- if(r.error){
+ // Falla bara tillbaka om RPC saknas, aldrig vid serverns tidslåsning.
+ if(r.error&&["PGRST202","42883"].includes(r.error.code)){
   console.warn("Homework completion RPC unavailable, using legacy sync:",r.error);
   return recordAssignmentRound(a.id,x);
  }
@@ -12570,7 +12575,13 @@ function recordRound(event){
   render();MZ.homeworkQuiz?.render?.();
  }).catch(error=>{
    console.error("Supabase assignment round:",error);
-   if(a?.homework_id){
+   if(a?.homework_id&&String(error?.message||error).includes("homework_locked")){
+     clearHomeworkAssignmentDone(id);
+     setActiveAssignment(null);
+     $("#status").textContent="🔒 Läxan är låst för klassen just nu. Omgången registrerades inte.";
+     render();
+     void readCloudState().catch(console.warn);
+   }else if(a?.homework_id){
      $("#status").textContent="✓ "+a.title+" är klar här. Matteparken försöker synka den till molnet igen.";
      render();
    }else{
