@@ -12092,6 +12092,7 @@ function formatLast(v){if(!v)return"–";const d=new Date(v);if(Number.isNaN(d.g
 function formatMoment(v){if(!v)return"";const d=new Date(v);return d.toLocaleString("sv-SE",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}
 function homeworkTasks(hwId){return (current?.allAssignments||[]).filter(a=>a.homework_id===hwId);}
 function homeworkSchoolPause(){
+ // Skolans tidszon styr veckodag och klockslag, inte elevens datorinställning.
  let weekday="",hour=0,minute=0;
  try{
   const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Stockholm",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
@@ -12101,8 +12102,16 @@ function homeworkSchoolPause(){
   const d=new Date(),days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   weekday=days[d.getDay()];hour=d.getHours();minute=d.getMinutes();
  }
- const schoolDay=["Mon","Tue","Wed","Thu","Fri"].includes(weekday),minutes=hour*60+minute;
- return{blocked:schoolDay&&minutes>=8*60+20&&minutes<14*60};
+ const day={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:7}[weekday]||0;
+ const minutes=hour*60+minute;
+ // Vid övergång innan SQL-installationen behålls den tidigare spärren.
+ const oldSchedule=[1,2,3,4,5].map(d=>({day:d,start:"08:20",end:"14:00"}));
+ const slots=Array.isArray(current?.classInfo?.homework_blocked_times)
+  ?current.classInfo.homework_blocked_times:oldSchedule;
+ const toMinutes=v=>{const p=String(v||"").split(":").map(Number);return p.length===2&&Number.isFinite(p[0])&&Number.isFinite(p[1])?p[0]*60+p[1]:-1;};
+ const active=slots.filter(slot=>Number(slot.day)===day&&toMinutes(slot.start)<=minutes&&minutes<toMinutes(slot.end));
+ const until=active.length?active.map(x=>String(x.end)).sort().at(-1):null;
+ return{blocked:active.length>0,until};
 }
 function homeworkStatus(hw){
  const tasks=homeworkTasks(hw.id),done=tasks.filter(homeworkAssignmentDone).length;
@@ -12238,12 +12247,13 @@ async function readCloudState(){
  if(sr.error)throw sr.error;
  if(!sr.data){current=null;render();return null;}
  const student=sr.data;
- const [cr,ar,hr,qr]=await Promise.all([
-  c.from("classes").select("id,code,name").eq("id",student.class_id).maybeSingle(),
+ let [cr,ar,hr,qr]=await Promise.all([
+  c.from("classes").select("id,code,name,homework_blocked_times").eq("id",student.class_id).maybeSingle(),
   c.from("assignments").select("id,class_id,game_id,title,description,target,enabled,game_config,homework_id,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
   c.from("homeworks").select("id,class_id,title,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true}),
   c.from("quizzes").select("id,class_id,game_id,title,game_config,question_count,opens_at,due_at,enabled,created_at,updated_at").eq("class_id",student.class_id).eq("enabled",true).order("created_at",{ascending:true})
  ]);
+ if(cr.error&&String(cr.error.message||"").includes("homework_blocked_times"))cr=await c.from("classes").select("id,code,name").eq("id",student.class_id).maybeSingle();
  if(cr.error)throw cr.error;if(ar.error)throw ar.error;if(hr.error)throw hr.error;if(qr.error)throw qr.error;
  const allAssignments=ar.data||[],assignments=allAssignments.filter(a=>!a.homework_id),homeworks=hr.data||[],quizzes=qr.data||[],progressMap=new Map(),ids=allAssignments.map(x=>x.id);
  if(ids.length){
@@ -12318,7 +12328,7 @@ function render(){
     const time=document.createElement("div");time.className="homework-window";
     time.textContent=st.locked?"🔒 Öppnar "+formatMoment(group.opens_at):(group.due_at?"Deadline "+formatMoment(group.due_at)+(st.late?" · klar efter deadline":""):"Ingen deadline");info.appendChild(time);
     const access=document.createElement("div");access.className="homework-window";
-    access.textContent=st.schoolBlocked?"⏰ Pausad nu · öppnar kl. 14.00":"⏰ Vardagar: före 08.20 eller efter 14.00";info.appendChild(access);
+    access.textContent=st.schoolBlocked?"⏰ Läxan är pausad till kl. "+homeworkSchoolPause().until:"⏰ Klassens egna läxtider gäller";info.appendChild(access);
     const reward=document.createElement("div");reward.className="homework-reward";
     reward.textContent=st.complete?"🎁 Hela läxan är klar":"🎁 Bonus när alla delar är klara: 1 blind bag";info.appendChild(reward);
 
@@ -12341,7 +12351,7 @@ function render(){
       const actions=document.createElement("div");actions.className="assignment-actions";
       const btn=document.createElement("button");btn.className="primary";btn.type="button";
       btn.disabled=st.locked||st.schoolBlocked;
-      btn.textContent=st.locked?"Inte öppen än":st.schoolBlocked?"Öppnar 14.00":done?"Träna igen":"Starta delen";
+      btn.textContent=st.locked?"Inte öppen än":st.schoolBlocked?"Låst till "+homeworkSchoolPause().until:done?"Träna igen":"Starta delen";
       btn.dataset.startAssignment=a.id;btn.dataset.assignmentKind="homework";
       actions.appendChild(btn);part.append(partInfo,actions);parts.appendChild(part);
     });
@@ -12395,8 +12405,9 @@ function startAssignment(id){
      render();
      return false;
    }
-   if(homeworkSchoolPause().blocked){
-     startFeedback("⏰ Läxan är pausad på vardagar kl. 08.20–14.00. Försök igen efter 14.00.","bad");
+   const schoolPause=homeworkSchoolPause();
+   if(schoolPause.blocked){
+     startFeedback("⏰ Läxan är pausad för din klass till kl. "+schoolPause.until+". Du kan träna i de vanliga spelen under tiden.","bad");
      render();
      return false;
    }
@@ -12494,6 +12505,11 @@ async function syncLocalHomeworkCompletions(){
 }
 function recordRound(event){
  const x=event.detail?.activity,id=getActiveAssignment();if(!x||!id||!getSelection())return;const a=current?.allAssignments?.find(v=>v.id===id);if(!matchingRound(a,x))return;
+ if(a?.homework_id&&homeworkSchoolPause().blocked){
+  setActiveAssignment(null);
+  $("#status").textContent="🔒 Läxan är låst för din klass just nu. Omgången räknas inte som läxa.";
+  render();return;
+ }
  if(a?.homework_id){
   markHomeworkAssignmentDone(id);
   setActiveAssignment(null);
