@@ -12117,7 +12117,7 @@ function homeworkStatus(hw){
  const tasks=homeworkTasks(hw.id),done=tasks.filter(homeworkAssignmentDone).length;
  const complete=tasks.length>0&&done===tasks.length;
  const completedAt=complete?tasks.map(homeworkAssignmentCompletedAt).filter(Boolean).sort().at(-1)||null:null;
- const schoolBlocked=!complete&&homeworkSchoolPause().blocked;
+ const schoolBlocked=homeworkSchoolPause().blocked;
  return{tasks,done,total:tasks.length,complete,completedAt,locked:Boolean(hw.opens_at&&Date.now()<new Date(hw.opens_at).getTime()),schoolBlocked,late:Boolean(complete&&hw.due_at&&completedAt&&new Date(completedAt)>new Date(hw.due_at))};
 }
 function homeworkGroupKey(hw){return [String(hw?.title||"").trim().toLowerCase(),hw?.opens_at||"",hw?.due_at||""].join("|");}
@@ -12136,7 +12136,7 @@ function homeworkGroupStatus(group){
  const tasks=statuses.flatMap(x=>x.tasks),done=statuses.reduce((sum,x)=>sum+x.done,0),total=statuses.reduce((sum,x)=>sum+x.total,0),complete=total>0&&done===total;
  const completedAt=complete?statuses.map(x=>x.completedAt).filter(Boolean).sort().at(-1)||null:null;
  const locked=(group?.homeworks||[]).some(hw=>hw.opens_at&&Date.now()<new Date(hw.opens_at).getTime());
- const schoolBlocked=!complete&&homeworkSchoolPause().blocked;
+ const schoolBlocked=homeworkSchoolPause().blocked;
  return{tasks,done,total,complete,completedAt,locked,schoolBlocked,late:Boolean(complete&&group?.due_at&&completedAt&&new Date(completedAt)>new Date(group.due_at))};
 }
 function gameTitle(id){return MZ.math.listGames().find(g=>g.id===id)?.title||fallbackTitles[id]||id;}
