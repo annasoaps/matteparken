@@ -1224,11 +1224,11 @@ window.MATTEZOO_TEACHER_PLAN = {
   display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;
 }
 @keyframes halloweenGhostBobbing{
-  0%,100%{margin-top:5px}
-  50%{margin-top:-13px}
+  0%,100%{margin-top:2px}
+  50%{margin-top:-4px}
 }
 
-/* The awake bat briefly closes its eyes, then opens them again. */
+/* The bat flock alternates two distinct wing poses for gentle flapping. */
 .placed-item.halloweenBats .halloween-animation{
   position:relative;display:block;width:100%;height:100%;
 }
@@ -1237,23 +1237,21 @@ window.MATTEZOO_TEACHER_PLAN = {
   object-fit:contain;image-rendering:pixelated;pointer-events:none;
 }
 .placed-item.halloweenBats .frame-1{
-  opacity:1;animation:halloweenBatsOpen 4.8s steps(1,end) infinite;
+  opacity:1;animation:halloweenBatsOpen 1s steps(1,end) infinite;
 }
 .placed-item.halloweenBats .frame-2{
-  opacity:0;animation:halloweenBatsClosed 4.8s steps(1,end) infinite;
+  opacity:0;animation:halloweenBatsClosed 1s steps(1,end) infinite;
 }
 @keyframes halloweenBatsOpen{
-  0%,87.9%{opacity:1}
-  88%,94.9%{opacity:0}
-  95%,100%{opacity:1}
+  0%,49.9%{opacity:1}
+  50%,100%{opacity:0}
 }
 @keyframes halloweenBatsClosed{
-  0%,87.9%{opacity:0}
-  88%,94.9%{opacity:1}
-  95%,100%{opacity:0}
+  0%,49.9%{opacity:0}
+  50%,100%{opacity:1}
 }
 @media(prefers-reduced-motion:reduce){
-  .placed-item.halloweenGhost .halloween-ghost-float,
+  .placed-item.halloweenGhost:not(.placement-ghost),
   .placed-item.halloweenBats .halloween-frame{animation:none!important}
   .placed-item.halloweenBats .frame-1{opacity:1}
   .placed-item.halloweenBats .frame-2{opacity:0}
@@ -6508,11 +6506,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     parasolMushroom:"assets/autumn/parasol_mushroom.png"
   });
   Object.assign(itemSprites, {
-    halloweenBats:"assets/halloween/bats_simple_test.png",
-    halloweenGhost:"assets/halloween/ghost_simple_test.png",
-    halloweenWeb:"assets/halloween/cobweb_simple_test.png",
-    halloweenCauldron:"assets/halloween/cauldron_simple_test.png",
-    halloweenTrailSign:"assets/halloween/spooktrail_sign.webp"
+    halloweenBats:"assets/halloween/bats_wings_up.png",
+    halloweenGhost:"assets/halloween/ghost_lagom.png",
+    halloweenWeb:"assets/halloween/cobweb_lagom.png",
+    halloweenCauldron:"assets/halloween/cauldron_lagom.png",
+    halloweenTrailSign:"assets/halloween/spooktrail_sign_lagom.png"
   });
 
   // Restore sprites for park lantern and forest mushroom cluster.
@@ -6583,8 +6581,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       "assets/asset_047_c474e6261ef81111.png",
       "assets/asset_086_ae365717c7246f56.png"
     ],
-    halloweenBats:["assets/halloween/bats_simple_test.png","assets/halloween/bats_simple_test.png"],
-    halloweenGhost:["assets/halloween/ghost_simple_test.png","assets/halloween/ghost_simple_test.png"]
+    halloweenBats:["assets/halloween/bats_wings_up.png","assets/halloween/bats_wings_down.png"],
+    halloweenGhost:["assets/halloween/ghost_lagom.png","assets/halloween/ghost_lagom.png"]
   };
 
   const seedMoundSprite = "assets/asset_087_7bbd83a1be9b2aa9.png";
