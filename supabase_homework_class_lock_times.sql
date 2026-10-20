@@ -64,7 +64,7 @@ begin
 end;
 $$;
 
-revoke all on function public.teacher_set_homework_blocked_times(uuid,jsonb) from public;
+revoke all on function public.teacher_set_homework_blocked_times(uuid,jsonb) from public, anon;
 grant execute on function public.teacher_set_homework_blocked_times(uuid,jsonb) to authenticated;
 
 -- Spärren kontrolleras också på servern. Att ändra datorns klocka,
