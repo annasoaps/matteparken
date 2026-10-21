@@ -1196,8 +1196,9 @@ window.MATTEZOO_TEACHER_PLAN = {
 .placed-item.appleBasket .placed-sprite{width:78px;height:66px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
 .placed-item.hayBale .placed-sprite{width:154px;height:96px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
 .placed-item.leafPile .placed-sprite{width:105px;height:61px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.boletes .placed-sprite{width:70px;height:56px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
-.placed-item.parasolMushroom .placed-sprite{width:53px;height:59px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.boletes,.placed-item.parasolMushroom{width:35px;height:30px}
+.placed-item.boletes .placed-sprite{width:35px;height:30px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
+.placed-item.parasolMushroom .placed-sprite{width:35px;height:30px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(45,65,45,.09))}
 
 /* Halloween items: 50% smaller. Keep saved item types and transparent assets intact. */
 .placed-item.halloweenBats{width:56px;height:41px}
@@ -1389,7 +1390,7 @@ window.MATTEZOO_TEACHER_PLAN = {
 /* v0.3.33 – pixlad parkbänk */
 .placed-item.bench{width:114px;height:69px}
 .placed-item.bench:before,.placed-item.bench:after{content:none!important}
-.placed-item.bench .placed-sprite{width:114px;height:69px;filter:drop-shadow(0 6px 0 rgba(45,65,45,.08))}
+.placed-item.bench .placed-sprite{width:114px;height:69px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 0 rgba(45,65,45,.08))}
 .item-sprite-thumb.bench{max-width:76px;max-height:48px}
 
 
@@ -6459,7 +6460,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     shoreStones:"assets/asset_022_f2d1aeb4f860634f.png",
     reeds:"assets/asset_023_8418d64f9780d63f.png",
     cattails:"assets/asset_024_84d58b6e230e5210.png",
-    bench:"assets/asset_025_f401b526b32e3899.png",
+    bench:"assets/decor/bench_simple_test.png",
     decorRock:"assets/asset_026_966555e09e6e3aec.png",
     birdbath:"assets/asset_027_d6e5eeb8023fa5b5.png",
     insectHotel:"assets/asset_028_8b544260bf3dc95d.png",
@@ -6548,8 +6549,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     appleBasket:"assets/autumn/apple_basket.png",
     hayBale:"assets/autumn/hay_bale.png",
     leafPile:"assets/autumn/leaf_pile.png",
-    boletes:"assets/autumn/boletes.png",
-    parasolMushroom:"assets/autumn/parasol_mushroom.png"
+    boletes:"assets/autumn/boletes_simple_test.png",
+    parasolMushroom:"assets/autumn/parasol_mushroom_simple_test.png"
   });
   Object.assign(itemSprites, {
     halloweenBats:"assets/halloween/bats_wings_up.png",
