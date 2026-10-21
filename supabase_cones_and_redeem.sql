@@ -33,7 +33,7 @@ create table if not exists public.redeem_codes (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
   class_id uuid not null references public.classes(id) on delete cascade,
-  reward_type text not null check (reward_type in ('cones','seedPack','decorBox','blindBag','autumnBox','halloweenBox')),
+  reward_type text not null check (reward_type in ('cones','seedPack','decorBox','blindBag','autumnBox','halloweenBox','halloweenGhost')),
   reward_amount integer not null default 1 check (reward_amount > 0),
   max_uses integer check (max_uses is null or max_uses > 0),
   expires_at timestamptz,
@@ -371,7 +371,7 @@ begin
     return jsonb_build_object('ok',false,'reason','invalid_code');
   end if;
 
-  if v_type not in ('cones','seedPack','decorBox','blindBag','autumnBox','halloweenBox') then
+  if v_type not in ('cones','seedPack','decorBox','blindBag','autumnBox','halloweenBox','halloweenGhost') then
     return jsonb_build_object('ok',false,'reason','invalid_reward');
   end if;
 
