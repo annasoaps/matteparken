@@ -6,11 +6,20 @@
   if (!MZ || !MZ.state || !MZ.habitats) return;
   const byId = id => document.getElementById(id);
   const SPECIES = [
-    {id:"kantarell",name:"Kantarell",color:"#e6ad38",dark:"#a56b25",weight:36,min:20,max:110,rarity:"Vanlig"},
-    {id:"bjorksopp",name:"Björksopp",color:"#ac8560",dark:"#614d38",weight:28,min:35,max:180,rarity:"Vanlig"},
-    {id:"karljohan",name:"Karljohan",color:"#9a633c",dark:"#543e2a",weight:19,min:45,max:280,rarity:"Ovanlig"},
-    {id:"flugsvamp",name:"Röd flugsvamp",color:"#c74330",dark:"#8d3029",weight:12,min:40,max:195,rarity:"Ovanlig",spots:true},
-    {id:"fjallskivling",name:"Stolt fjällskivling",color:"#c7aa78",dark:"#836b4d",weight:5,min:65,max:330,rarity:"Sällsynt"}
+    // Samma id:n som i v1 behåller elevernas redan upptäckta svampar.
+    {id:"kantarell",name:"Kantarell",sprite:"kantarell.png",weight:22,min:20,max:110,rarity:"Vanlig"},
+    {id:"bjorksopp",name:"Björksopp",sprite:"bjorksopp.png",weight:17,min:35,max:180,rarity:"Vanlig"},
+    {id:"karljohan",name:"Karljohan",sprite:"karljohan.png",weight:12,min:45,max:280,rarity:"Ovanlig"},
+    {id:"flugsvamp",name:"Röd flugsvamp",sprite:"rod_flugsvamp.png",weight:10,min:40,max:195,rarity:"Ovanlig"},
+    {id:"fjallskivling",name:"Stolt fjällskivling",sprite:"stolt_fjallskivling.png",weight:4,min:65,max:330,rarity:"Sällsynt"},
+    {id:"trattkantarell",name:"Trattkantarell",sprite:"trattkantarell.png",weight:17,min:20,max:85,rarity:"Vanlig"},
+    {id:"smorsopp",name:"Smörsopp",sprite:"smorsopp.png",weight:14,min:35,max:140,rarity:"Vanlig"},
+    {id:"tegelsopp",name:"Tegelsopp",sprite:"tegelsopp.png",weight:11,min:35,max:210,rarity:"Ovanlig"},
+    {id:"blodsopp",name:"Blodsopp",sprite:"blodsopp.png",weight:9,min:35,max:180,rarity:"Ovanlig"},
+    {id:"farticka",name:"Fårticka",sprite:"farticka.png",weight:7,min:30,max:145,rarity:"Ovanlig"},
+    {id:"lila_skivling",name:"Lila skivling",sprite:"lila_skivling.png",weight:5,min:20,max:95,rarity:"Sällsynt"},
+    {id:"korallsvamp",name:"Korallsvamp",sprite:"korallsvamp.png",weight:4,min:25,max:150,rarity:"Sällsynt"},
+    {id:"svart_trumpetsvamp",name:"Svart trumpetsvamp",sprite:"svart_trumpetsvamp.png",weight:3,min:20,max:90,rarity:"Sällsynt"}
   ];
   const COVERS = ["stone","stump","spruce"];
   const COVER_NAMES = {stone:"Mossig sten",stump:"Gammal stubbe",spruce:"Under granen"};
@@ -25,6 +34,7 @@
   let round = {};
   let modal;
   let guideTab;
+  let activeBasketId = null;
 
   function ownerKey() {
     const active = MZ.cloudStudent && MZ.cloudStudent.activeStudent && MZ.cloudStudent.activeStudent();
@@ -79,16 +89,10 @@
     if (q.a !== q.b && Math.random() < .5) return {a:q.b,b:q.a,answer:q.a*q.b};
     return {a:q.a,b:q.b,answer:q.a*q.b};
   }
-  function mushroomSvg(sp) {
+  function mushroomSprite(sp) {
     if (!sp) return "";
-    const spots = sp.spots
-      ? '<rect x="17" y="21" width="7" height="5" fill="#fff3d1"/><rect x="35" y="17" width="6" height="5" fill="#fff3d1"/><rect x="43" y="25" width="5" height="4" fill="#fff3d1"/>'
-      : '<rect x="18" y="24" width="9" height="3" fill="#f9e4a5" opacity=".45"/>';
-    return '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+sp.name+'" shape-rendering="crispEdges">'
-      + '<rect x="29" y="31" width="11" height="25" fill="#d6c6a0"/><rect x="29" y="36" width="3" height="19" fill="#fff0ca"/>'
-      + '<path d="M6 34 L10 24 L16 18 L22 15 L40 15 L49 19 L55 26 L58 34 L54 37 L11 37 Z" fill="'+sp.color+'" stroke="'+sp.dark+'" stroke-width="3" stroke-linejoin="miter"/>'
-      + spots + '<rect x="24" y="55" width="22" height="4" fill="#718657"/><rect x="19" y="59" width="30" height="3" fill="#4e6845"/>'
-      + '</svg>';
+    // Filnamnen är fasta i artkatalogen och alla sprites ligger lokalt i projektet.
+    return '<img class="sp-mushroom-sprite" src="assets/mushrooms/'+sp.sprite+'" alt="'+sp.name+'" width="96" height="96" decoding="async">';
   }
   function tree(x,y,scale,shade) {
     return '<g transform="translate('+x+' '+y+') scale('+scale+')" shape-rendering="crispEdges">'
@@ -191,7 +195,7 @@
     } else if (round.phase === "search") {
       content += '<div class="sp-place">'+COVER_NAMES[round.cover]+'</div>';
       content += '<button type="button" class="sp-spot sp-'+round.cover+'" id="spDiscover" aria-label="Jag hittade svampen! Klicka för att upptäcka den.">'
-        + '<span class="sp-specimen">'+mushroomSvg(round.species)+'</span></button>';
+        + '<span class="sp-specimen">'+mushroomSprite(round.species)+'</span></button>';
     } else {
       content += '<div class="sp-place">'+(round.cover ? COVER_NAMES[round.cover] : "Svampstigen")+'</div>';
     }
@@ -217,12 +221,12 @@
       const sp=round.species;
       const count=progress.catches[sp.id];
       const record=progress.records[sp.id];
-      html += '<div class="sp-panel"><div class="sp-discovery">'+mushroomSvg(sp)+'<div><strong>'
+      html += '<div class="sp-panel"><div class="sp-discovery">'+mushroomSprite(sp)+'<div><strong>'
         +(round.first ? "🍄 NY SVAMPART!" : round.record ? "🏆 NYTT REKORD!" : "🍄 SVAMP HITTAD!")
         +'</strong><h3>'+sp.name+'</h3><p>Hattdiameter: <strong>'+sizeText(round.size)+'</strong></p><p class="sp-record">Rekord: '+sizeText(record)+'</p><small>'+sp.rarity+' · hittad '+count+' gånger</small></div></div></div>';
     }
     if (round.phase === "found") html += '<div class="sp-actions"><button type="button" class="sp-primary" id="spAgain">🍄 Leta igen</button><button type="button" class="sp-secondary" id="spClose">Tillbaka till parken</button></div>';
-    html += '<div class="sp-foot">Multiplikation 2–10 · dina fynd hamnar i Fältguiden</div>';
+    html += '<div class="sp-foot">Multiplikation 2–10 · fynden sparas i Fältguiden · ingen plockguide för verkliga svampar</div>';
     body.innerHTML = html;
     body.querySelectorAll("[data-sp-dir]").forEach(button => button.addEventListener("click",() => selectDirection(button.dataset.spDir)));
     byId("spSubmit")?.addEventListener("click",answer);
@@ -232,8 +236,9 @@
     byId("spAgain")?.addEventListener("click",startRound);
     byId("spClose")?.addEventListener("click",close);
   }
-  function open() {
+  function open(basketId = null) {
     if (!MZ.habitats.isUnlocked("northwest") || !MZ.state.onboarding?.keyTaken) return;
+    activeBasketId = basketId;
     loadProgress();
     startRound();
     MZ.openModal("svampstigenModal");
@@ -263,7 +268,7 @@
       const card=document.createElement("article");
       card.className="field-guide-card "+(catches?"discovered":"unknown");
       if (catches) {
-        card.innerHTML='<div class="field-guide-icon sp-guide-img">'+mushroomSvg(sp)+'</div><div class="field-guide-entry-copy"><div class="field-guide-kicker">Upptäckt svamp · '+sp.rarity+'</div><h3>'+sp.name+'</h3><p>Hittad '+catches+' gånger</p><p>🏆 Största hatt: '+sizeText(record)+'</p></div>';
+        card.innerHTML='<div class="field-guide-icon sp-guide-img">'+mushroomSprite(sp)+'</div><div class="field-guide-entry-copy"><div class="field-guide-kicker">Upptäckt svamp · '+sp.rarity+'</div><h3>'+sp.name+'</h3><p>Hittad '+catches+' gånger</p><p>🏆 Största hatt: '+sizeText(record)+'</p></div>';
       } else {
         card.innerHTML='<div class="field-guide-icon unknown-mark">?</div><div class="field-guide-entry-copy"><div class="field-guide-kicker">Inte upptäckt ännu</div><h3>Okänd svamp</h3><p>Följ stigen och se vad som gömmer sig.</p></div>';
       }
@@ -278,10 +283,14 @@
     modal.id="svampstigenModal";
     modal.innerHTML='<section class="sp-dialog" role="dialog" aria-modal="true" aria-labelledby="spHeading">'
       +'<button type="button" class="close" id="spCloseX" aria-label="Stäng">×</button>'
-      +'<header class="sp-head"><div><h2 id="spHeading">🍄 Svampstigen</h2><p>En liten jakt i Skogsdungen</p></div></header>'
+      +'<header class="sp-head"><div><h2 id="spHeading">🍄 Svampstigen</h2><p>En liten jakt i Skogsdungen</p></div><button type="button" class="sp-secondary sp-move" id="spMoveBasket">🖐️ Flytta korgen</button></header>'
       +'<div id="spBody"></div></section>';
     document.querySelector(".game").appendChild(modal);
     byId("spCloseX").addEventListener("click",close);
+    byId("spMoveBasket").addEventListener("click",()=>{
+      close();
+      MZ.basketActions?.move?.(activeBasketId);
+    });
     modal.addEventListener("click",event=>{if(event.target===modal)close();});
     modal.addEventListener("keydown",event=>{if(event.key==="Escape"){event.preventDefault();close();}});
     const tabs=byId("fieldGuideFishTab").parentElement;
