@@ -12711,6 +12711,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     if(type==="decorBox")return amount===1?"en dekorationslåda":amount+" dekorationslådor";
     if(type==="blindBag")return amount===1?"en blind bag":amount+" blind bags";
     if(type==="autumnBox")return amount===1?"en höstlåda":amount+" höstlådor";
+    if(type==="halloweenBox")return amount===1?"en Halloweenlåda":amount+" Halloweenlådor";
     return "en belöning";
   }
   function giveLocalReward(type,amount){
@@ -12719,6 +12720,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     else if(type==="decorBox")MZ.rewards?.addCrate?.(n);
     else if(type==="blindBag")MZ.rewards?.addBonusBlindBag?.(n);
     else if(type==="autumnBox")MZ.rewards?.addSeasonalCrate?.("autumn",n);
+    else if(type==="halloweenBox")MZ.rewards?.addSeasonalCrate?.("halloween",n);
     MZ.office?.render?.();MZ.park?.updateShopUI?.();
   }
   async function redeem(code){
