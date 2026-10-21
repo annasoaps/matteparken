@@ -4708,6 +4708,15 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     if(!seasonalCrateDefinitions[seasonId]) return;
     state.rewards.seasonalCrates[seasonId]=seasonalCount(seasonId)+Math.max(0,Number(amount)||0); save();
   }
+  // En riktad redeem-belöning går direkt till elevens förråd, utan slumpade lådval.
+  function grantSeasonalDecoration(type,amount=1){
+    const item=findItem(type);
+    if(item.source!=="seasonal" || item.kind!=="equipment") return false;
+    const n=Math.max(1,Math.min(10,Math.floor(Number(amount)||1)));
+    state.inventory[item.type]=Math.max(0,Number(state.inventory[item.type])||0)+n;
+    storage.saveInventory(); save();
+    return true;
+  }
   function createSeasonalChoices(seasonId){
     const active=state.rewards.activeSeasonal?.[seasonId];
     if(active?.choices?.length) return active.choices;
@@ -4736,7 +4745,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     itemDefinitions,catalogPool,seedPackPool,decorBoxPool,dailyBlindBagPool,seasonalCrateDefinitions,
     addSeedPack,addCrate,createSeedChoices,createCrateChoices,chooseSeed,chooseCrate,
     createDailyChoices,chooseDaily,addBonusBlindBag,createBonusChoices,chooseBonus,findItem,clearPendingItem,catalogItems,availableHabitatsForSource,
-    activeSeasonalCrates,seasonalCount,addSeasonalCrate,createSeasonalChoices,chooseSeasonal
+    activeSeasonalCrates,seasonalCount,addSeasonalCrate,grantSeasonalDecoration,createSeasonalChoices,chooseSeasonal
   };
 })();
 
@@ -12712,6 +12721,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     if(type==="blindBag")return amount===1?"en blind bag":amount+" blind bags";
     if(type==="autumnBox")return amount===1?"en höstlåda":amount+" höstlådor";
     if(type==="halloweenBox")return amount===1?"en Halloweenlåda":amount+" Halloweenlådor";
+    if(type==="halloweenGhost")return amount===1?"ett svävande spöke":amount+" svävande spöken";
     return "en belöning";
   }
   function giveLocalReward(type,amount){
@@ -12721,6 +12731,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     else if(type==="blindBag")MZ.rewards?.addBonusBlindBag?.(n);
     else if(type==="autumnBox")MZ.rewards?.addSeasonalCrate?.("autumn",n);
     else if(type==="halloweenBox")MZ.rewards?.addSeasonalCrate?.("halloween",n);
+    else if(type==="halloweenGhost")MZ.rewards?.grantSeasonalDecoration?.("halloweenGhost",n);
     MZ.office?.render?.();MZ.park?.updateShopUI?.();
   }
   async function redeem(code){
