@@ -4717,6 +4717,29 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     storage.saveInventory(); save();
     return true;
   }
+  // Spara både föremålet och serverns kvitto i samma lokala förråd.
+  // Därmed återställs en missad utdelning men upprepas inte vid omladdning.
+  function grantRedeemedSeasonalDecoration(type,amount,studentId,codeId){
+    const item=findItem(type);
+    if(item.type!=="halloweenGhost" || item.kind!=="equipment" || !studentId || !codeId)
+      return {ok:false,reason:"invalid_reward"};
+    const key=String(studentId)+":"+String(codeId);
+    const previousReceipts=state.inventory.__redeemReceipts;
+    const receipts=previousReceipts && typeof previousReceipts==="object" && !Array.isArray(previousReceipts) ? previousReceipts : {};
+    if(receipts[key])return {ok:true,granted:false,amount:0};
+    const oldCount=Math.max(0,Number(state.inventory[item.type])||0);
+    const n=Math.max(1,Math.min(10,Math.floor(Number(amount)||1)));
+    state.inventory[item.type]=oldCount+n;
+    state.inventory.__redeemReceipts={...receipts,[key]:true};
+    try{storage.saveInventory();}
+    catch(error){
+      state.inventory[item.type]=oldCount;
+      if(previousReceipts===undefined)delete state.inventory.__redeemReceipts;
+      else state.inventory.__redeemReceipts=previousReceipts;
+      throw error;
+    }
+    return {ok:true,granted:true,amount:n};
+  }
   function createSeasonalChoices(seasonId){
     const active=state.rewards.activeSeasonal?.[seasonId];
     if(active?.choices?.length) return active.choices;
@@ -4745,7 +4768,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     itemDefinitions,catalogPool,seedPackPool,decorBoxPool,dailyBlindBagPool,seasonalCrateDefinitions,
     addSeedPack,addCrate,createSeedChoices,createCrateChoices,chooseSeed,chooseCrate,
     createDailyChoices,chooseDaily,addBonusBlindBag,createBonusChoices,chooseBonus,findItem,clearPendingItem,catalogItems,availableHabitatsForSource,
-    activeSeasonalCrates,seasonalCount,addSeasonalCrate,grantSeasonalDecoration,createSeasonalChoices,chooseSeasonal
+    activeSeasonalCrates,seasonalCount,addSeasonalCrate,grantSeasonalDecoration,grantRedeemedSeasonalDecoration,createSeasonalChoices,chooseSeasonal
   };
 })();
 
@@ -12277,6 +12300,8 @@ async function readCloudState(){
  const active=getActiveAssignment();if(active&&!allAssignments.some(x=>x.id===active))setActiveAssignment(null);
  await syncLocalHomeworkCompletions();
  if(MZ.cloudCones?.sync)await MZ.cloudCones.sync();
+ // Hämta redan inlösta spökbelöningar som ännu inte levererats till förrådet.
+ if(MZ.cloudCones?.syncGhostRewards)await MZ.cloudCones.syncGhostRewards();
  // Opt-in park sync pilot; NEVER import into a park with real progress.
  if(MZ.cloudParkSync?.onStudentReady)await MZ.cloudParkSync.onStudentReady();
  render();MZ.homeworkQuiz?.render?.();return current;
@@ -12714,6 +12739,33 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       return {ok:false,reason:"network_uncertain",requestId};
     }
   }
+  // Serverns inlösningskvitton är källan för spökkoder, även vid återinloggning.
+  async function syncGhostRewards(){
+    const active=student();
+    if(!active?.id)return {ok:false,reason:"not_connected"};
+    try{
+      const response=await client().rpc("student_list_ghost_redemptions");
+      if(response.error)throw response.error;
+      const data=response.data;
+      if(!data?.ok)return {ok:false,reason:data?.reason||"sync_failed"};
+      let granted=0;
+      for(const entry of data.rewards||[]){
+        const applied=MZ.rewards?.grantRedeemedSeasonalDecoration?.(
+          "halloweenGhost",entry.amount,active.id,entry.code_id
+        );
+        if(!applied?.ok)throw new Error("Spökbelöningen kunde inte läggas i förrådet.");
+        if(applied.granted)granted+=applied.amount;
+      }
+      if(granted){
+        MZ.park?.updateShopUI?.();
+        MZ.office?.render?.();
+      }
+      return {ok:true,granted};
+    }catch(error){
+      console.warn("Kunde inte återställa spökinlösning:",error);
+      return {ok:false,reason:"ghost_sync_failed"};
+    }
+  }
   function rewardText(type,amount){
     if(type==="cones")return amount+" kottar";
     if(type==="seedPack")return amount===1?"en fröpåse":amount+" fröpåsar";
@@ -12731,7 +12783,6 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     else if(type==="blindBag")MZ.rewards?.addBonusBlindBag?.(n);
     else if(type==="autumnBox")MZ.rewards?.addSeasonalCrate?.("autumn",n);
     else if(type==="halloweenBox")MZ.rewards?.addSeasonalCrate?.("halloween",n);
-    else if(type==="halloweenGhost")MZ.rewards?.grantSeasonalDecoration?.("halloweenGhost",n);
     MZ.office?.render?.();MZ.park?.updateShopUI?.();
   }
   async function redeem(code){
@@ -12745,7 +12796,14 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(data?.ok){
         ready=true;
         applyBalance(data);
-        if(data.reward_type!=="cones")giveLocalReward(data.reward_type,data.reward_amount);
+        if(data.reward_type==="halloweenGhost"){
+          const delivery=await syncGhostRewards();
+          if(!delivery.ok)return {ok:false,reason:"ghost_pending_delivery"};
+        }else if(data.reward_type!=="cones")giveLocalReward(data.reward_type,data.reward_amount);
+      }else if(data?.reason==="already_redeemed"){
+        const delivery=await syncGhostRewards();
+        if(delivery.ok && delivery.granted>0)
+          return {ok:true,recovered:true,reward_type:"halloweenGhost",reward_amount:delivery.granted};
       }
       return data;
     }catch(error){
@@ -12754,8 +12812,9 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     }
   }
   function messageFor(data){
+    if(data?.recovered)return "👻 Ditt tidigare inlösta spöke har nu lagts i förrådet!";
     if(data?.ok)return "🎁 Klart! Du fick "+rewardText(data.reward_type,data.reward_amount)+".";
-    const m={not_connected:"Matteparken hittar ingen aktiv elevkod ännu. Öppna Dagens uppdrag och logga in med elevkoden.",not_found:"Den koden finns inte för din klass.",disabled:"Den koden är inte aktiv längre.",expired:"Koden har gått ut.",already_redeemed:"Du har redan löst in den här koden.",used_up:"Koden har redan använts maximalt antal gånger.",no_student_session:"Elevkopplingen tappade kontakten. Försök igen om en stund.",network:"Kunde inte nå Supabase just nu. Försök igen."};
+    const m={ghost_pending_delivery:"Koden är registrerad, men spöket kunde inte hämtas ännu. Uppdatera sidan och kontrollera förrådet. Du behöver inte en ny kod.",not_connected:"Matteparken hittar ingen aktiv elevkod ännu. Öppna Dagens uppdrag och logga in med elevkoden.",not_found:"Den koden finns inte för din klass.",disabled:"Den koden är inte aktiv längre.",expired:"Koden har gått ut.",already_redeemed:"Du har redan löst in den här koden.",used_up:"Koden har redan använts maximalt antal gånger.",no_student_session:"Elevkopplingen tappade kontakten. Försök igen om en stund.",network:"Kunde inte nå Supabase just nu. Försök igen."};
     return m[data?.reason]||"Koden kunde inte lösas in just nu.";
   }
   function bindRedeem(){
@@ -12778,7 +12837,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(MZ.cloudStudent?.afterWrites)MZ.cloudStudent.afterWrites(run).catch(error=>console.warn(error));else run();
     });
   }
-  MZ.cloudCones={init,sync,isActive,isBalancePending,balance,spend,redeem,setTestBalance,addTestCones};
+  MZ.cloudCones={init,sync,syncGhostRewards,isActive,isBalancePending,balance,spend,redeem,setTestBalance,addTestCones};
 })();
 </script>
 
