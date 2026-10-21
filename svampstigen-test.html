@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     money.textContent=cones;
     buy.disabled=stage!=="shop";
     buy.textContent=stage==="shop"?"🧺 Köp svampkorg (60 kottar)":"🧺 Korgen är köpt";
-    forest.classList.toggle("placing",stage==="place");
+    forest.classList.toggle("placing",stage==="place"||stage==="move");
     status.textContent=stage==="shop"?"Köp en svampkorg med testkottarna ovan.":stage==="place"||stage==="move"?"Klicka där korgen ska stå i skogen.":"Klicka på korgen för att starta Svampstigen!";
   };
   // Samma flyttknapp som i riktiga parken, men utan att påverka elevdata.
