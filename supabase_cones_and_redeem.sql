@@ -550,3 +550,41 @@ comment on table public.student_cones is
   'Serverstyrt kott-saldo. Övrig parkdata är avsiktligt fortfarande lokal.';
 comment on table public.redeem_codes is
   'Lärarskapade belöningskoder per klass; varje elev kan lösa in en kod högst en gång.';
+
+-- Återställ missad leverans av direktutdelade Halloween-spöken.
+-- Returnerar bara den inloggade elevens egna kodkvitton.
+create or replace function public.student_list_ghost_redemptions()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_student uuid := public.matteparken_current_student_id();
+begin
+  if v_student is null then
+    return jsonb_build_object('ok', false, 'reason', 'no_student_session');
+  end if;
+
+  return jsonb_build_object(
+    'ok', true,
+    'rewards', coalesce(
+      (
+        select jsonb_agg(
+          jsonb_build_object(
+            'code_id', r.code_id,
+            'amount', greatest(1, least(10, r.reward_amount))
+          ) order by r.redeemed_at, r.code_id
+        )
+        from public.redeem_redemptions r
+        where r.student_id = v_student
+          and r.reward_type = 'halloweenGhost'
+      ),
+      '[]'::jsonb
+    )
+  );
+end;
+$$;
+
+revoke all on function public.student_list_ghost_redemptions() from public, anon;
+grant execute on function public.student_list_ghost_redemptions() to authenticated;
