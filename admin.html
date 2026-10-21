@@ -158,6 +158,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
               <option value="blindBag">Blind bag</option>
               <option value="autumnBox">Höstlåda</option>
               <option value="halloweenBox">🎃 Halloweenlåda</option>
+              <option value="halloweenGhost">👻 Svävande spöke (direkt)</option>
             </select>
           </label>
           <label>Antal<input id="redeemRewardAmount" type="number" min="1" max="1000" value="50"></label>
@@ -708,6 +709,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
     if(code?.reward_type==="blindBag")return n===1?"1 blind bag":n+" blind bags";
     if(code?.reward_type==="autumnBox")return n===1?"1 höstlåda":n+" höstlådor";
     if(code?.reward_type==="halloweenBox")return n===1?"1 Halloweenlåda":n+" Halloweenlådor";
+    if(code?.reward_type==="halloweenGhost")return n===1?"1 svävande spöke":n+" svävande spöken";
     return "Belöning";
   }
   function renderRedeemCodes(){
