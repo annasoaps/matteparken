@@ -78,10 +78,10 @@ h1{font-size:clamp(22px,3vw,32px);margin:6px 0}p{line-height:1.5}
       <button type="button" class="secondary" id="fieldGuideWildlifeTab">🐾 Parkliv</button>
       <button type="button" class="secondary" id="fieldGuideFishTab">🐟 Fiskar</button>
     </div>
-    <p><strong id="fieldGuideCount">0 / 5</strong> <span id="fieldGuideProgressLabel">svampar upptäckta</span></p>
+    <p><strong id="fieldGuideCount">0 / 13</strong> <span id="fieldGuideProgressLabel">svampar upptäckta</span></p>
     <div class="field-guide-grid" id="fieldGuideGrid"><p>Fynden visas här efter att du öppnat fliken Svampar.</p></div>
   </section>
-  <p class="test-guide-status">Svampkorgen och placeringen är en testmodell. Den riktiga köpfunktionen i Matteparkens katalog införs efter att vi har provspelat och godkänt upplägget.</p>
+  <p class="test-guide-status">Detta är ett fristående provspel. I riktiga parken flyttar du korgen med knappen i Svampstigen eller med Skift+klick.</p>
 </div>
 <script>
 window.Mattezoo={
@@ -108,15 +108,24 @@ document.addEventListener("DOMContentLoaded",()=>{
     money.textContent=cones;
     buy.disabled=stage!=="shop";
     buy.textContent=stage==="shop"?"🧺 Köp svampkorg (60 kottar)":"🧺 Korgen är köpt";
-    forest.classList.toggle("placing",stage==="place");
-    status.textContent=stage==="shop"?"Köp en svampkorg med testkottarna ovan.":stage==="place"?"Klicka var du vill placera korgen i skogen.":"Klicka på korgen för att starta Svampstigen!";
+    forest.classList.toggle("placing",stage==="place"||stage==="move");
+    status.textContent=stage==="shop"?"Köp en svampkorg med testkottarna ovan.":stage==="place"||stage==="move"?"Klicka där korgen ska stå i skogen.":"Klicka på korgen för att starta Svampstigen!";
+  };
+  // Samma flyttknapp som i riktiga parken, men utan att påverka elevdata.
+  window.Mattezoo.basketActions = {
+    move(){
+      if(stage!=="ready")return;
+      basket.hidden=true;
+      stage="move";
+      draw();
+    }
   };
   buy.addEventListener("click",()=>{
     if(stage!=="shop"||cones<60)return;
     cones-=60;stage="place";draw();
   });
   forest.addEventListener("click",event=>{
-    if(stage!=="place")return;
+    if(stage!=="place"&&stage!=="move")return;
     const r=park.getBoundingClientRect();
     let x=((event.clientX-r.left)/r.width)*100;
     let y=((event.clientY-r.top)/r.height)*100;
@@ -127,7 +136,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
   basket.addEventListener("click",event=>{
     event.preventDefault();event.stopPropagation();
-    if(stage==="ready")window.Mattezoo.svampstigen?.open();
+    if(stage==="ready")window.Mattezoo.svampstigen?.open("test-basket");
   });
   reset.addEventListener("click",()=>{
     window.Mattezoo.svampstigen?.close();

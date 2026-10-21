@@ -7785,7 +7785,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     const displayName = isStarterSeed ? seedName(state.onboarding.selectedSeed) : itemDisplayName(type);
     const icon = type === "birch" ? "🌳" : isEquipment(type) ? (equipmentMeta[type]?.icon || "🪑") : "🌱";
 
-    const availableZones = unlockedZoneIds();
+    const availableZones = unlockedZoneIds().filter(zoneId => type !== "mushroomBasket" || zoneId === "northwest");
     const destinationText = availableZones.map(zoneName).join(availableZones.length > 2 ? ", " : " eller ") || "Startgläntan";
     $("#placementText").textContent = isMove
       ? `${icon} Klicka där ${displayName} ska stå med basen i ${destinationText}.`
@@ -7866,7 +7866,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     $("#itemActionBanner").classList.add("open");
     $("#placementBanner").classList.remove("open");
 
-    const availableZones=unlockedZoneIds();
+    const availableZones=unlockedZoneIds().filter(zoneId => item.type !== "mushroomBasket" || zoneId === "northwest");
     availableZones.forEach((zoneId)=>zoneElement(zoneId)?.classList.add("active"));
     MZ.closeModal("catalogModal");
     MZ.closeModal("rewardModal");
@@ -8091,7 +8091,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function selectParkItem(item, pointerEvent=null){
     if(item?.type === "mushroomBasket" && item.zone === "northwest"){
-      MZ.svampstigen?.open?.();
+      // Vanligt klick spelar. Skift+klick flyttar direkt med musen.
+      if(pointerEvent?.shiftKey) beginMovingParkItem(item,pointerEvent);
+      else MZ.svampstigen?.open?.(item.id);
       return;
     }
     if(item?.type === "miniJetty" && item.zone === "southeast"){
@@ -8103,6 +8105,14 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       return;
     }
   }
+
+  // Anropas från Svampstigens dialog; fungerar även på pekskärm.
+  MZ.basketActions = {
+    move(basketId){
+      const basket = state.parkItems.find(item => item.type === "mushroomBasket" && item.zone === "northwest" && (!basketId || item.id === basketId));
+      if(basket) beginMovingParkItem(basket);
+    }
+  };
 
   function moveSelectedParkItem(){
     const item = state.parkItems.find((candidate) => candidate.id === selectedParkItemId);

@@ -1,18 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges">
-<title>Svampkorg till Matteparken</title>
-<rect width="64" height="64" fill="none"/>
-<path d="M19 28V16H22V12H26V9H40V12H44V16H47V28H42V17H39V14H27V17H24V28Z" fill="#513727"/>
-<path d="M23 27V17H26V13H40V17H43V27H39V19H27V27Z" fill="#caa06a"/>
-<path d="M11 26H53V36H50V52H46V56H18V52H14V36H11Z" fill="#5d3d27"/>
-<path d="M14 29H50V36H48V50H44V53H20V50H16V36H14Z" fill="#bc8850"/>
-<path d="M17 35H47V39H17Z" fill="#e0b579"/>
-<rect x="17" y="41" width="30" height="3" fill="#8b5b32"/>
-<rect x="17" y="47" width="30" height="3" fill="#8b5b32"/>
-<path d="M22 37V51H26V37ZM31 37V53H35V37ZM40 37V51H44V37Z" fill="#e4b77b" opacity=".9"/>
-<path d="M14 26H50V30H14Z" fill="#e4b77b"/>
-<path d="M15 31H49V34H15Z" fill="#865635"/>
-<path d="M22 25H30V29H22Z" fill="#578343"/>
-<path d="M32 23H41V29H32Z" fill="#a45036"/>
-<rect x="35" y="21" width="3" height="3" fill="#fff0b0"/>
-<rect x="10" y="56" width="44" height="3" fill="#263c2b" opacity=".25"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" shape-rendering="crispEdges">
+<title>Svampkorg i flätad rotting med skogssvampar</title>
+<!-- Transparent pixelform, tecknad för Skogsdungens små dekorationer. -->
+<path d="M15 86H81V89H15Z" fill="#253f30" opacity=".18"/>
+<!-- Handtag bakom innehållet -->
+<path d="M22 48V30H26V23H31V17H37V13H59V17H65V23H70V30H74V48H64V31H61V25H57V22H39V25H35V31H32V48Z" fill="#483222"/>
+<path d="M26 47V31H30V24H36V18H60V24H66V31H70V47H65V31H61V25H58V22H38V25H34V31H31V47Z" fill="#d29b59"/>
+<path d="M31 34H34V27H38V23H43V20H54V23H59V27H63V34H60V29H55V26H40V29H35V34Z" fill="#f2cf8d" opacity=".85"/>
+<!-- Skogssvampar som tittar upp -->
+<path d="M29 44H37V58H29ZM59 46H66V58H59Z" fill="#f5e5be"/>
+<path d="M23 46H41V50H23ZM56 48H71V52H56Z" fill="#d8c39c"/>
+<path d="M17 44H20V39H24V34H28V31H35V34H40V39H43V44Z" fill="#cd9134"/>
+<path d="M21 39H25V35H34V38H38V41H21Z" fill="#ffcd55"/>
+<path d="M54 43H57V37H62V34H70V37H75V43Z" fill="#ad4938"/>
+<path d="M58 40H64V38H69V40H73V42H58Z" fill="#e96549"/>
+<path d="M62 37H66V40H62ZM70 40H73V42H70Z" fill="#fff4d2"/>
+<path d="M45 50V35H49V32H56V35H60V40H62V46H56V49Z" fill="#f5deb6"/>
+<path d="M40 37H44V33H49V30H56V33H59V37H63V41H40Z" fill="#75472f"/>
+<path d="M44 35H49V32H55V35H59V38H44Z" fill="#b9804e"/>
+<path d="M21 45H25V49H21ZM75 46H79V51H75Z" fill="#63824f"/>
+<path d="M19 40H22V45H19ZM76 41H80V46H76Z" fill="#7e9e5b"/>
+<!-- Korgens skål -->
+<path d="M11 49H85V61H81V76H76V82H68V86H28V82H20V76H15V61H11Z" fill="#503827"/>
+<path d="M15 52H81V61H78V75H73V79H67V83H29V79H23V75H19V61H15Z" fill="#b77841"/>
+<path d="M19 59H77V75H73V79H66V82H30V79H23V75H19Z" fill="#cb914f"/>
+<!-- Handflätade mörka och ljusa band -->
+<path d="M17 61H79V64H17ZM19 69H77V72H19ZM23 77H73V80H23Z" fill="#8a532f"/>
+<path d="M20 65H26V69H20ZM32 65H38V69H32ZM44 65H50V69H44ZM56 65H62V69H56ZM68 65H74V69H68Z" fill="#f2ba72"/>
+<path d="M26 72H32V76H26ZM38 72H44V76H38ZM50 72H56V76H50ZM62 72H68V76H62Z" fill="#f2ba72"/>
+<path d="M24 58V79H28V58ZM36 58V82H40V58ZM48 58V83H52V58ZM60 58V82H64V58ZM72 58V78H76V58Z" fill="#e4ad67" opacity=".75"/>
+<path d="M16 49H80V53H84V57H12V53H16Z" fill="#513925"/>
+<path d="M17 51H79V54H17Z" fill="#f1c07b"/>
+<path d="M18 55H78V58H18Z" fill="#93603a"/>
+<path d="M25 81H31V84H65V81H71V84H66V87H30V84H25Z" fill="#6d452f"/>
+<!-- små glanspunkter -->
+<path d="M20 60H23V63H20ZM40 74H43V77H40ZM70 63H73V66H70Z" fill="#ffe1a1" opacity=".8"/>
 </svg>
