@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173b2e">
+<title>Matteparken · Kottkampen på storbild</title>
+<style>
+:root{--dark:#193c2f;--dark2:#10271e;--paper:#f8efce;--gold:#f3c86d;--leaf:#aad994}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;background:var(--dark2);color:var(--paper)}
+body{background:radial-gradient(ellipse at 70% 0%,#365c3b 0,transparent 53%),linear-gradient(145deg,#193c2f,#10291f 70%);padding:clamp(12px,3vw,36px)}
+.shell{width:min(1440px,100%);margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.eyebrow{text-transform:uppercase;letter-spacing:.18em;color:#b8d4a8;font-size:clamp(11px,1.2vw,16px);font-weight:800}
+h1{font-size:clamp(28px,4.8vw,64px);line-height:1.05;margin:9px 0 5px}
+h2{margin:0}
+.sub{font-size:clamp(16px,2vw,28px);color:#e8d8ac;margin:5px 0}
+.actions{display:flex;gap:8px;align-items:center}
+button{border-radius:9px;border:1px solid #a6bd94;background:#e7dfc5;color:#1b3e2b;font:750 15px/1.2 inherit;padding:11px 16px;cursor:pointer}
+button:hover{background:#fff4cf}
+.status{margin:24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;border:2px solid #7aa071;background:#204938;padding:16px 24px;border-radius:16px}
+.status-text{font-size:clamp(16px,2vw,27px);font-weight:850}
+.timer{font-size:clamp(36px,5vw,78px);font-weight:950;letter-spacing:.06em;color:#f1d38b;font-variant-numeric:tabular-nums}
+.content{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,.75fr);gap:22px}
+.podium,.standings{background:#f7efda;color:#254432;border-radius:18px;padding:clamp(16px,2vw,28px);border:5px solid #b28d56;box-shadow:0 10px 0 #102a20}
+h3{font-size:clamp(20px,2vw,30px);margin:0 0 15px}
+.podium-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin-top:28px}
+.podium-item{border:2px solid #d5b77a;border-radius:12px;padding:16px 8px;text-align:center;background:linear-gradient(#fefbe9,#e1d1a4)}
+.podium-item:nth-child(1){order:2;min-height:220px;background:linear-gradient(#fff2b0,#ebc468);border-color:#c89b35}
+.podium-item:nth-child(2){order:1;min-height:175px}
+.podium-item:nth-child(3){order:3;min-height:150px}
+.medal{font-size:clamp(32px,4vw,62px)}
+.player{font-size:clamp(15px,2vw,26px);font-weight:900;overflow-wrap:anywhere;margin:8px 0}
+.score{font-size:clamp(16px,1.6vw,24px);font-weight:800;font-variant-numeric:tabular-nums}
+.reward{font-size:clamp(13px,1.2vw,18px);color:#6b4e25;margin-top:4px;font-weight:800}
+.placeholder{min-height:260px;display:grid;place-items:center;text-align:center;font-size:clamp(19px,2.5vw,33px);color:#5c795d}
+ol{list-style:none;padding:0;margin:0}
+li{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #d1c8ad;padding:10px 4px;font-size:clamp(15px,1.45vw,24px)}
+li:last-child{border-bottom:0}
+.name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.points{font-weight:950;white-space:nowrap;font-variant-numeric:tabular-nums}
+small{color:#b9d0b6}
+footer{margin:23px 0 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:#b8d4b5}
+.live{display:inline-block;background:#afdf8c;color:#1d3b2b;border-radius:50px;padding:5px 12px;font-size:14px;font-weight:900}
+.error{color:#ffddac;font-weight:800}
+@media(max-width:760px){.content{grid-template-columns:1fr}.status{padding:12px}.podium-item:nth-child(1){min-height:150px}.podium-item:nth-child(2),.podium-item:nth-child(3){min-height:130px}.podium-list{gap:5px;margin-top:14px} .actions{width:100%}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header>
+ <div><div class="eyebrow">MATTEPARKEN · KOTTKAMPEN</div><h1>🐿️ <span id="title">Kottjakten</span></h1><p class="sub">Vem hittar flest kottar i skogen?</p></div>
+ <div class="actions"><button id="fullscreen" type="button">⛶ Helskärm</button><button id="reload" type="button">↻ Uppdatera</button></div>
+</header>
+<div class="status" role="status"><div><div class="eyebrow" id="stateLabel">Ansluter till tävlingen</div><div class="status-text" id="status">Hämtar aktuellt resultat …</div></div><div class="timer" id="timer">🌰</div></div>
+<div class="content">
+ <section class="podium" aria-label="Prispall"><h3 id="podiumTitle">🏆 Topp tre</h3><div class="podium-list" id="podium"><div class="placeholder" style="grid-column:1/-1">Väntar på tävlingen …</div></div></section>
+ <section class="standings" aria-label="Topplista"><h3>🌲 Ställningen</h3><ol id="leaders"><li>Inga spelare ännu.</li></ol></section>
+</div>
+<footer><span>🪵 Mystiska stubbar kan ge bonuspoäng, poängförlust eller ingenting.</span><span id="updated">Endast klassens tävlingsnamn och ekorrarnas placeringar visas.</span></footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(()=>{
+"use strict";
+const URL="https://mjgkkwdgowvxuehiudvj.supabase.co",KEY="sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
+const id=new URLSearchParams(location.search).get("session");
+const $=k=>document.getElementById(k);
+const c=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"matteparken-admin-auth-v1"}});
+let last=null,offsetMs=0,requesting=false,token=0;
+function text(id,v){$(id).textContent=String(v??"");}
+function add(tag,cls,value,parent){const node=document.createElement(tag);if(cls)node.className=cls;if(value!=null)node.textContent=value;parent.append(node);return node;}
+function draw(players,finished){
+ const sorted=[...players].sort((a,b)=>(b.score-a.score)||(b.correct-a.correct));const top=$("podium"),list=$("leaders");
+ top.replaceChildren();list.replaceChildren();
+ if(!sorted.length){add("div","placeholder","🐾 Eleverna har inte anslutit ännu.",top);add("li","","Väntar på deltagare …",list);return;}
+ for(let i=0;i<Math.min(3,sorted.length);i++){
+  const p=sorted[i],item=add("div","podium-item",null,top);
+  add("div","medal",["🥇","🥈","🥉"][i],item);
+  add("div","player",p.name,item);
+  add("div","score",p.score+" poäng",item);
+  if(finished && p.reward!=null)add("div","reward","🌰 +"+p.reward+" kottar",item);
+ }
+ sorted.slice(0,16).forEach((p,i)=>{
+  const li=add("li","",null,list);add("span","name",(i+1)+". "+p.name,li);add("span","points",p.score+" p",li);
+ });
+}
+function timer(){
+ const s=last;if(!s)return;
+ if(!s.started_at||s.mode!=="time"){text("timer",s.mode==="questions"?s.question_count+" frågor":"🌰");return;}
+ const base=new Date(s.started_at).getTime()+s.minutes*60000+s.paused_seconds*1000;
+ const now=s.status==="paused"?new Date(s.paused_at).getTime():Date.now()+offsetMs;
+ const remaining=s.status==="finished"?0:Math.max(0,Math.ceil((base-now)/1000));
+ text("timer",Math.floor(remaining/60)+":"+String(remaining%60).padStart(2,"0"));
+}
+async function refresh(){
+ if(!id){text("status","Ingen tävling vald. Öppna skärmen från läraradmin.");return;}
+ if(requesting)return;requesting=true;
+ try{
+  const {data,error}=await c.rpc("kottkamp_teacher",{p_action:"snapshot",p_session_id:id,p_payload:{}});
+  if(error)throw error;if(!data?.ok)throw Error(data?.reason||"Tävlingen hittades inte.");
+  last=data.session;offsetMs=new Date(data.server_now).getTime()-Date.now();token++;
+  text("title",last.title);document.title="Kottkampen · "+last.title;
+  const labels={waiting:"Väntar på start",running:"Tävlingen pågår",paused:"Pausad av läraren",finished:"Tävlingen är avslutad!"};
+  const count=data.players?.length||0;text("stateLabel",last.status==="running"?"● LIVE":last.status==="finished"?"MÅLGÅNG":"KOTTKAMPEN");
+  text("status",(labels[last.status]||"Tävlingen")+" · "+count+" deltagare");
+  text("podiumTitle",last.status==="finished"?"🏆 Prispallen":"🏆 Just nu i toppen");
+  draw(data.players||[],last.status==="finished");timer();
+  text("updated","Uppdaterad "+new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit",second:"2-digit"}));
+ }catch(e){text("stateLabel","Kan inte visa tävlingen");text("status","Kontrollera att läraren är inloggad i admin. "+e.message);}
+ finally{requesting=false;}
+}
+$("fullscreen").addEventListener("click",()=>{
+ if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});
+ else document.exitFullscreen?.().catch(()=>{});
+});
+$("reload").onclick=refresh;
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)void refresh();});
+setInterval(refresh,2000);setInterval(timer,500);
+void refresh();
+})();
+</script>
+</body></html>
