@@ -1275,9 +1275,23 @@ window.MATTEZOO_TEACHER_PLAN = {
   display:block;width:100%;height:100%;
   object-fit:contain;image-rendering:pixelated;pointer-events:none;
 }
+/* Explicit in-game motion choice keeps the default system accessibility setting,
+   while allowing a visitor to opt in to these two gentle park animations. */
+body[data-park-motion="off"] .placed-item.halloweenGhost:not(.placement-ghost){animation:none!important;margin-top:0!important}
+body[data-park-motion="off"] .wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-1{animation:none!important;opacity:1!important}
+body[data-park-motion="off"] .wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-2{animation:none!important;opacity:0!important}
 @media(prefers-reduced-motion:reduce){
   .placed-item.halloweenGhost:not(.placement-ghost){animation:none!important}
+  body[data-park-motion="on"] .placed-item.halloweenGhost:not(.placement-ghost){animation:halloweenGhostBobbing 1.8s ease-in-out infinite!important}
+  body[data-park-motion="on"] .wildlife-visitor.fox.fox-walking{transition:left var(--fox-walk-duration,3s) linear,top var(--fox-walk-duration,3s) linear!important}
+  body[data-park-motion="on"] .wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-1{animation:foxSitFrame1 4.8s steps(1) infinite!important}
+  body[data-park-motion="on"] .wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-2{animation:foxSitFrame2 4.8s steps(1) infinite!important}
 }
+#parkMotionToggle{
+  flex-shrink:0;margin-left:10px;padding:5px 8px;font:700 11px/1.2 inherit;
+  border:1px solid #889674;border-radius:8px;background:#f4ebcc;color:#41523b;cursor:pointer;
+}
+#parkMotionToggle:focus-visible{outline:3px solid #ce9c51;outline-offset:2px}
 
 .placed-item.firePit .firepit-animation{position:relative;display:block;width:60px;height:52px}
 .placed-item.firePit .firepit-animation::before{content:"";position:absolute;left:50%;top:58%;width:42px;height:28px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle, rgba(255,214,120,.34) 0%, rgba(255,168,60,.18) 45%, rgba(255,120,30,.08) 68%, rgba(255,120,30,0) 100%);pointer-events:none;filter:blur(1px)}
@@ -2607,6 +2621,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   <footer class="messagebar">
     <span id="status">💬 ”Någon har sett spår i den västra skogen...”</span>
     <span class="hint">Klicka på anslagstavlan, parkkontoret eller parkförrådet</span>
+    <button id="parkMotionToggle" type="button" aria-pressed="false" title="Styr rävens promenader och spökets guppning">🐾 Rörelse: Av</button>
   </footer>
 
 
@@ -6762,6 +6777,39 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const woodpeckerTimers = new Set();
   const foxTimers = new Set();
   let foxLastPosition = null; // only for this browser session, never save player data
+  let foxNextWalkAt = 0;
+  const parkMotionMedia = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const parkMotionKey = "matteparken:foxGhostMotion";
+  let parkMotionChoice = null;
+  try{parkMotionChoice=window.localStorage.getItem(parkMotionKey)}catch{}
+  let parkMotionEnabled = parkMotionChoice === "on" || (parkMotionChoice !== "off" && !parkMotionMedia?.matches);
+  function applyParkMotion(){
+    document.body.dataset.parkMotion = parkMotionEnabled ? "on" : "off";
+    const button = document.getElementById("parkMotionToggle");
+    if(button){
+      button.textContent = "🐾 Rörelse: " + (parkMotionEnabled ? "På" : "Av");
+      button.setAttribute("aria-pressed", String(parkMotionEnabled));
+      button.title = "Rävens promenader och spökets guppning";
+    }
+  }
+  function initParkMotionToggle(){
+    applyParkMotion();
+    document.getElementById("parkMotionToggle")?.addEventListener("click",()=>{
+      parkMotionEnabled = !parkMotionEnabled;
+      parkMotionChoice = parkMotionEnabled ? "on" : "off";
+      try{window.localStorage.setItem(parkMotionKey,parkMotionChoice)}catch{}
+      foxNextWalkAt = 0;
+      applyParkMotion();
+      renderParkItems();
+    });
+    parkMotionMedia?.addEventListener?.("change",(event)=>{
+      if(parkMotionChoice === "on" || parkMotionChoice === "off") return;
+      parkMotionEnabled = !event.matches;
+      foxNextWalkAt = 0;
+      applyParkMotion();
+      renderParkItems();
+    });
+  }
   let wildlifeInfoCard = null;
   let wildlifeInfoPinned = false;
   let wildlifeInfoSpeciesId = null;
@@ -6932,7 +6980,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     let y=clamp(Number(remembered?.y ?? visitor.y) || 50,minY,maxY);
     node.style.left=`${x}%`;
     node.style.top=`${y}%`;
-    if(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    if(!parkMotionEnabled) return;
 
     const schedule=(fn,delay)=>{
       const timerId=setTimeout(()=>{
@@ -6941,8 +6989,12 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       },delay);
       foxTimers.add(timerId);
     };
-    const rest=()=>schedule(walk,8500+Math.floor(Math.random()*9000));
+    const rest=()=>{
+      if(!foxNextWalkAt) foxNextWalkAt=Date.now()+3500+Math.floor(Math.random()*1500);
+      schedule(walk,Math.max(120,foxNextWalkAt-Date.now()));
+    };
     const walk=()=>{
+      foxNextWalkAt=0;
       if(document.hidden){rest();return;}
       const direction=Math.random()<.5?-1:1;
       const walkPx=40+Math.random()*70;
@@ -6966,6 +7018,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         pose.dataset.mode="idle";
         x=targetX; y=targetY;
         foxLastPosition={key,x,y};
+        foxNextWalkAt=Date.now()+9000+Math.floor(Math.random()*9000);
         rest();
       },duration+40);
     };
@@ -9263,6 +9316,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     updateShopUI,
     openAquarium,
     init(){
+      initParkMotionToggle();
       bindEvents();
       const visit = storage.initializeParkDay();
       MZ.wildlife.processParkDay(visit.parkDay);
