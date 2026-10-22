@@ -324,11 +324,11 @@ begin
 end $$;
 
 create or replace function public.kottkamp_teacher(p_action text,p_session_id uuid default null,p_payload jsonb default '{}'::jsonb)
-returns jsonb language sql set search_path='' as $$
+returns jsonb language sql security definer set search_path='' as $
  select private.kottkamp_teacher_impl(p_action,p_session_id,p_payload)
 $$;
 create or replace function public.kottkamp_student(p_action text,p_session_id uuid default null,p_payload jsonb default '{}'::jsonb)
-returns jsonb language sql set search_path='' as $$
+returns jsonb language sql security definer set search_path='' as $
  select private.kottkamp_student_impl(p_action,p_session_id,p_payload)
 $$;
 revoke all on function public.kottkamp_teacher(text,uuid,jsonb),public.kottkamp_student(text,uuid,jsonb) from public,anon;
