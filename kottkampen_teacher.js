@@ -22,7 +22,7 @@ card.innerHTML=[
 '<label id="kkQuestionsRow" class="hidden">Antal frågor (1–100)<input type="number" id="kkQuestions" min="1" max="100" value="15"></label>',
 '<div class="form-actions"><button class="btn primary" id="kkCreate">Skapa tävling</button><button class="btn secondary" id="kkRestore">Återgå till tävling</button></div></div>',
 '<div class="stack"><h3 id="kkHeading">Ingen tävling startad</h3><p id="kkInfo" class="muted">Skapa en tävling först.</p>',
-'<div class="form-actions"><button class="btn primary" id="kkStart" disabled>▶ Starta</button><button class="btn secondary" id="kkPause" disabled>⏸ Pausa</button><button class="btn secondary" id="kkResume" disabled>▶ Fortsätt</button><button class="btn danger" id="kkFinish" disabled>🏁 Avsluta</button></div>',
+'<div class="form-actions"><button class="btn primary" id="kkStart" disabled>▶ Starta</button><button class="btn secondary" id="kkPause" disabled>⏸ Pausa</button><button class="btn secondary" id="kkResume" disabled>▶ Fortsätt</button><button class="btn danger" id="kkFinish" disabled>🏁 Avsluta</button><button class="btn secondary" id="kkProjector" disabled>🏆 Visa på storbild ↗</button></div>',
 '<h4>Topplista</h4><div class="table-wrap"><table><thead><tr><th>Elev</th><th>Poäng</th><th>Rätt</th><th>Kottar</th></tr></thead><tbody id="kkRows"></tbody></table></div>',
 '<p class="muted small">Stubbar påverkar tävlingspoäng, aldrig elevens riktiga kottar. Vid målgång delas 25/20/15 kottar ut till de tre främsta, övriga deltagare får 8.</p></div></div><p id="kkMessage" class="feedback" aria-live="polite"></p>'
 ].join("");
@@ -32,6 +32,7 @@ btn.onclick=()=>{shown=!shown;card.classList.toggle("hidden",!shown);if(shown)re
 $("kkClose").onclick=()=>{shown=false;card.classList.add("hidden");};
 document.querySelectorAll('input[name="kkMode"]').forEach(e=>e.onchange=()=>{let timed=document.querySelector('input[name="kkMode"]:checked').value==="time";$("kkMinutesRow").classList.toggle("hidden",!timed);$("kkQuestionsRow").classList.toggle("hidden",timed);});
 $("kkCreate").onclick=create;$("kkRestore").onclick=restore;
+$("kkProjector").onclick=()=>{if(!id){say("Skapa en tävling först.");return;}window.open("kottkampen_live.html?session="+encodeURIComponent(id),"_blank","noopener");};
 for(const action of ["start","pause","resume","finish"])$("kk"+action[0].toUpperCase()+action.slice(1)).onclick=()=>control(action);
 $("classSelect").addEventListener("change",()=>{id=null;if(shown)restore();});
 setInterval(()=>{if(shown&&id&&!busy)refresh();},2500);
@@ -55,7 +56,7 @@ const x=await rpc("snapshot"),s=x.session;
 $("kkHeading").textContent=s.title+" · "+({waiting:"Väntar",running:"Pågår",paused:"Pausad",finished:"Avslutad"}[s.status]||s.status);
 let timer="";if(s.mode==="time"&&s.started_at){let end=new Date(s.started_at).getTime()+(s.minutes*60+s.paused_seconds)*1000;let now=new Date(s.status==="paused"?s.paused_at:x.server_now).getTime();timer=" · "+Math.max(0,Math.ceil((end-now)/1000))+" s kvar";}
 $("kkInfo").textContent=x.players.length+" deltagare · "+(s.mode==="time"?s.minutes+" minuter":s.question_count+" frågor")+timer;
-$("kkStart").disabled=s.status!=="waiting";$("kkPause").disabled=s.status!=="running"||s.mode!=="time";$("kkResume").disabled=s.status!=="paused";$("kkFinish").disabled=s.status==="waiting"||s.status==="finished";
+$("kkProjector").disabled=false;$("kkStart").disabled=s.status!=="waiting";$("kkPause").disabled=s.status!=="running"||s.mode!=="time";$("kkResume").disabled=s.status!=="paused";$("kkFinish").disabled=s.status==="waiting"||s.status==="finished";
 $("kkRows").replaceChildren();
 if(!x.players.length){let row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=4;cell.textContent="Eleverna har inte anslutit ännu.";row.append(cell);$("kkRows").append(row);}
 for(const p of x.players){let tr=document.createElement("tr");for(const v of [p.name,p.score,p.correct,p.reward==null?"–":p.reward]){let td=document.createElement("td");td.textContent=v;tr.append(td);} $("kkRows").append(tr);}
