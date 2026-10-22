@@ -862,15 +862,30 @@ window.MATTEZOO_TEACHER_PLAN = {
 .wildlife-visitor.owl .owl-animation[data-pose="neutral"] .frame-1{opacity:1}
 .wildlife-visitor.owl .owl-animation[data-pose="left"] .frame-2{opacity:1}
 .wildlife-visitor.owl .owl-animation[data-pose="right"] .frame-3{opacity:1}
+/* Räv: två steg, två sittbilder. Rörelsen gäller hela djuret, inte bildrutorna. */
 .wildlife-visitor.fox.sprite-animal{width:72px;height:72px}
+.wildlife-visitor.fox.fox-walking{
+  transition:left var(--fox-walk-duration,3s) linear,top var(--fox-walk-duration,3s) linear;
+}
 .wildlife-visitor.fox .fox-animation{position:relative;display:block;width:100%;height:100%}
-.wildlife-visitor.fox .fox-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;opacity:0}
-.wildlife-visitor.fox .frame-1{animation:foxTailFrame1 1.8s steps(1) infinite}
-.wildlife-visitor.fox .frame-2{animation:foxTailFrame2 1.8s steps(1) infinite}
-.wildlife-visitor.fox .frame-3{animation:foxTailFrame3 1.8s steps(1) infinite}
-@keyframes foxTailFrame1{0%,33%{opacity:1}34%,100%{opacity:0}}
-@keyframes foxTailFrame2{0%,33%{opacity:0}34%,66%{opacity:1}67%,100%{opacity:0}}
-@keyframes foxTailFrame3{0%,66%{opacity:0}67%,100%{opacity:1}}
+.wildlife-visitor.fox .fox-animation[data-direction="left"]{transform:scaleX(-1)}
+.wildlife-visitor.fox .fox-frame{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  image-rendering:pixelated;pointer-events:none;opacity:0;
+}
+.wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-1{animation:foxSitFrame1 4.8s steps(1) infinite}
+.wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-2{animation:foxSitFrame2 4.8s steps(1) infinite}
+.wildlife-visitor.fox .fox-animation[data-mode="walk"] .fox-walk-1{animation:foxWalkFrame1 .58s steps(1) infinite}
+.wildlife-visitor.fox .fox-animation[data-mode="walk"] .fox-walk-2{animation:foxWalkFrame2 .58s steps(1) infinite}
+@keyframes foxSitFrame1{0%,49.99%{opacity:1}50%,100%{opacity:0}}
+@keyframes foxSitFrame2{0%,49.99%{opacity:0}50%,100%{opacity:1}}
+@keyframes foxWalkFrame1{0%,49.99%{opacity:1}50%,100%{opacity:0}}
+@keyframes foxWalkFrame2{0%,49.99%{opacity:0}50%,100%{opacity:1}}
+@media(prefers-reduced-motion:reduce){
+  .wildlife-visitor.fox.fox-walking{transition:none}
+  .wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-1{animation:none;opacity:1}
+  .wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-2{animation:none;opacity:0}
+}
 
 /* Grundpotensform v0.4.22 */
 .scientific-notation-panel{max-width:760px;margin-inline:auto}
@@ -6687,11 +6702,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     coot:"assets/asset_103_d0a1d1d750185f15.png"
   };
   const wildlifeAnimationFrames = {
-    fox:[
-      "assets/asset_099_df93ec3e64f38c5f.png",
-      "assets/asset_104_9d9f9b7a7cb04533.png",
-      "assets/asset_105_4a8a7592aee2e9f1.png"
-    ],
+    fox:{
+      walk:["assets/fox/rav_gar_1.png","assets/fox/rav_gar_2.png"],
+      sit:["assets/fox/rav_sitter_1.png","assets/fox/rav_sitter_2.png"]
+    },
     woodpecker:[
       "assets/asset_098_aff26148210aa6e6.png",
       "assets/asset_106_70652d46a0fb0482.png"
@@ -6717,7 +6731,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const wildlifeSpriteUrl = (species) => wildlifeSprites[species] || "";
   function wildlifeSpriteMarkup(species){
     if(species === "fox"){
-      return `<span class="fox-animation">${wildlifeAnimationFrames.fox.map((src,index)=>`<img class="wildlife-sprite fox-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
+      const frames=wildlifeAnimationFrames.fox;
+      return `<span class="fox-animation" data-mode="idle" data-direction="right">${frames.walk.map((src,index)=>`<img class="wildlife-sprite fox-frame fox-walk-${index+1}" src="${src}" alt="" />`).join("")}${frames.sit.map((src,index)=>`<img class="wildlife-sprite fox-frame fox-sit-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
     }
     if(species === "woodpecker"){
       return `<span class="woodpecker-animation" data-pose="idle">${wildlifeAnimationFrames.woodpecker.map((src,index)=>`<img class="wildlife-sprite woodpecker-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
@@ -6745,6 +6760,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const attachedBirdTimers = new Set();
   const owlTimers = new Set();
   const woodpeckerTimers = new Set();
+  const foxTimers = new Set();
+  let foxLastPosition = null; // only for this browser session, never save player data
   let wildlifeInfoCard = null;
   let wildlifeInfoPinned = false;
   let wildlifeInfoSpeciesId = null;
@@ -6890,6 +6907,69 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   function clearWoodpeckerTimers(){
     woodpeckerTimers.forEach((timerId) => clearTimeout(timerId));
     woodpeckerTimers.clear();
+  }
+
+  function clearFoxTimers(){
+    foxTimers.forEach((timerId)=>clearTimeout(timerId));
+    foxTimers.clear();
+  }
+
+  function startFoxWandering(node,visitor){
+    const pose=node?.querySelector(".fox-animation");
+    const zone=node?.parentElement;
+    if(!pose || !zone || visitor.zone !== "northwest") return;
+    pose.dataset.mode="idle";
+    // Keep a complete 72px fox inside the Skogsdungen building-zone rectangle.
+    const clamp=(value,low,high)=>Math.min(high,Math.max(low,value));
+    const zoneWidth=Math.max(120,zone.clientWidth);
+    const zoneHeight=Math.max(120,zone.clientHeight);
+    const marginX=clamp(3600/zoneWidth,9,35);
+    const marginY=clamp(3600/zoneHeight,16,35);
+    const minX=marginX,maxX=100-marginX,minY=marginY,maxY=100-marginY;
+    const key=`${storage.getParkDay()}:${visitor.anchorId || ""}`;
+    const remembered=foxLastPosition?.key===key ? foxLastPosition : null;
+    let x=clamp(Number(remembered?.x ?? visitor.x) || 50,minX,maxX);
+    let y=clamp(Number(remembered?.y ?? visitor.y) || 50,minY,maxY);
+    node.style.left=`${x}%`;
+    node.style.top=`${y}%`;
+    if(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    const schedule=(fn,delay)=>{
+      const timerId=setTimeout(()=>{
+        foxTimers.delete(timerId);
+        if(node.isConnected) fn();
+      },delay);
+      foxTimers.add(timerId);
+    };
+    const rest=()=>schedule(walk,8500+Math.floor(Math.random()*9000));
+    const walk=()=>{
+      if(document.hidden){rest();return;}
+      const direction=Math.random()<.5?-1:1;
+      const walkPx=40+Math.random()*70;
+      let targetX=clamp(x+direction*walkPx/zoneWidth*100,minX,maxX);
+      if(Math.abs(targetX-x)*zoneWidth/100<22){
+        targetX=clamp(x-direction*walkPx/zoneWidth*100,minX,maxX);
+      }
+      const targetY=clamp(y+(Math.random()-.5)*36/zoneHeight*100,minY,maxY);
+      const distance=Math.hypot((targetX-x)*zoneWidth/100,(targetY-y)*zoneHeight/100);
+      if(distance<10){rest();return;}
+      const duration=Math.round(clamp(distance/27*1000,1600,5000));
+      pose.dataset.direction=targetX<x?"left":"right";
+      pose.dataset.mode="walk";
+      node.style.setProperty("--fox-walk-duration",`${duration}ms`);
+      node.classList.add("fox-walking");
+      node.getBoundingClientRect(); // establish the starting location before transition
+      node.style.left=`${targetX}%`;
+      node.style.top=`${targetY}%`;
+      schedule(()=>{
+        node.classList.remove("fox-walking");
+        pose.dataset.mode="idle";
+        x=targetX; y=targetY;
+        foxLastPosition={key,x,y};
+        rest();
+      },duration+40);
+    };
+    rest();
   }
 
   function startWoodpeckerAnimation(node){
@@ -8432,7 +8512,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   }
 
   function renderWildlifeVisitors(visitors=null){
-    $$(".wildlife-visitor").forEach((node) => node.remove());
+    clearFoxTimers();
+    $(".wildlife-visitor").forEach((node) => node.remove());
     const visibleVisitors = Array.isArray(visitors) ? visitors : MZ.wildlife.visibleVisitors(storage.getParkDay());
     visibleVisitors.forEach((visitor) => {
       // Småfåglar fästs direkt på sitt fågelbad/fågelholk i renderParkItems.
@@ -8452,6 +8533,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       zone.appendChild(node);
       if(visitor.species === "owl") startOwlAnimation(node.querySelector(".owl-animation"));
       if(visitor.species === "woodpecker") startWoodpeckerAnimation(node.querySelector(".woodpecker-animation"));
+      if(visitor.species === "fox") startFoxWandering(node,visitor);
       bindWildlifeInfoTarget(node,visitor.species,{focusable:true});
     });
   }
@@ -8474,7 +8556,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     clearAttachedBirdTimers();
     clearOwlTimers();
     clearWoodpeckerTimers();
-    $$(".placed-item:not(.placement-ghost), .starter-seed, .starter-bloom, .wildlife-visitor").forEach((node) => node.remove());
+    clearFoxTimers();
+    $(".placed-item:not(.placement-ghost), .starter-seed, .starter-bloom, .wildlife-visitor").forEach((node) => node.remove());
     const {visitors, hiddenAnchorIds} = collectVisibleWildlife();
     const attachedBirds = new Map(
       visitors.filter((visitor)=>["bird","tit"].includes(visitor.species) && visitor.anchorId)
