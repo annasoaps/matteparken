@@ -115,7 +115,8 @@ begin
   prompt_text:='Av 100 rutor är '||percent||' färgade. Hur stor andel är färgad (i %)?';
   result_value:=percent;
  when 'percentChange' then
-  before_value:=a*2;
+  -- Choose multiples of 100 so every supported percentage gives exact integer values.
+  before_value:=100+(floor(random()*6)::int)*100;
   after_value:=before_value*(100+percent)/100;
   if random()<0.5 then
    after_value:=before_value*(100-percent)/100;
