@@ -223,7 +223,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
         <div class="callout">Hela veckoläxan ger <strong>1 blind bag totalt</strong>. Vill du ha flera matteområden i samma läxa, lägg till dem med samma rubrik, öppningstid och deadline. De samlas automatiskt till en gemensam läxa.</div>
         <div class="callout" style="background:#fafcf8">
           <h3 style="margin:0 0 6px">🔒 Läxans låsta tider · vald klass</h3>
-          <p class="muted small" style="margin:0 0 12px">Ställ in tider då läxan INTE går att göra. Gäller varje vecka, svensk tid, endast läxan. Utanför tiderna går det bra att arbeta. En tom lista betyder att läxan aldrig är tidsspärrad.</p>
+          <p class="muted small" style="margin:0 0 12px">Ställ in tider då läxan INTE går att göra. Gäller varje vecka, svensk tid, endast läxan. Utanför tiderna går det bra att arbeta. En tom lista betyder att läxan aldrig är tidsspärrad. <strong>Ändringarna sparas först när du klickar på ”Spara tider för klassen”.</strong></p>
           <div id="homeworkBlockedList" class="schoolwork-list" style="margin:0 0 12px"></div>
           <div class="form-grid">
             <label>Veckodag
@@ -284,7 +284,8 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
           <div class="wide"><button class="btn primary" id="createQuizBtn" type="button">+ Lägg till läxförhör</button></div>
         </div>
         <div class="feedback" id="quizFeedback"></div>
-        <div class="schoolwork-list" id="quizList"></div>
+        <p class="muted small">Här visas bara det senaste läxförhöret. Tidigare resultat finns kvar i elevdetaljerna.</p>
+          <div class="schoolwork-list" id="quizList"></div>
       </section>
     </div>
 
@@ -471,6 +472,10 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
       groups.get(key).quizzes.push(q);
     });
     return [...groups.values()];
+  }
+  function quizGroupRecency(group){
+    const latestCreated=Math.max(0,...group.quizzes.map(q=>Date.parse(q.created_at)||0));
+    return Date.parse(group.opens_at)||latestCreated;
   }
   function quizPartName(q){
     const t=Number(q?.game_config?.table);
@@ -828,7 +833,7 @@ tbody tr.student-expanded-row:hover{background:#f7faf4}
   function renderQuizzes(){
     const box=$("quizList");if(!box)return;box.innerHTML="";
     if(!quizzes.length){box.innerHTML='<div class="empty">Inget läxförhör skapat ännu.</div>';return;}
-    quizGroups().forEach(group=>{
+    quizGroups().sort((a,b)=>quizGroupRecency(b)-quizGroupRecency(a)).slice(0,1).forEach(group=>{
       const total=group.quizzes.reduce((sum,q)=>sum+Number(q.question_count||0),0);
       const completed=students.filter(s=>quizGroupStatus(s.id,group).complete).length;
       const allPaused=group.quizzes.every(q=>!q.enabled);
