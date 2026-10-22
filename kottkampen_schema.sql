@@ -58,7 +58,7 @@ revoke all on public.kottkamp_sessions,public.kottkamp_players,public.kottkamp_q
 -- No public-table policies. All reads/writes go through the authorization-checking RPCs.
 
 create or replace function private.kottkamp_expired(p public.kottkamp_sessions)
-returns boolean language sql stable set search_path='' as $$
+returns boolean language sql volatile set search_path='' as $
  select p.status='running' and p.mode='time' and
  clock_timestamp() >= p.started_at + make_interval(secs=>p.minutes*60+p.paused_seconds)
 $$;
@@ -220,7 +220,7 @@ begin
  select * into s from public.kottkamp_sessions where id=p_id for update;
  if s.id is null or not exists(select 1 from public.teacher_classes where class_id=s.class_id and teacher_id=auth.uid())
   then return jsonb_build_object('ok',false,'reason','not_your_session'); end if;
- if private.kottkamp_expired(s) then perform private.kottkamp_finish_impl(p_id); end if;
+ if private.kottkamp_expired(s) then perform private.kottkamp_finish_impl(p_id); select * into s from public.kottkamp_sessions where id=p_id; end if;
  if p_action='start' and s.status='waiting' then
   update public.kottkamp_sessions set status='running',started_at=clock_timestamp(),paused_seconds=0 where id=p_id;
  elsif p_action='pause' and s.status='running' and s.mode='time' then
