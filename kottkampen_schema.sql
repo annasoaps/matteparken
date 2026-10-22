@@ -107,7 +107,7 @@ begin
    prompt_text:=percent||' % = ? i decimalform';
    result_value:=percent::numeric/100;
   else
-   prompt_text:=replace(to_char(percent::numeric/100,'FM999999990.9999'),'.',',')||' = ? %';
+   prompt_text:=replace(trim(trailing '.' from to_char(percent::numeric/100,'FM999999990.9999')),'.',',')||' = ? %';
    result_value:=percent;
   end if;
  when 'sharePart' then
@@ -164,12 +164,12 @@ begin
  else raise exception 'unsupported_game: %',g;
  end case;
  delta:=case when abs(result_value)<2 then 0.1 when abs(result_value)<20 then 1 else 10 end;
- correct_text:=replace(to_char(round(result_value,4),'FM999999990.9999'),'.',',');
+ correct_text:=replace(trim(trailing '.' from to_char(round(result_value,4),'FM999999990.9999')),'.',',');
  opts:=array[
   correct_text,
-  replace(to_char(round(result_value+delta,4),'FM999999990.9999'),'.',','),
-  replace(to_char(round(result_value-delta,4),'FM999999990.9999'),'.',','),
-  replace(to_char(round(result_value+2*delta,4),'FM999999990.9999'),'.',',')
+  replace(trim(trailing '.' from to_char(round(result_value+delta,4),'FM999999990.9999')),'.',','),
+  replace(trim(trailing '.' from to_char(round(result_value-delta,4),'FM999999990.9999')),'.',','),
+  replace(trim(trailing '.' from to_char(round(result_value+2*delta,4),'FM999999990.9999')),'.',',')
  ];
  answer_at:=floor(random()*4)::int;
  -- move answer from first position to its randomly chosen position
