@@ -13098,6 +13098,10 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     const day=!q?.opens_at&&!q?.due_at?String(q?.created_at||"").slice(0,10):"";
     return [String(q?.title||"").trim().toLocaleLowerCase("sv-SE"),q?.opens_at||"",q?.due_at||"",day].join("|");
   }
+  function quizGroupRecency(group){
+    const latestCreated=Math.max(0,...group.quizzes.map(q=>Date.parse(q.created_at)||0));
+    return Date.parse(group.opens_at)||latestCreated;
+  }
   function quizGroups(){
     const groups=new Map();
     availableQuizzes().forEach(q=>{
@@ -13105,7 +13109,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
       if(!groups.has(key))groups.set(key,{key,title:q.title,opens_at:q.opens_at,due_at:q.due_at,quizzes:[]});
       groups.get(key).quizzes.push(q);
     });
-    return [...groups.values()];
+    return [...groups.values()].sort((a,b)=>quizGroupRecency(b)-quizGroupRecency(a));
   }
   const quizAreaNames={multiplication:"Multiplikation",equations:"Ekvationer",pow10:"× och ÷ med 10, 100, 1000",fractionDecimal:"Bråk ↔ Decimal",fractionArithmetic:"Räkna med bråk",percentConvert:"Bråk · Decimal · Procent",percentChange:"Beräkna förändring",whole:"Hitta det hela",sharePart:"Hur stor andel?",prefixMatch:"Prefix",unitConvert:"Enhetsomvandling",statistics:"Statistik",scientificNotation:"Grundpotensform"};
   function quizAreaName(q){
@@ -13123,8 +13127,8 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
 
   function renderPaper(){
     const btn=$("officeHomeworkQuizBtn");if(!btn)return;
-    const c=current(),qs=c?.quizzes||[];
-    const waiting=qs.some(q=>!attemptFor(q.id)&&!isLocked(q));
+    const latest=quizGroups()[0];
+    const waiting=Boolean(latest?.quizzes.some(q=>!attemptFor(q.id)&&!isLocked(q)));
     btn.classList.toggle("has-quiz",waiting);
     btn.title=waiting?"Ett läxförhör väntar":"Läxförhör";
   }
@@ -13134,7 +13138,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
     test.classList.add("hidden");result.classList.add("hidden");$("homeworkQuizReflection").classList.add("hidden");list.classList.remove("hidden");list.innerHTML="";
     const c=current();
     if(!c?.student){list.innerHTML='<div class="assignment-empty-cloud">Logga in med klass och elevkod på anslagstavlan först.</div>';return;}
-    const groups=quizGroups();
+    const groups=quizGroups().slice(0,1);
     if(!groups.length){list.innerHTML='<div class="assignment-empty-cloud">Inget läxförhör väntar just nu.</div>';return;}
     groups.forEach(group=>{
       const status=groupAttemptStatus(group),locked=isLocked(group),late=isLate(group);
