@@ -8513,7 +8513,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   function renderWildlifeVisitors(visitors=null){
     clearFoxTimers();
-    $(".wildlife-visitor").forEach((node) => node.remove());
+    $$(".wildlife-visitor").forEach((node) => node.remove());
     const visibleVisitors = Array.isArray(visitors) ? visitors : MZ.wildlife.visibleVisitors(storage.getParkDay());
     visibleVisitors.forEach((visitor) => {
       // Småfåglar fästs direkt på sitt fågelbad/fågelholk i renderParkItems.
@@ -8557,7 +8557,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     clearOwlTimers();
     clearWoodpeckerTimers();
     clearFoxTimers();
-    $(".placed-item:not(.placement-ghost), .starter-seed, .starter-bloom, .wildlife-visitor").forEach((node) => node.remove());
+    $$(".placed-item:not(.placement-ghost), .starter-seed, .starter-bloom, .wildlife-visitor").forEach((node) => node.remove());
     const {visitors, hiddenAnchorIds} = collectVisibleWildlife();
     const attachedBirds = new Map(
       visitors.filter((visitor)=>["bird","tit"].includes(visitor.species) && visitor.anchorId)
