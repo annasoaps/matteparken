@@ -58,7 +58,7 @@ revoke all on public.kottkamp_sessions,public.kottkamp_players,public.kottkamp_q
 -- No public-table policies. All reads/writes go through the authorization-checking RPCs.
 
 create or replace function private.kottkamp_expired(p public.kottkamp_sessions)
-returns boolean language sql volatile set search_path='' as $
+returns boolean language sql volatile set search_path='' as $$
  select p.status='running' and p.mode='time' and
  clock_timestamp() >= p.started_at + make_interval(secs=>p.minutes*60+p.paused_seconds)
 $$;
