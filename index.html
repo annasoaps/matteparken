@@ -1288,10 +1288,14 @@ body[data-park-motion="off"] .wildlife-visitor.fox .fox-animation[data-mode="idl
   body[data-park-motion="on"] .wildlife-visitor.fox .fox-animation[data-mode="idle"] .fox-sit-2{animation:foxSitFrame2 4.8s steps(1) infinite!important}
 }
 #parkMotionToggle{
-  flex-shrink:0;margin-left:10px;padding:5px 8px;font:700 11px/1.2 inherit;
+  flex-shrink:0;margin-left:10px;padding:5px 8px;font-size:11px;font-weight:700;line-height:1.2;
   border:1px solid #889674;border-radius:8px;background:#f4ebcc;color:#41523b;cursor:pointer;
 }
 #parkMotionToggle:focus-visible{outline:3px solid #ce9c51;outline-offset:2px}
+@media(max-width:720px){
+  .messagebar #status{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #parkMotionToggle{padding:5px;font-size:10px;margin-left:6px}
+}
 
 .placed-item.firePit .firepit-animation{position:relative;display:block;width:60px;height:52px}
 .placed-item.firePit .firepit-animation::before{content:"";position:absolute;left:50%;top:58%;width:42px;height:28px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle, rgba(255,214,120,.34) 0%, rgba(255,168,60,.18) 45%, rgba(255,120,30,.08) 68%, rgba(255,120,30,0) 100%);pointer-events:none;filter:blur(1px)}
