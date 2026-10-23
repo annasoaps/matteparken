@@ -90,7 +90,7 @@ async function join(id){
  stage("");t("kkStudentStatus","Välj din spelikon:");
  try{
   const data=await rpc("icons");
-  if(data.mine){await rpc("join",{icon:data.mine});selectingIcon=false;await syncKottkampPrizes(true);await tick();return;}
+  if(data.mine){await rpc("join",{icon:data.mine});selectingIcon=false;try{await syncKottkampPrizes(true);}catch(error){console.warn("Kottkampen-priser väntar:",error);}await tick();return;}
   const taken=new Set(data.taken||[]);
   const board=document.createElement("div");
   board.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px";
@@ -103,7 +103,7 @@ async function join(id){
    if(button.disabled){button.style.opacity="0.25";button.title="Redan vald av en annan elev";}
    button.onclick=async()=>{
     board.querySelectorAll("button").forEach(b=>b.disabled=true);
-    try{await rpc("join",{icon:i+1});selectingIcon=false;stage("");await syncKottkampPrizes(true);await tick();}
+    try{await rpc("join",{icon:i+1});selectingIcon=false;stage("");try{await syncKottkampPrizes(true);}catch(error){console.warn("Kottkampen-priser väntar:",error);}await tick();}
     catch(e){t("kkStudentStatus",e.message==="icon_taken"?"Den ikonen valdes precis. Välj en annan!":e.message);await join(id);}
    };board.append(button);
   });
