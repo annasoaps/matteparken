@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 const KK_ICONS=["🐿️","🦊","🐻","🦉","🦔","🐸","🐞","🦆","🐟","🐝","🦋","🐭","🐰","🐺","🦌","🐱","🐶","🐢","🦫","🦦","🐌","🐛","🐜","🦜","🍄","🌻","🌲","🍎","🎃","🌰"];
 const M=()=>window.Mattezoo;
-let room=null,question=null,loading=false,pending=false,lastStatus="",endedSynced=false,prizesSynced=false,prizeNames=[],clock=null,offsetMs=0,autoAdvanceTimer=null;
+let room=null,question=null,loading=false,selectingIcon=false,pending=false,lastStatus="",endedSynced=false,prizesSynced=false,prizeNames=[],clock=null,offsetMs=0,autoAdvanceTimer=null;
 function cancelAutoAdvance(){if(autoAdvanceTimer!==null){clearTimeout(autoAdvanceTimer);autoAdvanceTimer=null;}}
 function scheduleAutoAdvance(delayMs,expectedRoom){cancelAutoAdvance();autoAdvanceTimer=setTimeout(()=>{autoAdvanceTimer=null;if(room!==expectedRoom||$("kkOverlay")?.classList.contains("hidden"))return;pending=false;void getQuestion();},delayMs);}
 const rpc=async(action,p={})=>{
@@ -55,13 +55,13 @@ function install(){
  }else{
   $("kkCalculatorDock").textContent="Miniräknaren kunde inte laddas. Uppdatera sidan.";
  }
- $("kkCloseStudent").onclick=()=>{$("kkOverlay").classList.add("hidden");room=null;question=null;cancelAutoAdvance();};
- setInterval(()=>{if(!$("kkOverlay")?.classList.contains("hidden")&&room&&!loading)void tick();},2200);
+ $("kkCloseStudent").onclick=()=>{$("kkOverlay").classList.add("hidden");room=null;question=null;selectingIcon=false;cancelAutoAdvance();};
+ setInterval(()=>{if(!$("kkOverlay")?.classList.contains("hidden")&&room&&!loading&&!selectingIcon)void tick();},2200);
  setInterval(()=>{if(!$("kkOverlay")?.classList.contains("hidden")&&room&&clock?.status==="running"&&clock?.mode==="time")renderCountdown();},1000);
 }
 async function open(){
  $("kkOverlay").classList.remove("hidden");t("kkSub","Anslut till lärarens tävling");t("kkStudentStatus","Söker efter Kottkamper …");
- cancelAutoAdvance();stage("");$("kkLeaders").replaceChildren();room=null;question=null;lastStatus="";endedSynced=false;prizesSynced=false;prizeNames=[];
+ cancelAutoAdvance();stage("");$("kkLeaders").replaceChildren();room=null;question=null;selectingIcon=false;lastStatus="";endedSynced=false;prizesSynced=false;prizeNames=[];
  try{
  const x=await rpc("list");
  if(!x.sessions?.length){t("kkStudentStatus","Ingen Kottkamp finns för din klass just nu.");return;}
@@ -76,11 +76,11 @@ async function open(){
  }catch(e){t("kkStudentStatus",e.message);}
 }
 async function join(id){
- cancelAutoAdvance();room=id;question=null;pending=false;endedSynced=false;prizesSynced=false;prizeNames=[];
+ cancelAutoAdvance();room=id;question=null;selectingIcon=true;pending=false;endedSynced=false;prizesSynced=false;prizeNames=[];
  stage("");t("kkStudentStatus","Välj din spelikon:");
  try{
   const data=await rpc("icons");
-  if(data.mine){await rpc("join",{icon:data.mine});await syncKottkampPrizes(true);await tick();return;}
+  if(data.mine){await rpc("join",{icon:data.mine});selectingIcon=false;await syncKottkampPrizes(true);await tick();return;}
   const taken=new Set(data.taken||[]);
   const board=document.createElement("div");
   board.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px";
@@ -93,7 +93,7 @@ async function join(id){
    if(button.disabled){button.style.opacity="0.25";button.title="Redan vald av en annan elev";}
    button.onclick=async()=>{
     board.querySelectorAll("button").forEach(b=>b.disabled=true);
-    try{await rpc("join",{icon:i+1});stage("");await syncKottkampPrizes(true);await tick();}
+    try{await rpc("join",{icon:i+1});selectingIcon=false;stage("");await syncKottkampPrizes(true);await tick();}
     catch(e){t("kkStudentStatus",e.message==="icon_taken"?"Den ikonen valdes precis. Välj en annan!":e.message);await join(id);}
    };board.append(button);
   });
