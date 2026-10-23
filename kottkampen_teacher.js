@@ -25,8 +25,8 @@ card.innerHTML=[
 '<div class="form-actions"><button class="btn primary" id="kkCreate">Skapa tävling</button><button class="btn secondary" id="kkRestore">Återgå till tävling</button></div></div>',
 '<div class="stack"><h3 id="kkHeading">Ingen tävling startad</h3><p id="kkInfo" class="muted">Skapa en tävling först.</p>',
 '<div class="form-actions"><button class="btn primary" id="kkStart" disabled>▶ Starta</button><button class="btn secondary" id="kkPause" disabled>⏸ Pausa</button><button class="btn secondary" id="kkResume" disabled>▶ Fortsätt</button><button class="btn danger" id="kkFinish" disabled>🏁 Avsluta</button><button class="btn secondary" id="kkProjector" disabled>🏆 Visa på storbild ↗</button></div>',
-'<h4>Topplista</h4><div class="table-wrap"><table><thead><tr><th>Elev</th><th>Poäng</th><th>Rätt</th><th>Kottar</th></tr></thead><tbody id="kkRows"></tbody></table></div>',
-'<p class="muted small">Rätt svar ger +100 och fel svar −50 tävlingspoäng. Stubbar påverkar tävlingspoäng, aldrig elevens riktiga kottar. Vid målgång delas 25/20/15 kottar ut till de tre främsta, övriga deltagare får 8.</p></div></div><p id="kkMessage" class="feedback" aria-live="polite"></p>'
+'<h4>Topplista</h4><div class="table-wrap"><table><thead><tr><th>Elev</th><th>Poäng</th><th>Rätt</th><th>Kottar</th><th>Priser</th></tr></thead><tbody id="kkRows"></tbody></table></div>',
+'<p class="muted small">Rätt svar ger +100 och fel svar −50 tävlingspoäng. Stubbar påverkar tävlingspoäng, aldrig elevens riktiga kottar. Vid 800 poäng får eleven en blind bag och vid 1 500 ytterligare en. Priser markeras som bekräftade när eleven hämtat dem i sin park. Vid målgång delas även 25/20/15 kottar ut till de tre främsta, övriga deltagare får 8.</p></div></div><p id="kkMessage" class="feedback" aria-live="polite"></p>'
 ].join("");
 $("adminView").insertBefore(card,$("adminView").querySelector(".topbar").nextSibling);
 G.forEach(([value,name],i)=>{let label=document.createElement("label"),checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.value=value;checkbox.checked=i<5;checkbox.style.width="auto";label.style.cssText="display:flex;flex-direction:row;gap:8px;align-items:center;font-size:13px";label.append(checkbox,document.createTextNode(name));$("kkGames").append(label);});
@@ -60,8 +60,8 @@ let timer="";if(s.mode==="time"&&s.started_at){let end=new Date(s.started_at).ge
 $("kkInfo").textContent=x.players.length+" deltagare · "+(s.mode==="time"?s.minutes+" minuter":s.question_count+" frågor")+timer;
 $("kkProjector").disabled=false;$("kkStart").disabled=s.status!=="waiting";$("kkPause").disabled=s.status!=="running"||s.mode!=="time";$("kkResume").disabled=s.status!=="paused";$("kkFinish").disabled=s.status==="waiting"||s.status==="finished";
 $("kkRows").replaceChildren();
-if(!x.players.length){let row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=4;cell.textContent="Eleverna har inte anslutit ännu.";row.append(cell);$("kkRows").append(row);}
-for(const p of x.players){let tr=document.createElement("tr");for(const v of [(p.icon_id?KK_ICONS[p.icon_id-1]+" "+KK_NAMES[p.icon_id-1]:p.name),p.score,p.correct,p.reward==null?"–":p.reward]){let td=document.createElement("td");td.textContent=v;tr.append(td);} $("kkRows").append(tr);}
+if(!x.players.length){let row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=5;cell.textContent="Eleverna har inte anslutit ännu.";row.append(cell);$("kkRows").append(row);}
+for(const p of x.players){let tr=document.createElement("tr");for(const v of [(p.icon_id?KK_ICONS[p.icon_id-1]+" "+KK_NAMES[p.icon_id-1]:p.name),p.score,p.correct,p.reward==null?"–":p.reward,p.prizes_total?((p.prizes_confirmed||0)+"/"+p.prizes_total+" bekräftade"):"–"]){let td=document.createElement("td");td.textContent=v;tr.append(td);} $("kkRows").append(tr);}
 }catch(e){say("Kunde inte hämta ställningen: "+e.message);}}
 document.addEventListener("DOMContentLoaded",install);
 })();
