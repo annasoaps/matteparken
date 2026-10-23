@@ -2,6 +2,7 @@
 (()=>{"use strict";
 const $=id=>document.getElementById(id);
 const KK_ICONS=["🐿️","🦊","🐻","🦉","🦔","🐸","🐞","🦆","🐟","🐝","🦋","🐭","🐰","🐺","🦌","🐱","🐶","🐢","🦫","🦦","🐌","🐛","🐜","🦜","🍄","🌻","🌲","🍎","🎃","🌰"];
+const KK_NAMES=["Ekorren","Räven","Björnen","Ugglan","Igelkotten","Grodan","Nyckelpigan","Ankan","Fisken","Biet","Fjärilen","Musen","Haren","Vargen","Rådjuret","Katten","Hunden","Sköldpaddan","Bävern","Uttern","Snigeln","Larven","Myran","Papegojan","Svampen","Solrosen","Granen","Äpplet","Pumpan","Kotten"];
 const M=()=>window.Mattezoo;
 let room=null,question=null,loading=false,selectingIcon=false,pending=false,lastStatus="",endedSynced=false,prizesSynced=false,prizeNames=[],clock=null,offsetMs=0,autoAdvanceTimer=null;
 function cancelAutoAdvance(){if(autoAdvanceTimer!==null){clearTimeout(autoAdvanceTimer);autoAdvanceTimer=null;}}
@@ -122,7 +123,7 @@ function leaders(players){
  for(const [i,p] of (players||[]).slice(0,12).entries()){
   const line=document.createElement("div");
   line.style.cssText="display:flex;justify-content:space-between;padding:5px 8px;border-bottom:1px solid #dce6d6;gap:8px";
-  const a=document.createElement("span");a.textContent=(i+1)+". "+(p.icon_id?KK_ICONS[p.icon_id-1]+" ":"")+p.name;const b=document.createElement("b");b.textContent=p.score+" poäng";
+  const a=document.createElement("span");a.textContent=(i+1)+". "+(p.icon_id?KK_ICONS[p.icon_id-1]+" "+KK_NAMES[p.icon_id-1]:p.name);const b=document.createElement("b");b.textContent=p.score+" poäng";
   line.append(a,b);host.append(line);
  }
  if(!players?.length)host.textContent="Väntar på deltagare.";
