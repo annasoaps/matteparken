@@ -16,8 +16,8 @@ const rpc=async(action,p={})=>{
 };
 const t=(id,value)=>{if($(id))$(id).textContent=value;};
 const stage=html=>{$("kkStage").innerHTML=html;};
-async function syncKottkampPrizes(){
- if(prizesSynced||!room)return;
+async function syncKottkampPrizes(force=false){
+ if((prizesSynced&&!force)||!room)return;
  const r=await rpc("prizes");
  const studentId=M()?.cloudStudent?.currentState?.()?.student?.id;
  if(!studentId)throw Error("Eleven behöver vara inloggad för att ta emot priset.");
@@ -25,7 +25,7 @@ async function syncKottkampPrizes(){
  for(const prize of r.prizes||[]){
   const result=M()?.rewards?.grantKottkampReward?.(prize,studentId);
   if(!result?.ok)throw Error("Priset kunde inte levereras till förrådet.");
-  prizeNames.push(prize.type==="seedPack"?"fröpåse":prize.type==="decorBox"?"dekorationslåda":"blind bag");
+  prizeNames.push(prize.type==="seedPack"?"fröpåse":prize.type==="decorBox"?"dekorationslåda":prize.type==="blindBag"?"blind bag":(result.name||"dekoration"));
  }
  prizesSynced=true;
 }
@@ -80,7 +80,7 @@ async function join(id){
  stage("");t("kkStudentStatus","Välj din spelikon:");
  try{
   const data=await rpc("icons");
-  if(data.mine){await rpc("join",{icon:data.mine});await tick();return;}
+  if(data.mine){await rpc("join",{icon:data.mine});await syncKottkampPrizes(true);await tick();return;}
   const taken=new Set(data.taken||[]);
   const board=document.createElement("div");
   board.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px";
@@ -93,7 +93,7 @@ async function join(id){
    if(button.disabled){button.style.opacity="0.25";button.title="Redan vald av en annan elev";}
    button.onclick=async()=>{
     board.querySelectorAll("button").forEach(b=>b.disabled=true);
-    try{await rpc("join",{icon:i+1});stage("");await tick();}
+    try{await rpc("join",{icon:i+1});stage("");await syncKottkampPrizes(true);await tick();}
     catch(e){t("kkStudentStatus",e.message==="icon_taken"?"Den ikonen valdes precis. Välj en annan!":e.message);await join(id);}
    };board.append(button);
   });
@@ -130,6 +130,7 @@ async function tick(){
   stage('<div style="padding:18px;text-align:center;background:#e8efd9;border-radius:12px"><h2>🎉 Målgång!</h2><div id="kkFinal" style="font-size:20px;font-weight:bold"></div></div>');
   t("kkFinal",(r.me.icon_id?KK_ICONS[r.me.icon_id-1]+" · ":"")+r.me.score+" tävlingspoäng · "+r.me.correct+" rätt · "+(reward??0)+" riktiga kottar");
   if(!endedSynced){endedSynced=true;void M()?.cloudCones?.sync?.();}
+  if(lastStatus!=="finished")prizesSynced=false;
   try{await syncKottkampPrizes();}catch(error){console.warn("Kottkampen-belöning väntar:",error);}
   if(prizeNames.length)t("kkFinal",r.me.score+" tävlingspoäng · "+r.me.correct+" rätt · "+(reward??0)+" riktiga kottar · 🎁 "+prizeNames.join(", "));
   lastStatus="finished";return;
@@ -190,9 +191,14 @@ function drawStumps(){
  for(let slot=1;slot<=3;slot++){
   const b=document.createElement("button");b.className="secondary";b.type="button";b.style.cssText="min-height:100px;font-size:31px";b.textContent="🪵";b.setAttribute("aria-label","Välj stubbe "+slot);
   b.onclick=async()=>{grid.querySelectorAll("button").forEach(x=>x.disabled=true);try{
-   const r=await rpc("stump",{slot});sub.textContent=r.award>0?"🌰 Extra "+r.award+" tävlingspoäng!":r.award<0?"🐿️ En ekorre norpade "+Math.abs(r.award)+" tävlingspoäng!":"🍂 Tom stubbe! Inga bonuspoäng.";
-   // Show the found item briefly before automatically revealing the next question.
-   scheduleAutoAdvance(1700,room);
+   const r=await rpc("stump",{slot});
+   sub.textContent=r.award>0?"🌰 Extra "+r.award+" tävlingspoäng!":r.award<0?"🐿️ En ekorre norpade "+Math.abs(r.award)+" tävlingspoäng!":"🍂 Tom stubbe! Inga bonuspoäng.";
+   if(r.prize_type){
+    try{await syncKottkampPrizes(true);}catch(error){console.warn("Sällsynt fynd väntar på leverans:",error);}
+    const name=r.prize_type==="decoration" ? (M()?.rewards?.findItem?.(r.prize_item)?.name||"en dekoration") : "en blind bag";
+    sub.textContent+=" 🎉 SÄLLSYNT FYND! Du hittade "+name+"! Titta i ditt förråd.";
+   }
+   scheduleAutoAdvance(r.prize_type?3000:1700,room);
   }catch(e){sub.textContent=e.message;grid.querySelectorAll("button").forEach(x=>x.disabled=false);}};
   grid.append(b);
  }
