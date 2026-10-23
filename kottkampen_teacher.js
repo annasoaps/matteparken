@@ -24,7 +24,7 @@ card.innerHTML=[
 '<div class="stack"><h3 id="kkHeading">Ingen tävling startad</h3><p id="kkInfo" class="muted">Skapa en tävling först.</p>',
 '<div class="form-actions"><button class="btn primary" id="kkStart" disabled>▶ Starta</button><button class="btn secondary" id="kkPause" disabled>⏸ Pausa</button><button class="btn secondary" id="kkResume" disabled>▶ Fortsätt</button><button class="btn danger" id="kkFinish" disabled>🏁 Avsluta</button><button class="btn secondary" id="kkProjector" disabled>🏆 Visa på storbild ↗</button></div>',
 '<h4>Topplista</h4><div class="table-wrap"><table><thead><tr><th>Elev</th><th>Poäng</th><th>Rätt</th><th>Kottar</th></tr></thead><tbody id="kkRows"></tbody></table></div>',
-'<p class="muted small">Stubbar påverkar tävlingspoäng, aldrig elevens riktiga kottar. Vid målgång delas 25/20/15 kottar ut till de tre främsta, övriga deltagare får 8.</p></div></div><p id="kkMessage" class="feedback" aria-live="polite"></p>'
+'<p class="muted small">Rätt svar ger +100 och fel svar −50 tävlingspoäng. Stubbar påverkar tävlingspoäng, aldrig elevens riktiga kottar. Vid målgång delas 25/20/15 kottar ut till de tre främsta, övriga deltagare får 8.</p></div></div><p id="kkMessage" class="feedback" aria-live="polite"></p>'
 ].join("");
 $("adminView").insertBefore(card,$("adminView").querySelector(".topbar").nextSibling);
 G.forEach(([value,name],i)=>{let label=document.createElement("label"),checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.value=value;checkbox.checked=i<5;checkbox.style.width="auto";label.style.cssText="display:flex;flex-direction:row;gap:8px;align-items:center;font-size:13px";label.append(checkbox,document.createTextNode(name));$("kkGames").append(label);});
