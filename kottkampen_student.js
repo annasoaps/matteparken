@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 const KK_ICONS=["🐿️","🦊","🐻","🦉","🦔","🐸","🐞","🦆","🐟","🐝","🦋","🐭","🐰","🐺","🦌","🐱","🐶","🐢","🦫","🦦","🐌","🐛","🐜","🦜","🍄","🌻","🌲","🍎","🎃","🌰"];
 const M=()=>window.Mattezoo;
-let room=null,question=null,loading=false,pending=false,lastStatus="",endedSynced=false,clock=null,offsetMs=0,autoAdvanceTimer=null;
+let room=null,question=null,loading=false,pending=false,lastStatus="",endedSynced=false,prizesSynced=false,prizeNames=[],clock=null,offsetMs=0,autoAdvanceTimer=null;
 function cancelAutoAdvance(){if(autoAdvanceTimer!==null){clearTimeout(autoAdvanceTimer);autoAdvanceTimer=null;}}
 function scheduleAutoAdvance(delayMs,expectedRoom){cancelAutoAdvance();autoAdvanceTimer=setTimeout(()=>{autoAdvanceTimer=null;if(room!==expectedRoom||$("kkOverlay")?.classList.contains("hidden"))return;pending=false;void getQuestion();},delayMs);}
 const rpc=async(action,p={})=>{
@@ -16,6 +16,19 @@ const rpc=async(action,p={})=>{
 };
 const t=(id,value)=>{if($(id))$(id).textContent=value;};
 const stage=html=>{$("kkStage").innerHTML=html;};
+async function syncKottkampPrizes(){
+ if(prizesSynced||!room)return;
+ const r=await rpc("prizes");
+ const studentId=M()?.cloudStudent?.currentState?.()?.student?.id;
+ if(!studentId)throw Error("Eleven behöver vara inloggad för att ta emot priset.");
+ prizeNames=[];
+ for(const prize of r.prizes||[]){
+  const result=M()?.rewards?.grantKottkampReward?.(prize,studentId);
+  if(!result?.ok)throw Error("Priset kunde inte levereras till förrådet.");
+  prizeNames.push(prize.type==="seedPack"?"fröpåse":prize.type==="decorBox"?"dekorationslåda":"blind bag");
+ }
+ prizesSynced=true;
+}
 function install(){
  const shelf=document.querySelector("#gameShelfDrawer .game-shelf");if(!shelf||$("kkShelf"))return;
  const card=document.createElement("button");card.id="kkShelf";card.type="button";card.className="game-card";
@@ -39,7 +52,7 @@ function install(){
 }
 async function open(){
  $("kkOverlay").classList.remove("hidden");t("kkSub","Anslut till lärarens tävling");t("kkStudentStatus","Söker efter Kottkamper …");
- cancelAutoAdvance();stage("");$("kkLeaders").replaceChildren();room=null;question=null;lastStatus="";endedSynced=false;
+ cancelAutoAdvance();stage("");$("kkLeaders").replaceChildren();room=null;question=null;lastStatus="";endedSynced=false;prizesSynced=false;prizeNames=[];
  try{
  const x=await rpc("list");
  if(!x.sessions?.length){t("kkStudentStatus","Ingen Kottkamp finns för din klass just nu.");return;}
@@ -54,7 +67,7 @@ async function open(){
  }catch(e){t("kkStudentStatus",e.message);}
 }
 async function join(id){
- cancelAutoAdvance();room=id;question=null;pending=false;endedSynced=false;
+ cancelAutoAdvance();room=id;question=null;pending=false;endedSynced=false;prizesSynced=false;prizeNames=[];
  stage("");t("kkStudentStatus","Välj din spelikon:");
  try{
   const data=await rpc("icons");
@@ -108,6 +121,8 @@ async function tick(){
   stage('<div style="padding:18px;text-align:center;background:#e8efd9;border-radius:12px"><h2>🎉 Målgång!</h2><div id="kkFinal" style="font-size:20px;font-weight:bold"></div></div>');
   t("kkFinal",(r.me.icon_id?KK_ICONS[r.me.icon_id-1]+" · ":"")+r.me.score+" tävlingspoäng · "+r.me.correct+" rätt · "+(reward??0)+" riktiga kottar");
   if(!endedSynced){endedSynced=true;void M()?.cloudCones?.sync?.();}
+  try{await syncKottkampPrizes();}catch(error){console.warn("Kottkampen-belöning väntar:",error);}
+  if(prizeNames.length)t("kkFinal",r.me.score+" tävlingspoäng · "+r.me.correct+" rätt · "+(reward??0)+" riktiga kottar · 🎁 "+prizeNames.join(", "));
   lastStatus="finished";return;
  }
  if(s.status==="waiting"){
