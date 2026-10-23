@@ -41,11 +41,20 @@ function install(){
  '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0">🐿️ Kottkampen</h2><button class="secondary" type="button" id="kkCloseStudent">✕ Stäng</button></div>',
  '<p id="kkSub" class="muted" style="margin-top:10px">Kottjakten · klassens tävling</p>',
  '<div id="kkStudentStatus" style="font-weight:800;padding:10px;background:#e8efd9;border-radius:8px"></div>',
+ '<div id="kkCalculatorDock" style="margin-top:12px"></div>',
  '<div id="kkStage" style="margin-top:18px;display:grid;gap:14px"></div>',
  '<div style="border-top:1px solid #bec8b5;margin-top:18px;padding-top:12px"><h3 style="margin:0 0 7px">🏆 Topplista</h3><div id="kkLeaders" style="font-size:13px"></div></div>',
  '</section>'
  ].join("");
  document.body.appendChild(shade);
+ // Reuse the calculator already used in Matteparken's other maths games.
+ const calculator=window.MatteparkenCalculator;
+ if(calculator){
+  $("kkCalculatorDock").innerHTML=calculator.markup();
+  calculator.bind($("kkCalculatorDock"));
+ }else{
+  $("kkCalculatorDock").textContent="Miniräknaren kunde inte laddas. Uppdatera sidan.";
+ }
  $("kkCloseStudent").onclick=()=>{$("kkOverlay").classList.add("hidden");room=null;question=null;cancelAutoAdvance();};
  setInterval(()=>{if(!$("kkOverlay")?.classList.contains("hidden")&&room&&!loading)void tick();},2200);
  setInterval(()=>{if(!$("kkOverlay")?.classList.contains("hidden")&&room&&clock?.status==="running"&&clock?.mode==="time")renderCountdown();},1000);
