@@ -391,3 +391,8 @@ begin
     'reward',pl.reward_paid),'players',data,'server_now',clock_timestamp());
 end $$;
 
+
+
+-- Only RPC wrappers are public. Internal numeric helpers are not an API.
+revoke execute on function private.kottkamp_fmt(numeric) from public, anon, authenticated;
+revoke execute on function private.kottkamp_gcd(integer,integer) from public, anon, authenticated;
