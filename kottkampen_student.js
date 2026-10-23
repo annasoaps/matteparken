@@ -72,7 +72,8 @@ async function open(){
  const current=sessions.find(s=>s.status==="running"||s.status==="paused")||sessions[0];
  if(current.status==="finished"){
   t("kkStudentStatus","Den senaste Kottkampen är avslutad.");
-  stage("<p>🏁 "+current.title+" är färdigspelad. Läraren kan starta en ny tävling från läraradmin.</p>");
+  const notice=document.createElement("p");notice.textContent="🏁 "+current.title+" är färdigspelad. Läraren kan starta en ny tävling från läraradmin.";
+  $("kkStage").replaceChildren(notice);
   return;
  }
  if(current.status!=="waiting"&&current.status!=="running"&&current.status!=="paused"){
