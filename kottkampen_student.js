@@ -16,7 +16,7 @@ const stage=html=>{$("kkStage").innerHTML=html;};
 function install(){
  const shelf=document.querySelector("#gameShelfDrawer .game-shelf");if(!shelf||$("kkShelf"))return;
  const card=document.createElement("button");card.id="kkShelf";card.type="button";card.className="game-card";
- card.innerHTML='<span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">16</span><span class="shelf-symbol">🐿️ 🌰</span><span class="shelf-cover-rule"></span></span><strong>Kottkampen</strong><span class="shelf-description">Tävla tillsammans med klassen i Kottjakten. Öppna mystiska stubbar och samla poäng!</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span>';
+ card.innerHTML='<span class="shelf-cover" aria-hidden="true"><span class="shelf-volume">16</span><span class="shelf-symbol">🐿️ 🌰</span><span class="shelf-cover-rule"></span></span><strong>Kottkampen</strong><span class="shelf-description">Tävla i Kottjakten! Rätt svar +100 poäng, fel svar −50. Öppna mystiska stubbar.</span><span class="shelf-play" aria-hidden="true">Spela <span>↗</span></span>';
  shelf.appendChild(card);card.onclick=open;
  const shade=document.createElement("div");shade.id="kkOverlay";shade.className="hidden";
  shade.style.cssText="position:fixed;inset:0;z-index:5000;background:#142a20ee;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto";
@@ -111,7 +111,7 @@ async function getQuestion(){
  if(r.status!=="question"){question=null;return;}
  question=r;pending=false;
  const host=document.createElement("div");host.style.cssText="display:grid;gap:13px";
- const header=document.createElement("div");header.textContent="Fråga "+(r.index+1)+" · "+label(r.game_id);header.style.fontWeight="800";
+ const header=document.createElement("div");header.textContent="Fråga "+(r.index+1)+" · "+label(r.game_id);header.style.fontWeight="800";header.textContent+=" · ✅ +100 rätt / ❌ −50 fel";
  const text=document.createElement("h2");text.style.cssText="text-align:center;padding:22px 9px;background:#eef4df;border-radius:12px;font-size:clamp(19px,4vw,27px)";text.textContent=r.prompt;
  const grid=document.createElement("div");grid.style.cssText="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px";
  r.options.forEach((value,i)=>{const b=document.createElement("button");b.className="secondary";b.type="button";b.style.cssText="min-height:68px;font-size:21px;font-weight:900";b.textContent=value;b.onclick=()=>answer(i);grid.append(b);});
@@ -127,7 +127,7 @@ async function answer(choice){
  const q=question,ans=await rpc("answer",{index:q.index,choice});
  question=null;
  $("kkStage").querySelectorAll("button").forEach(b=>b.disabled=true);
- t("kkFeedback",ans.correct?"✅ Rätt! +100 poäng":"Inte riktigt. Rätt svar: "+ans.correct_answer);
+ t("kkFeedback",ans.correct?"✅ Rätt svar! +100 tävlingspoäng":"❌ Fel svar: −50 tävlingspoäng. Rätt svar: "+ans.correct_answer);
  const next=document.createElement("button");next.type="button";next.className="primary";
  if(ans.stump){next.textContent="🪵 Öppna en hemlig stubbe";next.onclick=drawStumps;}
  else{next.textContent="Nästa fråga →";next.onclick=()=>{pending=false;void getQuestion();};}
