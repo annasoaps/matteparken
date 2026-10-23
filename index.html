@@ -1172,7 +1172,9 @@ window.MATTEZOO_TEACHER_PLAN = {
 .placed-item.parkSign:after,.placed-item.trailMarker:after,.placed-item.lakeSign:after{content:"🪧";font-size:42px}
 .placed-item.stump:after{content:"🪵";font-size:45px;transform:rotate(90deg)}
 .placed-item.mushroomCluster:after{content:"🍄";font-size:43px;text-shadow:18px 8px 0 rgba(255,255,255,.0)}
-.placed-item.pineconePile:after{content:"🌰";font-size:40px}
+/* Skogsdungens kotthög: liten transparent sprite, inte emoji. */
+.placed-item.pineconePile{width:84px;height:62px}
+.placed-item.pineconePile .placed-sprite{width:84px;height:62px;object-fit:contain;filter:drop-shadow(0 4px 0 rgba(45,65,45,.09))}
 .placed-item.cairn:after{content:"🪨";font-size:45px;filter:brightness(.9)}
 .placed-item.cragRock:after{content:"⛰️";font-size:45px}
 
@@ -6528,6 +6530,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     birch:"assets/asset_029_8447c7ac258e1b3a.png",
     fallenLog:"assets/asset_030_7ebde1048ac81ba2.png",
     stump:"assets/forest/stump_simple.png",
+    pineconePile:"assets/forest/pinecone_pile.svg",
     mushroomBasket:"assets/mushroom_basket_96.png",
     flowerPot:"assets/asset_032_ff44e1b027b942f7.png",
     daisy:"assets/asset_033_38b4b8d996e6b996.png",
