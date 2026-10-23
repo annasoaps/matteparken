@@ -65,14 +65,25 @@ async function open(){
  try{
  const x=await rpc("list");
  if(!x.sessions?.length){t("kkStudentStatus","Ingen Kottkamp finns för din klass just nu.");return;}
- t("kkStudentStatus","Välj en tävling:");
- const el=document.createElement("div");el.style.cssText="display:grid;gap:10px";
- for(const s of x.sessions){
-  const b=document.createElement("button");b.type="button";b.className="primary";
-  b.textContent=s.title+" · "+({waiting:"Anslut",running:"Pågår",paused:"Pausad",finished:"Avslutad"}[s.status]||s.status);
-  b.onclick=()=>void join(s.id);
-  el.appendChild(b);
- }$("kkStage").replaceChildren(el);
+ // The server lists recent sessions in creation order. Old unstarted test
+ // rooms must not crowd the lobby or compete with the current round.
+ // An ongoing/paused round wins; otherwise only the newest round counts.
+ const sessions=x.sessions;
+ const current=sessions.find(s=>s.status==="running"||s.status==="paused")||sessions[0];
+ if(current.status==="finished"){
+  t("kkStudentStatus","Den senaste Kottkampen är avslutad.");
+  const notice=document.createElement("p");notice.textContent="🏁 "+current.title+" är färdigspelad. Läraren kan starta en ny tävling från läraradmin.";
+  $("kkStage").replaceChildren(notice);
+  return;
+ }
+ if(current.status!=="waiting"&&current.status!=="running"&&current.status!=="paused"){
+  t("kkStudentStatus","Ingen öppen Kottkamp just nu.");return;
+ }
+ t("kkStudentStatus",current.status==="waiting"?"En tävling är öppen för din klass:":"Klassens tävling pågår:");
+ const button=document.createElement("button");button.type="button";button.className="primary";
+ button.textContent=current.title+" · "+(current.status==="waiting"?"Anslut":current.status==="paused"?"Pausad":"Pågår");
+ button.onclick=()=>void join(current.id);
+ $("kkStage").replaceChildren(button);
  }catch(e){t("kkStudentStatus",e.message);}
 }
 async function join(id){
