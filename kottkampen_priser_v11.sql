@@ -13,7 +13,7 @@ alter table public.kottkamp_prizes enable row level security;
 revoke all on public.kottkamp_prizes from anon,authenticated;
 create or replace function private.kottkamp_finish_impl(p_id uuid)
 returns void language plpgsql security definer set search_path='' as $$
-declare v public.kottkamp_sessions; p record; amount integer;
+declare v public.kottkamp_sessions; p record; amount integer; v_paid boolean;
 begin
  select * into v from public.kottkamp_sessions where id=p_id for update;
  if v.id is null or v.status='finished' then return; end if;
@@ -26,7 +26,8 @@ begin
  loop
   amount:=case when p.answers=0 then 0 when p.position=1 then 25 when p.position=2 then 20 when p.position=3 then 15 else 8 end;
   update public.kottkamp_players set reward_paid=amount,pending_stump=false,stump_outcomes='{}' where session_id=p_id and student_id=p.student_id and reward_paid is null;
-  if found and p.answers>0 then
+  v_paid:=found;
+  if v_paid and p.answers>0 then
    if p.score>1000 then
     insert into public.kottkamp_prizes(session_id,student_id,prize_key,prize_type)
      values(p_id,p.student_id,'score-threshold','decorBox') on conflict do nothing;
@@ -35,7 +36,7 @@ begin
      values(p_id,p.student_id,'score-threshold','seedPack') on conflict do nothing;
    end if;
   end if;
-  if found and amount>0 then
+  if v_paid and amount>0 then
    perform public.matteparken_ensure_cones(p.student_id);
    update public.student_cones set balance=balance+amount,updated_at=now() where student_id=p.student_id;
   end if;
