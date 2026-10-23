@@ -68,6 +68,7 @@ footer{margin:23px 0 0;display:flex;justify-content:space-between;gap:10px;flex-
 const URL="https://mjgkkwdgowvxuehiudvj.supabase.co",KEY="sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
 const id=new URLSearchParams(location.search).get("session");
 const KK_ICONS=["🐿️","🦊","🐻","🦉","🦔","🐸","🐞","🦆","🐟","🐝","🦋","🐭","🐰","🐺","🦌","🐱","🐶","🐢","🦫","🦦","🐌","🐛","🐜","🦜","🍄","🌻","🌲","🍎","🎃","🌰"];
+const KK_NAMES=["Ekorren","Räven","Björnen","Ugglan","Igelkotten","Grodan","Nyckelpigan","Ankan","Fisken","Biet","Fjärilen","Musen","Haren","Vargen","Rådjuret","Katten","Hunden","Sköldpaddan","Bävern","Uttern","Snigeln","Larven","Myran","Papegojan","Svampen","Solrosen","Granen","Äpplet","Pumpan","Kotten"];
 const $=k=>document.getElementById(k);
 const c=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"matteparken-admin-auth-v1"}});
 let last=null,offsetMs=0,requesting=false,token=0;
@@ -80,12 +81,12 @@ function draw(players,finished){
  for(let i=0;i<Math.min(3,sorted.length);i++){
   const p=sorted[i],item=add("div","podium-item",null,top);
   add("div","medal",["🥇","🥈","🥉"][i],item);
-  add("div","player",(p.icon_id?KK_ICONS[p.icon_id-1]+" ":"")+p.name,item);
+  add("div","player",(p.icon_id?KK_ICONS[p.icon_id-1]+" "+KK_NAMES[p.icon_id-1]:p.name),item);
   add("div","score",p.score+" poäng",item);
   if(finished && p.reward!=null)add("div","reward","🌰 +"+p.reward+" kottar",item);
  }
  sorted.slice(0,16).forEach((p,i)=>{
-  const li=add("li","",null,list);add("span","name",(i+1)+". "+(p.icon_id?KK_ICONS[p.icon_id-1]+" ":"")+p.name,li);add("span","points",p.score+" p",li);
+  const li=add("li","",null,list);add("span","name",(i+1)+". "+(p.icon_id?KK_ICONS[p.icon_id-1]+" "+KK_NAMES[p.icon_id-1]:p.name),li);add("span","points",p.score+" p",li);
  });
 }
 function timer(){

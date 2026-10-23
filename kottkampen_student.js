@@ -2,6 +2,7 @@
 (()=>{"use strict";
 const $=id=>document.getElementById(id);
 const KK_ICONS=["🐿️","🦊","🐻","🦉","🦔","🐸","🐞","🦆","🐟","🐝","🦋","🐭","🐰","🐺","🦌","🐱","🐶","🐢","🦫","🦦","🐌","🐛","🐜","🦜","🍄","🌻","🌲","🍎","🎃","🌰"];
+const KK_NAMES=["Ekorren","Räven","Björnen","Ugglan","Igelkotten","Grodan","Nyckelpigan","Ankan","Fisken","Biet","Fjärilen","Musen","Haren","Vargen","Rådjuret","Katten","Hunden","Sköldpaddan","Bävern","Uttern","Snigeln","Larven","Myran","Papegojan","Svampen","Solrosen","Granen","Äpplet","Pumpan","Kotten"];
 const M=()=>window.Mattezoo;
 let room=null,question=null,loading=false,selectingIcon=false,pending=false,lastStatus="",endedSynced=false,prizesSynced=false,prizeNames=[],clock=null,offsetMs=0,autoAdvanceTimer=null;
 function cancelAutoAdvance(){if(autoAdvanceTimer!==null){clearTimeout(autoAdvanceTimer);autoAdvanceTimer=null;}}
@@ -17,18 +18,16 @@ const rpc=async(action,p={})=>{
 const t=(id,value)=>{if($(id))$(id).textContent=value;};
 const stage=html=>{$("kkStage").innerHTML=html;};
 async function syncKottkampPrizes(force=false){
- if((prizesSynced&&!force)||!room)return;
- const r=await rpc("prizes");
- const studentId=M()?.cloudStudent?.currentState?.()?.student?.id;
- if(!studentId)throw Error("Eleven behöver vara inloggad för att ta emot priset.");
- prizeNames=[];
- for(const prize of r.prizes||[]){
-  const result=M()?.rewards?.grantKottkampReward?.(prize,studentId);
-  if(!result?.ok)throw Error("Priset kunde inte levereras till förrådet.");
-  prizeNames.push(prize.type==="seedPack"?"fröpåse":prize.type==="decorBox"?"dekorationslåda":prize.type==="blindBag"?"blind bag":(result.name||"dekoration"));
- }
+ if(prizesSynced&&!force)return {ok:true,prizes:[]};
+ const inbox=M()?.kottkampPrizeInbox;
+ if(!inbox)throw Error("Prisinkorgen är inte laddad. Uppdatera Matteparken.");
+ const result=await inbox.sync();
+ if(!result.ok)throw Error("Några Kottkamp-priser väntar på leverans. Öppna Mina Kottkamp-priser i spelhyllan.");
  prizesSynced=true;
+ prizeNames=(result.prizes||[]).map(prize=>inbox.prizeTitle(prize));
+ return result;
 }
+
 function install(){
  const shelf=document.querySelector("#gameShelfDrawer .game-shelf");if(!shelf||$("kkShelf"))return;
  const card=document.createElement("button");card.id="kkShelf";card.type="button";card.className="game-card";
@@ -91,7 +90,7 @@ async function join(id){
  stage("");t("kkStudentStatus","Välj din spelikon:");
  try{
   const data=await rpc("icons");
-  if(data.mine){await rpc("join",{icon:data.mine});selectingIcon=false;await syncKottkampPrizes(true);await tick();return;}
+  if(data.mine){await rpc("join",{icon:data.mine});selectingIcon=false;try{await syncKottkampPrizes(true);}catch(error){console.warn("Kottkampen-priser väntar:",error);}await tick();return;}
   const taken=new Set(data.taken||[]);
   const board=document.createElement("div");
   board.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px";
@@ -104,7 +103,7 @@ async function join(id){
    if(button.disabled){button.style.opacity="0.25";button.title="Redan vald av en annan elev";}
    button.onclick=async()=>{
     board.querySelectorAll("button").forEach(b=>b.disabled=true);
-    try{await rpc("join",{icon:i+1});selectingIcon=false;stage("");await syncKottkampPrizes(true);await tick();}
+    try{await rpc("join",{icon:i+1});selectingIcon=false;stage("");try{await syncKottkampPrizes(true);}catch(error){console.warn("Kottkampen-priser väntar:",error);}await tick();}
     catch(e){t("kkStudentStatus",e.message==="icon_taken"?"Den ikonen valdes precis. Välj en annan!":e.message);await join(id);}
    };board.append(button);
   });
@@ -124,7 +123,7 @@ function leaders(players){
  for(const [i,p] of (players||[]).slice(0,12).entries()){
   const line=document.createElement("div");
   line.style.cssText="display:flex;justify-content:space-between;padding:5px 8px;border-bottom:1px solid #dce6d6;gap:8px";
-  const a=document.createElement("span");a.textContent=(i+1)+". "+(p.icon_id?KK_ICONS[p.icon_id-1]+" ":"")+p.name;const b=document.createElement("b");b.textContent=p.score+" poäng";
+  const a=document.createElement("span");a.textContent=(i+1)+". "+(p.icon_id?KK_ICONS[p.icon_id-1]+" "+KK_NAMES[p.icon_id-1]:p.name);const b=document.createElement("b");b.textContent=p.score+" poäng";
   line.append(a,b);host.append(line);
  }
  if(!players?.length)host.textContent="Väntar på deltagare.";
@@ -143,7 +142,7 @@ async function tick(){
   if(!endedSynced){endedSynced=true;void M()?.cloudCones?.sync?.();}
   if(lastStatus!=="finished")prizesSynced=false;
   try{await syncKottkampPrizes();}catch(error){console.warn("Kottkampen-belöning väntar:",error);}
-  if(prizeNames.length)t("kkFinal",r.me.score+" tävlingspoäng · "+r.me.correct+" rätt · "+(reward??0)+" riktiga kottar · 🎁 "+prizeNames.join(", "));
+  if(prizeNames.length)t("kkFinal",r.me.score+" tävlingspoäng · "+r.me.correct+" rätt · "+(reward??0)+" riktiga kottar · 🎁 Dina priser finns i förrådet. Öppna Mina Kottkamp-priser för detaljer.");
   lastStatus="finished";return;
  }
  if(s.status==="waiting"){
@@ -205,9 +204,13 @@ function drawStumps(){
    const r=await rpc("stump",{slot});
    sub.textContent=r.award>0?"🌰 Extra "+r.award+" tävlingspoäng!":r.award<0?"🐿️ En ekorre norpade "+Math.abs(r.award)+" tävlingspoäng!":"🍂 Tom stubbe! Inga bonuspoäng.";
    if(r.prize_type){
-    try{await syncKottkampPrizes(true);}catch(error){console.warn("Sällsynt fynd väntar på leverans:",error);}
+    let delivered=false;
+    try{const check=await syncKottkampPrizes(true);delivered=check.ok;}
+    catch(error){console.warn("Sällsynt fynd väntar på leverans:",error);}
     const name=r.prize_type==="decoration" ? (M()?.rewards?.findItem?.(r.prize_item)?.name||"en dekoration") : "en blind bag";
-    sub.textContent+=" 🎉 SÄLLSYNT FYND! Du hittade "+name+"! Titta i ditt förråd.";
+    sub.textContent+=delivered
+     ?" 🎉 SÄLLSYNT FYND! Du hittade "+name+"! Priset finns i ditt förråd."
+     :" 🎉 SÄLLSYNT FYND! Du vann "+name+"! Priset finns sparat. Öppna Mina Kottkamp-priser i spelhyllan för att hämta det.";
    }
    scheduleAutoAdvance(r.prize_type?3000:1700,room);
   }catch(e){sub.textContent=e.message;grid.querySelectorAll("button").forEach(x=>x.disabled=false);}};

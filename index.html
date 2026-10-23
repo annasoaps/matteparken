@@ -4733,6 +4733,10 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
 
   // Server-proven Kottkampen rewards are delivered locally exactly once per
   // student and reward UUID. Inventory and receipt are saved in one rewards snapshot.
+  function hasKottkampReward(prizeId,studentId){
+    return Boolean(state.rewards.kottkampReceipts?.[String(studentId)+":"+String(prizeId)]);
+  }
+
   function grantKottkampReward(prize,studentId){
     const type=String(prize?.type||""),id=String(prize?.id||"");
     if(!id||!studentId||!["seedPack","decorBox","blindBag","decoration"].includes(type))
@@ -4857,7 +4861,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   MZ.rewards={
     itemDefinitions,catalogPool,seedPackPool,decorBoxPool,dailyBlindBagPool,seasonalCrateDefinitions,
     addSeedPack,addCrate,createSeedChoices,createCrateChoices,chooseSeed,chooseCrate,
-    createDailyChoices,chooseDaily,addBonusBlindBag,grantKottkampReward,createBonusChoices,chooseBonus,findItem,clearPendingItem,catalogItems,availableHabitatsForSource,
+    createDailyChoices,chooseDaily,addBonusBlindBag,grantKottkampReward,hasKottkampReward,createBonusChoices,chooseBonus,findItem,clearPendingItem,catalogItems,availableHabitatsForSource,
     activeSeasonalCrates,seasonalCount,addSeasonalCrate,grantSeasonalDecoration,grantRedeemedSeasonalDecoration,createSeasonalChoices,chooseSeasonal
   };
 })();
@@ -12520,6 +12524,9 @@ async function readCloudState(){
  if(MZ.cloudCones?.syncGhostRewards)await MZ.cloudCones.syncGhostRewards();
  // Opt-in park sync pilot; NEVER import into a park with real progress.
  if(MZ.cloudParkSync?.onStudentReady)await MZ.cloudParkSync.onStudentReady();
+ // Always recover Kottkampen prizes, even if the last contest is already closed.
+ try{if(MZ.kottkampPrizeInbox?.sync)await MZ.kottkampPrizeInbox.sync();}
+ catch(error){console.warn("Kottkampen: prisinkorgen kan hämtas igen från spelhyllan.",error);}
  render();MZ.homeworkQuiz?.render?.();return current;
 }
 function activeStudent(){
@@ -13774,5 +13781,6 @@ document.addEventListener("DOMContentLoaded", () => {
 <script defer src="autumn_geese.js"></script>
 <script defer src="mobile-park.js"></script>
 <script defer src="kottkampen_student.js"></script>
+<script defer src="kottkampen_inbox.js"></script>
 </body>
 </html>
