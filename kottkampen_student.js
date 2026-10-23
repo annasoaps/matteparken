@@ -1,6 +1,7 @@
 /* Kottkampen student game: server-scored live questions and mystery stumps. */
 (()=>{"use strict";
 const $=id=>document.getElementById(id);
+const KK_ICONS=["🐿️","🦊","🐻","🦉","🦔","🐸","🐞","🦆","🐟","🐝","🦋","🐭","🐰","🐺","🦌","🐱","🐶","🐢","🦫","🦦","🐌","🐛","🐜","🦜","🍄","🌻","🌲","🍎","🎃","🌰"];
 const M=()=>window.Mattezoo;
 let room=null,question=null,loading=false,pending=false,lastStatus="",endedSynced=false,clock=null,offsetMs=0,autoAdvanceTimer=null;
 function cancelAutoAdvance(){if(autoAdvanceTimer!==null){clearTimeout(autoAdvanceTimer);autoAdvanceTimer=null;}}
@@ -53,8 +54,30 @@ async function open(){
  }catch(e){t("kkStudentStatus",e.message);}
 }
 async function join(id){
- cancelAutoAdvance();room=id;question=null;pending=false;endedSynced=false;stage("");t("kkStudentStatus","Ansluter …");
- try{await rpc("join");await tick();}catch(e){t("kkStudentStatus",e.message);}
+ cancelAutoAdvance();room=id;question=null;pending=false;endedSynced=false;
+ stage("");t("kkStudentStatus","Välj din spelikon:");
+ try{
+  const data=await rpc("icons");
+  if(data.mine){await rpc("join",{icon:data.mine});await tick();return;}
+  const taken=new Set(data.taken||[]);
+  const board=document.createElement("div");
+  board.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px";
+  KK_ICONS.forEach((icon,i)=>{
+   const button=document.createElement("button");
+   button.className="secondary";button.type="button";button.textContent=icon;button.title="Spelikon "+(i+1);
+   button.setAttribute("aria-label","Välj spelikon "+(i+1)+": "+icon);
+   button.style.cssText="font-size:32px;min-height:64px;padding:8px";
+   button.disabled=taken.has(i+1);
+   if(button.disabled){button.style.opacity="0.25";button.title="Redan vald av en annan elev";}
+   button.onclick=async()=>{
+    board.querySelectorAll("button").forEach(b=>b.disabled=true);
+    try{await rpc("join",{icon:i+1});stage("");await tick();}
+    catch(e){t("kkStudentStatus",e.message==="icon_taken"?"Den ikonen valdes precis. Välj en annan!":e.message);await join(id);}
+   };board.append(button);
+  });
+  const hint=document.createElement("p");hint.textContent="Välj en ledig ikon. Grå ikoner har redan valts av andra i klassen.";
+  $("kkStage").replaceChildren(hint,board);
+ }catch(e){t("kkStudentStatus",e.message);}
 }
 function renderCountdown(){
  if(!clock||clock.mode!=="time"||!clock.started_at)return;
@@ -68,7 +91,7 @@ function leaders(players){
  for(const [i,p] of (players||[]).slice(0,12).entries()){
   const line=document.createElement("div");
   line.style.cssText="display:flex;justify-content:space-between;padding:5px 8px;border-bottom:1px solid #dce6d6;gap:8px";
-  const a=document.createElement("span");a.textContent=(i+1)+". "+p.name;const b=document.createElement("b");b.textContent=p.score+" poäng";
+  const a=document.createElement("span");a.textContent=(i+1)+". "+(p.icon_id?KK_ICONS[p.icon_id-1]+" ":"")+p.name;const b=document.createElement("b");b.textContent=p.score+" poäng";
   line.append(a,b);host.append(line);
  }
  if(!players?.length)host.textContent="Väntar på deltagare.";
@@ -83,7 +106,7 @@ async function tick(){
   const reward=r.me?.reward;
   t("kkStudentStatus","🏁 Tävlingen är avslutad!");
   stage('<div style="padding:18px;text-align:center;background:#e8efd9;border-radius:12px"><h2>🎉 Målgång!</h2><div id="kkFinal" style="font-size:20px;font-weight:bold"></div></div>');
-  t("kkFinal",r.me.score+" tävlingspoäng · "+r.me.correct+" rätt · "+(reward??0)+" riktiga kottar");
+  t("kkFinal",(r.me.icon_id?KK_ICONS[r.me.icon_id-1]+" · ":"")+r.me.score+" tävlingspoäng · "+r.me.correct+" rätt · "+(reward??0)+" riktiga kottar");
   if(!endedSynced){endedSynced=true;void M()?.cloudCones?.sync?.();}
   lastStatus="finished";return;
  }

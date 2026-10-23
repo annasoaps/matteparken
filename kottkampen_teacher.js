@@ -2,6 +2,7 @@
 (()=>{"use strict";
 const URL="https://mjgkkwdgowvxuehiudvj.supabase.co",KEY="sb_publishable_rezjH5i8fLkwlIv-BOLWBQ_mtWJtyYg";
 const G=[["percentConvert","Bråk · Decimal · Procent"],["sharePart","Hur stor andel?"],["percentChange","Beräkna förändring"],["percentPart","Beräkna delen"],["whole","Hitta det hela"],["fractionDecimal","Bråk ↔ Decimal"],["multiplication","Multiplikation"],["equations","Ekvationer"],["pow10","Tiopotenser"],["interest","Räntebanken"],["unitConvert","Enhetsomvandling"],["prefixMatch","Prefix"],["statistics","Statistik"],["fractionArithmetic","Räkna med bråk"],["scientificNotation","Grundpotensform"]];
+const KK_ICONS=["🐿️","🦊","🐻","🦉","🦔","🐸","🐞","🦆","🐟","🐝","🦋","🐭","🐰","🐺","🦌","🐱","🐶","🐢","🦫","🦦","🐌","🐛","🐜","🦜","🍄","🌻","🌲","🍎","🎃","🌰"];
 const $=id=>document.getElementById(id);let sb,id=null,shown=false,busy=false;
 const rpc=async(a,p={})=>{sb ||=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"matteparken-admin-auth-v1"}});
 const {data,error}=await sb.rpc("kottkamp_teacher",{p_action:a,p_session_id:id,p_payload:p});
@@ -59,7 +60,7 @@ $("kkInfo").textContent=x.players.length+" deltagare · "+(s.mode==="time"?s.min
 $("kkProjector").disabled=false;$("kkStart").disabled=s.status!=="waiting";$("kkPause").disabled=s.status!=="running"||s.mode!=="time";$("kkResume").disabled=s.status!=="paused";$("kkFinish").disabled=s.status==="waiting"||s.status==="finished";
 $("kkRows").replaceChildren();
 if(!x.players.length){let row=document.createElement("tr"),cell=document.createElement("td");cell.colSpan=4;cell.textContent="Eleverna har inte anslutit ännu.";row.append(cell);$("kkRows").append(row);}
-for(const p of x.players){let tr=document.createElement("tr");for(const v of [p.name,p.score,p.correct,p.reward==null?"–":p.reward]){let td=document.createElement("td");td.textContent=v;tr.append(td);} $("kkRows").append(tr);}
+for(const p of x.players){let tr=document.createElement("tr");for(const v of [(p.icon_id?KK_ICONS[p.icon_id-1]+" ":"")+p.name,p.score,p.correct,p.reward==null?"–":p.reward]){let td=document.createElement("td");td.textContent=v;tr.append(td);} $("kkRows").append(tr);}
 }catch(e){say("Kunde inte hämta ställningen: "+e.message);}}
 document.addEventListener("DOMContentLoaded",install);
 })();
