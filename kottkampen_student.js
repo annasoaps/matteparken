@@ -2,7 +2,9 @@
 (()=>{"use strict";
 const $=id=>document.getElementById(id);
 const M=()=>window.Mattezoo;
-let room=null,question=null,loading=false,pending=false,lastStatus="",endedSynced=false,clock=null,offsetMs=0;
+let room=null,question=null,loading=false,pending=false,lastStatus="",endedSynced=false,clock=null,offsetMs=0,autoAdvanceTimer=null;
+function cancelAutoAdvance(){if(autoAdvanceTimer!==null){clearTimeout(autoAdvanceTimer);autoAdvanceTimer=null;}}
+function scheduleAutoAdvance(delayMs,expectedRoom){cancelAutoAdvance();autoAdvanceTimer=setTimeout(()=>{autoAdvanceTimer=null;if(room!==expectedRoom||$("kkOverlay")?.classList.contains("hidden"))return;pending=false;void getQuestion();},delayMs);}
 const rpc=async(action,p={})=>{
  const client=M()?.cloudStudent?.getClient?.();
  if(!client)throw Error("Logga in med elevkod via Dagens uppdrag först.");
@@ -30,13 +32,13 @@ function install(){
  '</section>'
  ].join("");
  document.body.appendChild(shade);
- $("kkCloseStudent").onclick=()=>{$("kkOverlay").classList.add("hidden");room=null;question=null;};
+ $("kkCloseStudent").onclick=()=>{$("kkOverlay").classList.add("hidden");room=null;question=null;cancelAutoAdvance();};
  setInterval(()=>{if(!$("kkOverlay")?.classList.contains("hidden")&&room&&!loading)void tick();},2200);
  setInterval(()=>{if(!$("kkOverlay")?.classList.contains("hidden")&&room&&clock?.status==="running"&&clock?.mode==="time")renderCountdown();},1000);
 }
 async function open(){
  $("kkOverlay").classList.remove("hidden");t("kkSub","Anslut till lärarens tävling");t("kkStudentStatus","Söker efter Kottkamper …");
- stage("");$("kkLeaders").replaceChildren();room=null;question=null;lastStatus="";endedSynced=false;
+ cancelAutoAdvance();stage("");$("kkLeaders").replaceChildren();room=null;question=null;lastStatus="";endedSynced=false;
  try{
  const x=await rpc("list");
  if(!x.sessions?.length){t("kkStudentStatus","Ingen Kottkamp finns för din klass just nu.");return;}
@@ -51,7 +53,7 @@ async function open(){
  }catch(e){t("kkStudentStatus",e.message);}
 }
 async function join(id){
- room=id;question=null;pending=false;endedSynced=false;stage("");t("kkStudentStatus","Ansluter …");
+ cancelAutoAdvance();room=id;question=null;pending=false;endedSynced=false;stage("");t("kkStudentStatus","Ansluter …");
  try{await rpc("join");await tick();}catch(e){t("kkStudentStatus",e.message);}
 }
 function renderCountdown(){
@@ -128,10 +130,8 @@ async function answer(choice){
  question=null;
  $("kkStage").querySelectorAll("button").forEach(b=>b.disabled=true);
  t("kkFeedback",ans.correct?"✅ Rätt svar! +100 tävlingspoäng":"❌ Fel svar: −50 tävlingspoäng. Rätt svar: "+ans.correct_answer);
- const next=document.createElement("button");next.type="button";next.className="primary";
- if(ans.stump){next.textContent="🪵 Öppna en hemlig stubbe";next.onclick=drawStumps;}
- else{next.textContent="Nästa fråga →";next.onclick=()=>{pending=false;void getQuestion();};}
- $("kkStage").append(next);
+ const activeRoom=room;
+ if(ans.stump){scheduleAutoAdvance(1300,activeRoom);}else{scheduleAutoAdvance(1300,activeRoom);}
  }catch(e){pending=false;t("kkStudentStatus",e.message);}
 }
 function drawStumps(){
@@ -144,8 +144,8 @@ function drawStumps(){
   const b=document.createElement("button");b.className="secondary";b.type="button";b.style.cssText="min-height:100px;font-size:31px";b.textContent="🪵";b.setAttribute("aria-label","Välj stubbe "+slot);
   b.onclick=async()=>{grid.querySelectorAll("button").forEach(x=>x.disabled=true);try{
    const r=await rpc("stump",{slot});sub.textContent=r.award>0?"🌰 Extra "+r.award+" tävlingspoäng!":r.award<0?"🐿️ En ekorre norpade "+Math.abs(r.award)+" tävlingspoäng!":"🍂 Tom stubbe! Inga bonuspoäng.";
-   const next=document.createElement("button");next.className="primary";next.type="button";next.textContent="Nästa fråga →";
-   next.onclick=()=>{pending=false;void getQuestion();};box.append(next);
+   // Show the found item briefly before automatically revealing the next question.
+   scheduleAutoAdvance(1700,room);
   }catch(e){sub.textContent=e.message;grid.querySelectorAll("button").forEach(x=>x.disabled=false);}};
   grid.append(b);
  }
