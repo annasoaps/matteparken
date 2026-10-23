@@ -4733,19 +4733,27 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   // student and reward UUID. Inventory and receipt are saved in one rewards snapshot.
   function grantKottkampReward(prize,studentId){
     const type=String(prize?.type||""),id=String(prize?.id||"");
-    if(!id||!studentId||!["seedPack","decorBox","blindBag"].includes(type))
+    if(!id||!studentId||!["seedPack","decorBox","blindBag","decoration"].includes(type))
       return {ok:false,reason:"invalid_reward"};
+    const item=type==="decoration"?findItem(String(prize?.item||"")):null;
+    // Only established ordinary decoration-box items are eligible for a rare direct prize.
+    if(type==="decoration"&&(item?.source!=="decorBox"||item?.kind!=="equipment"))
+      return {ok:false,reason:"invalid_decoration"};
     const key=String(studentId)+":"+id;
     const receipts=state.rewards.kottkampReceipts||{};
-    if(receipts[key])return {ok:true,granted:false,type};
+    if(receipts[key])return {ok:true,granted:false,type,name:item?.name};
     if(type==="seedPack")state.rewards.seedPacks+=1;
     else if(type==="decorBox")state.rewards.crates+=1;
-    else state.rewards.bonusBlindBags=Math.max(0,Number(state.rewards.bonusBlindBags)||0)+1;
+    else if(type==="blindBag")state.rewards.bonusBlindBags=Math.max(0,Number(state.rewards.bonusBlindBags)||0)+1;
+    else {
+      state.inventory[item.type]=Math.max(0,Number(state.inventory[item.type])||0)+1;
+      storage.saveInventory();
+    }
     receipts[key]=true;
     state.rewards.kottkampReceipts=receipts;
     save();
     MZ.office?.render?.();MZ.park?.updateShopUI?.();
-    return {ok:true,granted:true,type};
+    return {ok:true,granted:true,type,name:item?.name};
   }
 
   function addBonusBlindBag(amount=1){
