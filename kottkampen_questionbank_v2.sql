@@ -158,6 +158,14 @@ begin
     delta:=case when result_value<50 then 5 else 10 end;
    when 'fractionDecimal' then
     frac:=(array['1/2','1/4','3/4','1/5','2/5','3/5','4/5','1/10','3/10','7/10','9/10','1/8','3/8','5/8','7/8','1/20','3/20'])[1+floor(random()*17)::int];
+    -- Extend the original matching-game pairs with many exactly representable
+    -- decimal fractions; reduce each new pair before asking for simplest form.
+    if random()<0.73 then
+     d:=(array[2,4,5,8,10,20,25,40,50,100])[1+floor(random()*10)::int];
+     n:=1+floor(random()*(d-1))::int;
+     v:=private.kottkamp_gcd(n,d);
+     frac:=(n/v)||'/'||(d/v);
+    end if;
     n:=split_part(frac,'/',1)::int;d:=split_part(frac,'/',2)::int;
     if random()<0.5 then
      prompt_text:=frac||' = ? i decimalform';
