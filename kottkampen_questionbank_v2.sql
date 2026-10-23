@@ -36,7 +36,18 @@ begin
  if found then return q; end if;
  select * into s from public.kottkamp_sessions where id=p_session;
  if s.id is null or p_index<0 or p_index>1200 then raise exception 'invalid_question'; end if;
- g:=s.games[(p_index % array_length(s.games,1))+1];
+ -- Draw each selected area once per cycle, in a newly randomized order.
+ select candidate.game_id into g
+ from unnest(s.games) as candidate(game_id)
+ where not exists(
+  select 1 from public.kottkamp_questions existing
+  where existing.session_id=p_session
+    and existing.question_index >= (p_index / array_length(s.games,1)) * array_length(s.games,1)
+    and existing.question_index < p_index
+    and existing.game_id=candidate.game_id
+ )
+ order by random() limit 1;
+ if g is null then g:=s.games[(p_index % array_length(s.games,1))+1];end if;
  for tries in 1..40 loop
   prompt_text:=null; answer_text:=null; result_value:=null; delta:=null;
   own_distractors:=false; fraction_mode:=false;
