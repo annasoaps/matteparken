@@ -6,7 +6,7 @@
   const $=id=>document.getElementById(id);
   const fmt=n=>new Intl.NumberFormat("sv-SE",{maximumFractionDigits:3}).format(n);
   const parse=v=>{
-    const s=String(v??"").trim().replace(/[\s\u00a0\u202f]/g,"").replace(",",".");
+    const s=String(v??"").trim().replace(/[\s\u00a0\u202f]/g,"").replace(",",".").toLowerCase().replace(/^kr(?=[+-]?\d)/,"").replace(/kr$/,"");
     return /^-?\d+(?:\.\d+)?$/.test(s)?Number(s):NaN;
   };
   const random=arr=>arr[Math.floor(Math.random()*arr.length)];
