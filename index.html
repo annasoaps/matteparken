@@ -13076,7 +13076,7 @@ MZ.cloudStudent={init,login,logout,readCloudState,activeStudent,startAssignment,
   const simp=(n,d)=>{if(d<0){n=-n;d=-d;}const g=gcd(n,d);return[n/g,d/g];};
   const svNum=n=>String(Number(n.toFixed?.(6)??n)).replace(".",",");
   const fracText=(n,d)=>d===1?String(n):n+"/"+d;
-  const parseNumber=v=>{const x=Number(String(v||"").trim().replace(/\\s+/g,"").replace("%","").replace(",","."));return Number.isFinite(x)?x:null;};
+  const parseNumber=v=>{const raw=String(v??"").trim().replace(/[\s\u00a0\u202f]/g,"").replace(",",".").toLowerCase();const cleaned=raw.replace(/^kr(?=[+-]?\d)/,"").replace(/kr$/,"").replace(/%$/,"");if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(cleaned))return null;const x=Number(cleaned);return Number.isFinite(x)?x:null;};
   const parseFraction=v=>{const m=String(v||"").trim().replace(/\\s+/g,"").match(/^(-?\d+)\/(-?\d+)$/);if(!m||Number(m[2])===0)return null;return simp(Number(m[1]),Number(m[2]));};
   function parseSci(v){
     let t=String(v||"").trim().toLowerCase().replace(/\\s+/g,"").replace(",",".").replace(/[×·x]/g,"*");
