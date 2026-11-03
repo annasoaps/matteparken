@@ -786,9 +786,26 @@ window.MATTEZOO_TEACHER_PLAN = {
   75%{transform:translate(-49%,-60%) translateX(1px)}
 }
 .wildlife-visitor.squirrel.sprite-animal{
-  width:68px;
-  height:68px;
+  width:48px;
+  height:48px;
   transform:translate(-50%,-50%);
+}
+/* Den svenska ekorren: fyra små, bottenjusterade rutor som visas ibland. */
+.wildlife-visitor.squirrel .squirrel-animation{position:relative;display:block;width:100%;height:100%}
+.wildlife-visitor.squirrel .squirrel-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;opacity:0}
+.wildlife-visitor.squirrel .frame-1{animation:squirrelIdleFrame 10s steps(1,end) infinite}
+.wildlife-visitor.squirrel .frame-2{animation:squirrelReachFrame 10s steps(1,end) infinite}
+.wildlife-visitor.squirrel .frame-3{animation:squirrelHoldFrame 10s steps(1,end) infinite}
+.wildlife-visitor.squirrel .frame-4{animation:squirrelPlaceFrame 10s steps(1,end) infinite}
+@keyframes squirrelIdleFrame{0%,69.9%{opacity:1}70%,86.9%{opacity:0}87%,100%{opacity:1}}
+@keyframes squirrelReachFrame{0%,69.9%{opacity:0}70%,74.9%{opacity:1}75%,100%{opacity:0}}
+@keyframes squirrelHoldFrame{0%,74.9%{opacity:0}75%,83.9%{opacity:1}84%,100%{opacity:0}}
+@keyframes squirrelPlaceFrame{0%,83.9%{opacity:0}84%,86.9%{opacity:1}87%,100%{opacity:0}}
+body[data-park-motion="off"] .wildlife-visitor.squirrel .squirrel-frame{animation:none!important;opacity:0!important}
+body[data-park-motion="off"] .wildlife-visitor.squirrel .frame-1{opacity:1!important}
+@media(prefers-reduced-motion:reduce){
+  body:not([data-park-motion="on"]) .wildlife-visitor.squirrel .squirrel-frame{animation:none!important;opacity:0!important}
+  body:not([data-park-motion="on"]) .wildlife-visitor.squirrel .frame-1{opacity:1!important}
 }
 .wildlife-visitor.blackCat.sprite-animal{
   width:60px;
@@ -6744,7 +6761,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     bumblebee:"assets/asset_093_eda3ae0ed5c5e96b.png",
     ladybug:"assets/asset_094_d009886419d7962c.png",
     beetle:"assets/asset_095_0a8ddd1f25a629e0.png",
-    squirrel:"assets/asset_096_ce74dff387440071.png",
+    squirrel:"assets/squirrel/ekorre_idle.svg",
     hedgehog:"assets/asset_097_f11e3af0d2f58427.png",
     woodpecker:"assets/asset_098_aff26148210aa6e6.png",
     fox:"assets/asset_099_df93ec3e64f38c5f.png",
@@ -6755,6 +6772,12 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     coot:"assets/asset_103_d0a1d1d750185f15.png"
   };
   const wildlifeAnimationFrames = {
+    squirrel:[
+      "assets/squirrel/ekorre_idle.svg",
+      "assets/squirrel/ekorre_reach.svg",
+      "assets/squirrel/ekorre_hold.svg",
+      "assets/squirrel/ekorre_place.svg"
+    ],
     fox:{
       walk:["assets/fox/rav_gar_1.png","assets/fox/rav_gar_2.png"],
       sit:["assets/fox/rav_sitter_1.png","assets/fox/rav_sitter_2.png"]
@@ -6783,6 +6806,9 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const wildlifeHasSprite = (species) => Boolean(wildlifeSprites[species]);
   const wildlifeSpriteUrl = (species) => wildlifeSprites[species] || "";
   function wildlifeSpriteMarkup(species){
+    if(species === "squirrel"){
+      return `<span class="squirrel-animation">${wildlifeAnimationFrames.squirrel.map((src,index)=>`<img class="wildlife-sprite squirrel-frame frame-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
+    }
     if(species === "fox"){
       const frames=wildlifeAnimationFrames.fox;
       return `<span class="fox-animation" data-mode="idle" data-direction="right">${frames.walk.map((src,index)=>`<img class="wildlife-sprite fox-frame fox-walk-${index+1}" src="${src}" alt="" />`).join("")}${frames.sit.map((src,index)=>`<img class="wildlife-sprite fox-frame fox-sit-${index+1}" src="${src}" alt="" />`).join("")}</span>`;
