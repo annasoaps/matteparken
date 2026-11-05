@@ -2,6 +2,7 @@
 (() => {
   "use strict";
   if (new Date().getMonth() !== 10) return;
+  document.documentElement.classList.add("november-park");
   const source = {
     oak: "asset_062_e6fa1c4be76188c4.png",
     birch: "asset_058_c2b3c97f7ea84d02.png",
