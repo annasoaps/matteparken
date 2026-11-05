@@ -103,10 +103,24 @@
   const observer=new MutationObserver(update);
   function start(){
     observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["src"]});
+    // Use real transparent November PNG assets as soon as they exist in GitHub.
+    // Until uploaded, fall back to the temporary generated late-autumn trees.
+    const novemberFiles = {
+      oak: "assets/november/ek.png",
+      spruce: "assets/november/gran.png",
+      pine: "assets/november/tall.png",
+      birch: "assets/november/bjork.png"
+    };
     for(const [kind,path] of Object.entries(autumn)){
-      const image=new Image();
-      image.onload=()=>{try{prepared[kind]=makeNovemberSprite(kind,image);update();}catch(err){console.warn("Novemberträd:",err);}};
-      image.src=path;
+      const fallback = () => {
+        const image=new Image();
+        image.onload=()=>{try{prepared[kind]=makeNovemberSprite(kind,image);update();}catch(err){console.warn("Novemberträd:",err);}};
+        image.src=path;
+      };
+      const novemberImage=new Image();
+      novemberImage.onload=()=>{prepared[kind]=novemberFiles[kind];update();};
+      novemberImage.onerror=fallback;
+      novemberImage.src=novemberFiles[kind];
     }
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});
