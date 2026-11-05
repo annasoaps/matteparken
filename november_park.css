@@ -1,0 +1,12 @@
+/* November i Matteparken: färglager på EXAKT samma originalbakgrund.
+   Alla stigar, sjön och föremål förblir på samma plats.
+   Aktiveras enbart när november_trees.js lägger klassen november-park på <html>. */
+html.november-park .park-background {
+  filter: sepia(.22) saturate(.78) hue-rotate(-7deg) brightness(.96);
+}
+html.november-park .park::before {
+  background:
+    linear-gradient(180deg, rgba(119,85,49,.10), rgba(121,81,48,.15)),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.02), rgba(0,0,0,.06));
+  mix-blend-mode:multiply;
+}
