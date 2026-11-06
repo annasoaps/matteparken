@@ -1,0 +1,67 @@
+/* Novemberregn: dekorativa lager, aldrig ovanför klickbara parkföremål. */
+.mz-november-rain {
+  position:absolute; inset:0; z-index:22; overflow:hidden;
+  pointer-events:none; contain:paint;
+}
+.mz-november-rain[hidden],.mz-november-puddles[hidden]{display:none!important}
+.mz-november-drop {
+  position:absolute; left:var(--x); top:-14%;
+  width:1.4px; height:var(--length);
+  opacity:var(--opacity);
+  background:linear-gradient(to bottom,transparent,rgba(235,242,246,.85));
+  transform:rotate(19deg);
+  transform-origin:center;
+  animation:mz-november-fall var(--duration) linear var(--delay) infinite;
+  filter:drop-shadow(0 0 1px rgba(85,108,125,.25));
+}
+@keyframes mz-november-fall {
+  from {translate:0 -15vh}
+  to {translate:-21vw 125vh}
+}
+.mz-november-puddles {
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+}
+.mz-november-puddle {
+  position:absolute;
+  left:var(--left);top:var(--top);
+  width:var(--width);height:var(--height);
+  transform:translate(-50%,-50%) scale(.6);
+  background:radial-gradient(ellipse at 42% 40%,rgba(195,210,211,.55),rgba(92,128,148,.49) 52%,rgba(70,109,128,.09) 76%,transparent 78%);
+  border-radius:50%;
+  opacity:0;
+  animation:mz-puddle-appear 1.9s ease-out forwards;
+}
+.mz-november-puddle::after {
+  content:"";position:absolute;inset:28% 18% 38% 20%;
+  border-radius:50%;border-top:1px solid rgba(235,245,245,.5);
+  transform:rotate(-10deg);
+}
+@keyframes mz-puddle-appear {to{opacity:.88;transform:translate(-50%,-50%) scale(1)}}
+.mz-november-puddles.mz-puddles-leaving .mz-november-puddle {
+  animation:mz-puddle-fade 3s ease-in forwards;
+}
+@keyframes mz-puddle-fade {to{opacity:0;transform:translate(-50%,-50%) scale(.7)}}
+.mz-november-robin{
+  position:absolute;z-index:5;width:43px;height:48px;left:var(--left);top:var(--top);
+  transform:translate(-50%,-95%);pointer-events:none;
+  animation:mz-robin-appear 2s ease-in both,mz-robin-hop 1.8s ease-in-out 2s infinite;
+  filter:drop-shadow(0 3px 1px rgba(50,60,55,.35));
+}
+.mz-november-robin svg{width:100%;height:100%;image-rendering:pixelated}
+@keyframes mz-robin-appear{from{opacity:0}to{opacity:1}}
+@keyframes mz-robin-hop{0%,45%,100%{translate:0 0}50%{translate:2px -5px}}
+.mz-november-puddles.mz-puddles-leaving .mz-november-robin{animation:mz-puddle-fade 3s forwards}
+.mz-november-audio{
+ position:absolute;z-index:23;left:12px;top:10px;
+ display:inline-flex;align-items:center;gap:5px;padding:5px 9px;
+ border:2px solid rgba(91,94,84,.65);border-radius:9px;
+ color:#3d453d;background:rgba(251,249,236,.9);
+ font:700 12px/1.2 system-ui,sans-serif;cursor:pointer;
+ box-shadow:0 2px 0 rgba(55,55,45,.15);
+}
+.mz-november-audio:focus-visible{outline:3px solid #fff0a6;outline-offset:2px}
+@media(max-width:650px){.mz-november-audio{left:5px;top:5px;padding:4px 6px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){
+ .mz-november-rain{display:none!important}
+ .mz-november-puddle,.mz-november-robin{animation:none!important;opacity:.85;translate:0 0}
+}
