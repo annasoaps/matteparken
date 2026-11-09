@@ -1,0 +1,16 @@
+{
+  "collection": "Novemberlådan",
+  "status": "design-approved-not-enabled-in-student-park",
+  "decorations": [
+    {
+      "id": "novemberStringLights",
+      "name": "Ljusslinga med varmt sken",
+      "asset": "assets/november/ljusslinga_varmt_sken.png",
+      "originalDesign": "föregående version med fem större glödlampor och varmt transparent gult sken",
+      "defaultMapWidthPercent": 8.5,
+      "transparentBackground": true,
+      "aspectRatio": "280:93",
+      "notes": "Kan placeras över ett träd eller mellan två dekorationer. Testad i Spriteverkstaden; inte aktiverad för elever."
+    }
+  ]
+}
