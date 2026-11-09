@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spriteverkstaden | Matteparken</title>
+<style>
+:root{font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;color:#394332;background:#e9e7d9}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#334b3d;color:#fff8e5;padding:16px max(20px,calc((100vw - 1460px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:24px}
+header small{color:#c8d7c6}
+a{color:inherit}
+main{max-width:1480px;margin:0 auto;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) 295px;gap:18px}
+.panel{background:#fffdf4;border:2px solid #c7c7b1;border-radius:14px;padding:15px;box-shadow:0 3px 0 #c7c7b155}
+h2{font-size:17px;margin:0 0 10px}
+.muted{color:#66715f;font-size:13px;line-height:1.45}
+#stage{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#8f986f;border:3px solid #526d4f;border-radius:10px;touch-action:none;user-select:none}
+#background{position:absolute;width:100%;height:100%;inset:0;object-fit:fill;pointer-events:none}
+#stage.november #background{filter:sepia(.22) saturate(.78) hue-rotate(-7deg) brightness(.96)}
+#stage.november::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(119,85,49,.10),rgba(121,81,48,.15));mix-blend-mode:multiply;z-index:2}
+.sprite{position:absolute;transform:translate(-50%,-50%);cursor:grab;touch-action:none;z-index:3;max-width:none;object-fit:contain;image-rendering:auto;filter:drop-shadow(0 3px 2px #26351f55)}
+.sprite.dragging{cursor:grabbing}
+.sprite.active{outline:2px dashed #f3dc7b;outline-offset:5px}
+.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 12px}
+button,.upload{border:2px solid #82957a;border-radius:9px;padding:9px 12px;background:#f6f5ea;color:#354a39;font:700 13px inherit;cursor:pointer}
+button:hover,.upload:hover{background:#e8f0df}
+button:focus-visible,.upload:focus-within{outline:3px solid #b99343;outline-offset:2px}
+button.primary,.upload.primary{background:#405f4d;border-color:#405f4d;color:white}
+button.primary:hover,.upload.primary:hover{background:#304d3c}
+button:disabled{opacity:.4;cursor:not-allowed}
+input[type=file]{display:none}
+label{font-size:13px;font-weight:750;color:#455347}
+.field{display:grid;gap:6px;margin:10px 0}
+.field input[type=range]{width:100%}
+.field input[type=number]{max-width:100%;padding:8px;border:1px solid #afbaa9;border-radius:7px}
+select{padding:9px;border:1px solid #9ca894;border-radius:8px;background:#fff}
+.stat{font-size:13px;color:#425344}
+.inline{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#items{display:grid;gap:6px;margin:8px 0 12px}
+.item{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid #c9d0bc;border-radius:8px;text-align:left;width:100%;background:#f9faef}
+.item[aria-pressed=true]{border-color:#4c7455;background:#e5f0de}
+.item img{width:37px;height:34px;object-fit:contain}
+.note{font-size:12px;color:#697767;margin-top:8px}
+#status{min-height:20px;font-size:13px;color:#4f6a54}
+#empty{color:#6a7666;font-size:13px}
+@media(max-width:880px){main{grid-template-columns:1fr}header{padding:14px 18px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header><div><h1>🍂 Spriteverkstaden</h1><small>Testa dekorationer mot Matteparkens verkliga bakgrund</small></div><a href="index.html">Tillbaka till Matteparken</a></header>
+<main>
+<section class="panel">
+<div class="toolbar">
+<label class="upload primary" for="files">+ Välj sprites (PNG/WebP)</label><input id="files" type="file" accept="image/png,image/webp" multiple>
+<button id="reset">Rensa testytan</button>
+<button id="save" class="primary">Spara testbild som PNG</button>
+<label for="season" style="margin-left:auto">Visa bakgrund</label><select id="season"><option value="november">Novemberfärger</option><option value="original">Originalfärger</option></select>
+</div>
+<div id="stage" class="november" aria-label="Testyta med Matteparkens riktiga bakgrund">
+<img id="background" src="assets/asset_004_67f3dcefe27d25d0.webp" alt="Matteparkens originalbakgrund">
+</div>
+<p class="muted">Detta är <strong>exakt samma bakgrundsfil som används i parken</strong>, inte en återskapad bild. Dra spritesen på kartan för att se storlek, placering och genomskinlighet. Ändringar stannar i din webbläsare och publiceras inte i elevparken.</p>
+<p id="status" role="status">Välj en eller flera PNG-filer för att börja.</p>
+</section>
+<aside class="panel">
+<h2>Din testyta</h2>
+<div id="items"></div><div id="empty">Inga sprites inlagda än.</div>
+<div id="settings" hidden>
+<hr>
+<h2>Vald dekoration</h2>
+<div id="filename" class="stat"></div>
+<div class="field"><div class="row"><label for="scale">Bredd på kartan</label><output id="scaleOut"></output></div><input id="scale" type="range" min="2" max="70" step=".5" value="18"></div>
+<div class="field"><div class="row"><label for="opacity">Genomskinlighet</label><output id="opacityOut"></output></div><input id="opacity" type="range" min="10" max="100" step="5" value="100"></div>
+<div class="field"><label for="depth">Lagerordning</label><select id="depth"><option value="3">Framför</option><option value="1">Bakom andra sprites</option></select></div>
+<div class="inline"><button id="duplicate">Duplicera</button><button id="remove">Ta bort vald</button></div>
+</div>
+<hr>
+<p class="muted"><strong>Arbetsflöde:</strong> Skapa sprite → öppna här → prova storlek och placering → spara en testbild → godkänn eller justera. Först därefter lägger vi in den i Novemberlådan.</p>
+<p class="note">Tips: PNG med transparent bakgrund visar parkens gräs genom de genomskinliga delarna. Exporten sparar bara en lokal bildfil.</p>
+</aside>
+</main>
+<script>
+(() => {
+"use strict";
+const $=id=>document.getElementById(id);
+const stage=$("stage"), bg=$("background"), list=$("items");
+const state={sprites:[],selected:null};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function selected(){return state.sprites.find(x=>x.id===state.selected);}
+function styleSprite(s){
+ s.el.style.left=s.x+"%";s.el.style.top=s.y+"%";
+ s.el.style.width=s.width+"%";s.el.style.height="auto";
+ s.el.style.opacity=String(s.opacity/100);s.el.style.zIndex=String(s.depth);
+ s.el.classList.toggle("active",state.selected===s.id);
+}
+function render(){
+ list.replaceChildren();$("empty").hidden=!!state.sprites.length;
+ for(const s of state.sprites){
+  styleSprite(s);
+  const button=document.createElement("button");
+  button.className="item";button.type="button";
+  button.setAttribute("aria-pressed",String(s.id===state.selected));
+  const image=document.createElement("img");image.src=s.url;image.alt="";
+  const name=document.createElement("span");name.textContent=s.name;
+  button.append(image,name);button.onclick=()=>{state.selected=s.id;render();};
+  list.appendChild(button);
+ }
+ const s=selected();$("settings").hidden=!s;
+ if(!s)return;
+ $("filename").textContent=s.name;
+ $("scale").value=s.width;$("scaleOut").textContent=s.width+" %";
+ $("opacity").value=s.opacity;$("opacityOut").textContent=s.opacity+" %";
+ $("depth").value=s.depth;
+}
+function addFile(file){
+ if(!file.type.startsWith("image/"))return;
+ const url=URL.createObjectURL(file),img=new Image();
+ img.onload=()=>{
+  const id=Date.now()+"-"+Math.random().toString(16).slice(2);
+  const s={id,url,name:file.name,x:50,y:47,width:18,opacity:100,depth:3,image:img,el:document.createElement("img")};
+  s.el.className="sprite";s.el.src=url;s.el.alt=file.name;
+  s.el.draggable=false;
+  s.el.addEventListener("pointerdown",e=>{
+   if(e.button!==0 && e.pointerType==="mouse")return;
+   e.preventDefault();e.stopPropagation();
+   state.selected=s.id;render();s.el.classList.add("dragging");
+   const rect=stage.getBoundingClientRect();
+   const originX=e.clientX,originY=e.clientY,oldX=s.x,oldY=s.y;
+   s.el.setPointerCapture(e.pointerId);
+   const move=ev=>{
+    s.x=clamp(oldX+(ev.clientX-originX)/rect.width*100,0,100);
+    s.y=clamp(oldY+(ev.clientY-originY)/rect.height*100,0,100);
+    styleSprite(s);
+   };
+   const finish=()=>{s.el.classList.remove("dragging");s.el.removeEventListener("pointermove",move);s.el.removeEventListener("pointerup",finish);s.el.removeEventListener("pointercancel",finish);};
+   s.el.addEventListener("pointermove",move);s.el.addEventListener("pointerup",finish);s.el.addEventListener("pointercancel",finish);
+  });
+  stage.appendChild(s.el);state.sprites.push(s);state.selected=id;render();
+  $("status").textContent="Sprite laddad! Dra den dit du vill på kartan.";
+ };
+ img.onerror=()=>{$("status").textContent="Kunde inte öppna filen: "+file.name;URL.revokeObjectURL(url);};
+ img.src=url;
+}
+$("files").addEventListener("change",e=>{Array.from(e.target.files||[]).forEach(addFile);e.target.value="";});
+$("season").onchange=e=>stage.classList.toggle("november",e.target.value==="november");
+$("scale").oninput=e=>{const s=selected();if(!s)return;s.width=Number(e.target.value);render();};
+$("opacity").oninput=e=>{const s=selected();if(!s)return;s.opacity=Number(e.target.value);render();};
+$("depth").onchange=e=>{const s=selected();if(!s)return;s.depth=Number(e.target.value);render();};
+$("remove").onclick=()=>{const s=selected();if(!s)return;s.el.remove();URL.revokeObjectURL(s.url);state.sprites=state.sprites.filter(x=>x!==s);state.selected=state.sprites.at(-1)?.id||null;render();};
+$("duplicate").onclick=()=>{const s=selected();if(!s)return;const copy=new File([new Uint8Array(0)],s.name,{type:"image/png"});const img=new Image();img.onload=()=>{const id=Date.now()+"-"+Math.random().toString(16).slice(2);const clone={...s,id,x:clamp(s.x+5,0,100),y:clamp(s.y+5,0,100),el:document.createElement("img")};clone.el.className="sprite";clone.el.src=s.url;clone.el.alt=s.name;clone.el.draggable=false;clone.el.addEventListener("pointerdown",e=>{e.preventDefault();state.selected=clone.id;render();});stage.appendChild(clone.el);state.sprites.push(clone);state.selected=clone.id;render();};img.src=s.url;};
+$("reset").onclick=()=>{for(const s of state.sprites){s.el.remove();URL.revokeObjectURL(s.url);}state.sprites=[];state.selected=null;render();$("status").textContent="Testytan är rensad.";};
+$("save").onclick=()=>{
+ if(!bg.complete||!bg.naturalWidth){$("status").textContent="Bakgrunden har inte laddats färdigt.";return;}
+ const canvas=document.createElement("canvas");canvas.width=bg.naturalWidth;canvas.height=bg.naturalHeight;
+ const ctx=canvas.getContext("2d");ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+ if(stage.classList.contains("november")){
+  // Pixel-based equivalent of the preview's gentle November tint, without changing the stored background.
+  const data=ctx.getImageData(0,0,canvas.width,canvas.height),p=data.data;
+  for(let i=0;i<p.length;i+=4){const r=p[i],g=p[i+1],b=p[i+2];p[i]=Math.min(255,r*.93+g*.08+17);p[i+1]=Math.min(255,g*.90+r*.035+7);p[i+2]=Math.min(255,b*.79+r*.055+5);}
+  ctx.putImageData(data,0,0);
+ }
+ for(const s of state.sprites.slice().sort((a,b)=>a.depth-b.depth)){
+  const dw=canvas.width*s.width/100,dh=dw*s.image.naturalHeight/s.image.naturalWidth;
+  ctx.globalAlpha=s.opacity/100;
+  ctx.drawImage(s.image,canvas.width*s.x/100-dw/2,canvas.height*s.y/100-dh/2,dw,dh);
+ }
+ ctx.globalAlpha=1;
+ canvas.toBlob(blob=>{
+  if(!blob){$("status").textContent="Kunde inte skapa testbilden.";return;}
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="matteparken-spritetest.png";a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $("status").textContent="Testbilden är sparad på din dator. Ingenting har publicerats.";
+ },"image/png");
+};
+render();
+})();
+</script>
+</body>
+</html>
