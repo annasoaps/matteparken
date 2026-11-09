@@ -116,14 +116,7 @@ function render(){
  $("opacity").value=s.opacity;$("opacityOut").textContent=s.opacity+" %";
  $("depth").value=s.depth;
 }
-function addFile(file){
- if(!file.type.startsWith("image/"))return;
- const url=URL.createObjectURL(file),img=new Image();
- img.onload=()=>{
-  const id=Date.now()+"-"+Math.random().toString(16).slice(2);
-  const s={id,url,name:file.name,x:50,y:47,width:18,opacity:100,depth:3,image:img,el:document.createElement("img")};
-  s.el.className="sprite";s.el.src=url;s.el.alt=file.name;
-  s.el.draggable=false;
+function attachDragging(s){
   s.el.addEventListener("pointerdown",e=>{
    if(e.button!==0 && e.pointerType==="mouse")return;
    e.preventDefault();e.stopPropagation();
@@ -139,6 +132,16 @@ function addFile(file){
    const finish=()=>{s.el.classList.remove("dragging");s.el.removeEventListener("pointermove",move);s.el.removeEventListener("pointerup",finish);s.el.removeEventListener("pointercancel",finish);};
    s.el.addEventListener("pointermove",move);s.el.addEventListener("pointerup",finish);s.el.addEventListener("pointercancel",finish);
   });
+}
+function addFile(file){
+ if(!file.type.startsWith("image/"))return;
+ const url=URL.createObjectURL(file),img=new Image();
+ img.onload=()=>{
+  const id=Date.now()+"-"+Math.random().toString(16).slice(2);
+  const s={id,url,name:file.name,x:50,y:47,width:18,opacity:100,depth:3,image:img,el:document.createElement("img")};
+  s.el.className="sprite";s.el.src=url;s.el.alt=file.name;
+  s.el.draggable=false;
+  attachDragging(s);
   stage.appendChild(s.el);state.sprites.push(s);state.selected=id;render();
   $("status").textContent="Sprite laddad! Dra den dit du vill på kartan.";
  };
@@ -151,7 +154,7 @@ $("scale").oninput=e=>{const s=selected();if(!s)return;s.width=Number(e.target.v
 $("opacity").oninput=e=>{const s=selected();if(!s)return;s.opacity=Number(e.target.value);render();};
 $("depth").onchange=e=>{const s=selected();if(!s)return;s.depth=Number(e.target.value);render();};
 $("remove").onclick=()=>{const s=selected();if(!s)return;s.el.remove();URL.revokeObjectURL(s.url);state.sprites=state.sprites.filter(x=>x!==s);state.selected=state.sprites.at(-1)?.id||null;render();};
-$("duplicate").onclick=()=>{const s=selected();if(!s)return;const copy=new File([new Uint8Array(0)],s.name,{type:"image/png"});const img=new Image();img.onload=()=>{const id=Date.now()+"-"+Math.random().toString(16).slice(2);const clone={...s,id,x:clamp(s.x+5,0,100),y:clamp(s.y+5,0,100),el:document.createElement("img")};clone.el.className="sprite";clone.el.src=s.url;clone.el.alt=s.name;clone.el.draggable=false;clone.el.addEventListener("pointerdown",e=>{e.preventDefault();state.selected=clone.id;render();});stage.appendChild(clone.el);state.sprites.push(clone);state.selected=clone.id;render();};img.src=s.url;};
+$("duplicate").onclick=()=>{const s=selected();if(!s)return;const img=new Image();img.onload=()=>{const id=Date.now()+"-"+Math.random().toString(16).slice(2);const clone={...s,id,x:clamp(s.x+5,0,100),y:clamp(s.y+5,0,100),el:document.createElement("img")};clone.el.className="sprite";clone.el.src=s.url;clone.el.alt=s.name;clone.el.draggable=false;attachDragging(clone);stage.appendChild(clone.el);state.sprites.push(clone);state.selected=clone.id;render();};img.src=s.url;};
 $("reset").onclick=()=>{for(const s of state.sprites){s.el.remove();URL.revokeObjectURL(s.url);}state.sprites=[];state.selected=null;render();$("status").textContent="Testytan är rensad.";};
 $("save").onclick=()=>{
  if(!bg.complete||!bg.naturalWidth){$("status").textContent="Bakgrunden har inte laddats färdigt.";return;}
