@@ -1,0 +1,38 @@
+{
+  "id": "oster-steg-1",
+  "name": "Öster Steg 1",
+  "background": "assets/oster-steg-1.webp",
+  "width": 1672,
+  "height": 941,
+  "initialHabitat": "oster_sjon",
+  "habitats": [
+    {
+      "id": "oster_sjon",
+      "name": "Sjön",
+      "initiallyUnlocked": true
+    },
+    {
+      "id": "oster_berget",
+      "name": "Berget",
+      "initiallyUnlocked": false
+    },
+    {
+      "id": "oster_baveran",
+      "name": "Bäverån",
+      "initiallyUnlocked": false
+    },
+    {
+      "id": "oster_sodra_stranden",
+      "name": "Södra stranden",
+      "initiallyUnlocked": false
+    }
+  ],
+  "unlockOrder": [
+    "oster_sjon",
+    "oster_berget",
+    "oster_baveran",
+    "oster_sodra_stranden"
+  ],
+  "integrationStatus": "background-file-pending",
+  "notes": "Kartdefinition för separat östlig karta. Navigation, byggytor och upplåsningar införs i senare steg. Ändrar inte befintlig startkarta."
+}
