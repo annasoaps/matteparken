@@ -85,8 +85,8 @@
         const polygons={
           oster_sjon:[...b.lakeNorth,...reversed(b.lakeSouth).slice(1),[0,H]],
           oster_berget:[[0,0],[W,0],...reversed(b.riverNorth),...reversed(b.lakeNorth).slice(1)],
-          oster_baveran:[...b.riverNorth,[W,b.riverSouth.at(-1)[1]],...reversed(b.riverSouth).slice(1)],
-          oster_sodra_stranden:[...b.lakeSouth,...b.riverSouth.slice(1),[W,H]]
+          oster_baveran:[...b.riverNorth,[W,H],...reversed(b.southDivider).slice(0,1)],
+          oster_sodra_stranden:[...b.lakeSouth,...b.southDivider.slice(1)]
         };
         const toPoints=(p)=>p.map(x=>x.join(",")).join(" ");
         const make=(tag,classes)=>{const el=document.createElement(tag);if(classes)el.className=classes;return el};
