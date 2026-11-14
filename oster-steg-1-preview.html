@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Matteparken • Öster Steg 1 • Habitatgranskning</title>
+  <style>
+    :root{color-scheme:light;--ink:#293b2b;--cream:#fff7dd;--wood:#765038}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#e6e8d5;color:var(--ink);font-family:"Trebuchet MS",system-ui,sans-serif}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px clamp(12px,2vw,30px);background:#fdf7e7;border-bottom:3px solid #adb993}
+    h1{font-size:clamp(1.15rem,2.6vw,1.85rem);margin:0}
+    header p{margin:5px 0 0;color:#56664c;font-size:.9rem}
+    .private-pill{font-weight:bold;background:#e8dec0;border:1px solid #ad9468;border-radius:99px;padding:8px 13px;white-space:nowrap;font-size:.83rem}
+    main{max-width:1780px;margin:auto;padding:18px clamp(10px,2vw,30px) 45px}
+    .controls{display:flex;gap:15px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:.93rem}
+    .controls label{display:inline-flex;align-items:center;gap:6px;background:#fff9e9;border:1px solid #c9cbb5;border-radius:9px;padding:8px 11px;cursor:pointer}
+    input{accent-color:#3e836e}
+    .stage{position:relative;width:100%;aspect-ratio:1672/941;overflow:hidden;background:#56724e;border:5px solid #70543b;border-radius:14px;box-shadow:0 10px 23px #45574636}
+    .background{width:100%;height:100%;display:block;object-fit:fill;user-select:none}
+    .regions{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+    .region{stroke-width:5;stroke-linejoin:round;vector-effect:non-scaling-stroke;cursor:pointer;transition:fill .15s,stroke-width .15s}
+    .region:hover,.region:focus-visible{stroke-width:9;outline:none}
+    .region.selected{stroke-width:10}
+    .no-borders .region{stroke:transparent;stroke-width:0}
+    .no-tint .region{fill:transparent!important}
+    .labels{position:absolute;inset:0;z-index:3;pointer-events:none}
+    .habitat-label{pointer-events:auto;position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:clamp(3px,.8vw,9px) clamp(6px,1.2vw,17px);min-width:max-content;background:linear-gradient(#fff4d1,#edcf92);color:#422a19;border:2px solid #704c2b;border-radius:15px;box-shadow:0 4px 0 #6e4b31aa,0 2px 15px #211c156b;cursor:pointer;font:inherit;text-align:center}
+    .habitat-label:hover,.habitat-label:focus-visible{background:#fff8e6;outline:3px solid white;outline-offset:2px}
+    .habitat-label .name{font-size:clamp(9px,1.5vw,23px);font-weight:900;white-space:nowrap}
+    .habitat-label .state{font-size:clamp(8px,1vw,15px);font-weight:800}
+    .habitat-label .state.locked{color:#855020}
+    .habitat-label .state.open{color:#2a7848}
+    .no-labels .labels{display:none}
+    .panel{margin:15px 0 0;background:#fff9ed;border-radius:13px;border:2px solid #b7b69b;padding:17px 19px}
+    .panel h2{margin:0 0 5px;font-size:1.15rem}
+    .panel p{margin:6px 0;line-height:1.55}
+    .panel small{display:block;color:#66735d}
+    .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+    .legend button{display:flex;align-items:center;gap:6px;border:1px solid #c2c5ad;background:#fffdf6;border-radius:8px;padding:9px 11px;color:#34492f;cursor:pointer;font-weight:700}
+    .swatch{width:15px;height:15px;border:2px solid #7b7f71;border-radius:4px}
+    .note{color:#65725d;font-size:.88rem;line-height:1.5}
+    .error{background:#ffe4df;color:#842c20;padding:20px;border-radius:10px}
+    @media(max-width:720px){.private-pill{display:none}.stage{border-width:2px;border-radius:8px}.habitat-label{border-width:1px;border-radius:5px;box-shadow:0 1px 0 #6e4b31aa;padding:2px 3px}.habitat-label .name{font-size:clamp(8px,1.65vw,12px)}.habitat-label .state{font-size:clamp(7px,1.25vw,10px)}main{padding-left:5px;padding-right:5px}.controls{padding:0 8px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>🌿 Matteparken: Öster Steg 1</h1><p>Granskning av habitatgränser, namnskyltar och låsikoner</p></div>
+    <span class="private-pill">🛠️ Utvecklingsvy • ingen elevnavigering</span>
+  </header>
+  <main>
+    <div class="controls">
+      <label><input type="checkbox" id="borders" checked> Visa habitatgränser</label>
+      <label><input type="checkbox" id="tint" checked> Markera låsta habitat</label>
+      <label><input type="checkbox" id="labels" checked> Visa namnskyltar</label>
+    </div>
+    <div id="stage" class="stage" aria-label="Öster Steg 1 med fyra habitat">
+      <img class="background" src="assets/oster-steg-1.webp" alt="Bakgrund för Öster Steg 1 med sjö, berg, å och strand">
+      <svg class="regions" id="regions" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-label="Habitatgränser"></svg>
+      <div class="labels" id="mapLabels"></div>
+    </div>
+    <div class="panel" aria-live="polite">
+      <h2 id="detailTitle">Välj ett habitat på kartan</h2>
+      <p id="detailDescription">Alla fyra områdena täcker tillsammans hela kartan och delar gränser utan mellanrum.</p>
+      <small id="detailStatus">Det här är en granskningsvy. Parkmärken kan inte spenderas här och eleverna kommer inte hit från startkartan.</small>
+      <div class="legend" id="legend"></div>
+    </div>
+    <p class="note">Förhandsvyn använder den riktiga bilden <code>assets/oster-steg-1.webp</code> och gränserna i <code>maps/oster-steg-1.json</code>. Placeringarna kan justeras utan att måla om bilden. Ingen ändring görs i elevernas sparade parker.</p>
+  </main>
+  <script>
+    (async function(){
+      const stage=document.getElementById("stage"),svg=document.getElementById("regions"),labels=document.getElementById("mapLabels"),legend=document.getElementById("legend");
+      const title=document.getElementById("detailTitle"),description=document.getElementById("detailDescription"),status=document.getElementById("detailStatus");
+      try {
+        const response=await fetch("maps/oster-steg-1.json",{cache:"no-store"});
+        if(!response.ok)throw new Error("Kunde inte läsa kartans definition (HTTP "+response.status+").");
+        const data=await response.json(),b=data.boundaries,W=data.width,H=data.height;
+        svg.setAttribute("viewBox","0 0 "+W+" "+H);
+        const reversed=(a)=>a.slice().reverse();
+        const polygons={
+          oster_sjon:[...b.lakeNorth,...reversed(b.lakeSouth).slice(1),[0,H]],
+          oster_berget:[[0,0],[W,0],...reversed(b.riverNorth),...reversed(b.lakeNorth).slice(1)],
+          oster_baveran:[...b.riverNorth,[W,b.riverSouth.at(-1)[1]],...reversed(b.riverSouth).slice(1)],
+          oster_sodra_stranden:[...b.lakeSouth,...b.riverSouth.slice(1),[W,H]]
+        };
+        const toPoints=(p)=>p.map(x=>x.join(",")).join(" ");
+        const make=(tag,classes)=>{const el=document.createElement(tag);if(classes)el.className=classes;return el};
+        const rgba=(hex,alpha)=>{const n=parseInt(hex.slice(1),16);return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+alpha+")"};
+        function choose(h,poly){
+          document.querySelectorAll(".region").forEach(r=>r.classList.toggle("selected",r===poly));
+          title.textContent=h.icon+" "+h.name;
+          description.textContent=h.description;
+          status.textContent=h.initiallyUnlocked?"✅ Öppen från början.":"🔒 Låst från början. Låses upp med parkmärken i den framtida spelversionen. Inga köp görs i granskningsläget.";
+        }
+        data.habitats.forEach(h=>{
+          const p=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+          p.setAttribute("points",toPoints(polygons[h.id]));p.setAttribute("stroke",h.color);
+          p.setAttribute("fill",rgba(h.color,h.initiallyUnlocked?.04:.13));
+          p.setAttribute("tabindex","0");p.setAttribute("role","button");
+          p.setAttribute("aria-label",h.name+", "+(h.initiallyUnlocked?"öppen":"låst")+". Visa information");
+          p.classList.add("region");p.dataset.id=h.id;svg.appendChild(p);
+          p.addEventListener("click",()=>choose(h,p));
+          p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose(h,p)}});
+          const label=make("button","habitat-label");label.type="button";
+          label.style.left=(100*h.position.x/W)+"%";label.style.top=(100*h.position.y/H)+"%";
+          const name=make("span","name");name.textContent=h.icon+" "+h.name;
+          const state=make("span","state "+(h.initiallyUnlocked?"open":"locked"));state.textContent=h.initiallyUnlocked?"✓ Öppen":"🔒 Låst";
+          label.append(name,state);label.addEventListener("click",()=>choose(h,p));labels.appendChild(label);
+          const item=make("button");item.type="button";const swatch=make("span","swatch");
+          swatch.style.background=h.color;item.append(swatch,document.createTextNode(h.name+" · "+(h.initiallyUnlocked?"Öppen":"Låst")));
+          item.addEventListener("click",()=>choose(h,p));legend.appendChild(item);
+        });
+        document.getElementById("borders").addEventListener("change",e=>stage.classList.toggle("no-borders",!e.target.checked));
+        document.getElementById("tint").addEventListener("change",e=>stage.classList.toggle("no-tint",!e.target.checked));
+        document.getElementById("labels").addEventListener("change",e=>stage.classList.toggle("no-labels",!e.target.checked));
+      } catch(err){
+        title.textContent="Det gick inte att läsa kartan";
+        description.textContent=err.message;
+        status.textContent="Öppna filen via Matteparkens publicerade GitHub Pages-adress. Lokala filer kan blockera inläsningen av JSON.";
+      }
+    })();
+  </script>
+</body>
+</html>
