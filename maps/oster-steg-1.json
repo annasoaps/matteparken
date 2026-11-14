@@ -200,46 +200,14 @@
         333
       ]
     ],
-    "riverSouth": [
+    "southDivider": [
       [
         1063,
         664
       ],
       [
-        1105,
-        694
-      ],
-      [
-        1163,
-        710
-      ],
-      [
-        1228,
-        702
-      ],
-      [
-        1292,
-        679
-      ],
-      [
-        1361,
-        665
-      ],
-      [
-        1440,
-        650
-      ],
-      [
-        1520,
-        645
-      ],
-      [
-        1601,
-        627
-      ],
-      [
-        1672,
-        615
+        1063,
+        941
       ]
     ]
   },
@@ -274,8 +242,8 @@
       "icon": "🦫",
       "initiallyUnlocked": false,
       "position": {
-        "x": 1460,
-        "y": 540
+        "x": 1440,
+        "y": 720
       },
       "color": "#c387f5",
       "description": "Rinnande vatten och strandkanter för bäver, mink, häger och ådekorationer."
@@ -286,8 +254,8 @@
       "icon": "🌿",
       "initiallyUnlocked": false,
       "position": {
-        "x": 1250,
-        "y": 813
+        "x": 735,
+        "y": 845
       },
       "color": "#97db5d",
       "description": "Strandäng och framtida båtplats med en trasig eka som senare kan repareras."
