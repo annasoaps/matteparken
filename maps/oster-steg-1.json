@@ -5,34 +5,294 @@
   "width": 1672,
   "height": 941,
   "initialHabitat": "oster_sjon",
-  "habitats": [
-    {
-      "id": "oster_sjon",
-      "name": "Sjön",
-      "initiallyUnlocked": true
-    },
-    {
-      "id": "oster_berget",
-      "name": "Berget",
-      "initiallyUnlocked": false
-    },
-    {
-      "id": "oster_baveran",
-      "name": "Bäverån",
-      "initiallyUnlocked": false
-    },
-    {
-      "id": "oster_sodra_stranden",
-      "name": "Södra stranden",
-      "initiallyUnlocked": false
-    }
-  ],
   "unlockOrder": [
     "oster_sjon",
     "oster_berget",
     "oster_baveran",
     "oster_sodra_stranden"
   ],
-  "integrationStatus": "background-file-pending",
-  "notes": "Kartdefinition för separat östlig karta. Navigation, byggytor och upplåsningar införs i senare steg. Ändrar inte befintlig startkarta."
+  "unlockCurrency": "parkmarken",
+  "unlockPrices": null,
+  "boundaries": {
+    "lakeNorth": [
+      [
+        0,
+        320
+      ],
+      [
+        47,
+        290
+      ],
+      [
+        112,
+        277
+      ],
+      [
+        174,
+        248
+      ],
+      [
+        232,
+        233
+      ],
+      [
+        300,
+        210
+      ],
+      [
+        361,
+        206
+      ],
+      [
+        414,
+        216
+      ],
+      [
+        476,
+        245
+      ],
+      [
+        520,
+        262
+      ],
+      [
+        557,
+        291
+      ],
+      [
+        602,
+        312
+      ],
+      [
+        670,
+        333
+      ],
+      [
+        731,
+        359
+      ],
+      [
+        805,
+        387
+      ],
+      [
+        868,
+        416
+      ],
+      [
+        919,
+        451
+      ],
+      [
+        960,
+        500
+      ],
+      [
+        1005,
+        549
+      ],
+      [
+        1041,
+        608
+      ],
+      [
+        1063,
+        664
+      ]
+    ],
+    "lakeSouth": [
+      [
+        320,
+        941
+      ],
+      [
+        380,
+        911
+      ],
+      [
+        444,
+        865
+      ],
+      [
+        519,
+        836
+      ],
+      [
+        585,
+        810
+      ],
+      [
+        654,
+        793
+      ],
+      [
+        736,
+        777
+      ],
+      [
+        813,
+        758
+      ],
+      [
+        897,
+        737
+      ],
+      [
+        977,
+        721
+      ],
+      [
+        1032,
+        693
+      ],
+      [
+        1063,
+        664
+      ]
+    ],
+    "riverNorth": [
+      [
+        1063,
+        664
+      ],
+      [
+        1089,
+        612
+      ],
+      [
+        1120,
+        576
+      ],
+      [
+        1170,
+        558
+      ],
+      [
+        1230,
+        536
+      ],
+      [
+        1290,
+        508
+      ],
+      [
+        1351,
+        473
+      ],
+      [
+        1411,
+        444
+      ],
+      [
+        1480,
+        402
+      ],
+      [
+        1540,
+        374
+      ],
+      [
+        1610,
+        352
+      ],
+      [
+        1672,
+        333
+      ]
+    ],
+    "riverSouth": [
+      [
+        1063,
+        664
+      ],
+      [
+        1105,
+        694
+      ],
+      [
+        1163,
+        710
+      ],
+      [
+        1228,
+        702
+      ],
+      [
+        1292,
+        679
+      ],
+      [
+        1361,
+        665
+      ],
+      [
+        1440,
+        650
+      ],
+      [
+        1520,
+        645
+      ],
+      [
+        1601,
+        627
+      ],
+      [
+        1672,
+        615
+      ]
+    ]
+  },
+  "habitats": [
+    {
+      "id": "oster_sjon",
+      "name": "Sjön",
+      "icon": "🌊",
+      "initiallyUnlocked": true,
+      "position": {
+        "x": 390,
+        "y": 530
+      },
+      "color": "#40c9f3",
+      "description": "Öppet vatten. Plats för framtida julmarknad på isen, skridskoåkning och båtfiske."
+    },
+    {
+      "id": "oster_berget",
+      "name": "Berget",
+      "icon": "⛰️",
+      "initiallyUnlocked": false,
+      "position": {
+        "x": 1060,
+        "y": 255
+      },
+      "color": "#f5c94f",
+      "description": "Bergsplatåer för egna dekorationer och en grotta för elevernas framtida minispel."
+    },
+    {
+      "id": "oster_baveran",
+      "name": "Bäverån",
+      "icon": "🦫",
+      "initiallyUnlocked": false,
+      "position": {
+        "x": 1460,
+        "y": 540
+      },
+      "color": "#c387f5",
+      "description": "Rinnande vatten och strandkanter för bäver, mink, häger och ådekorationer."
+    },
+    {
+      "id": "oster_sodra_stranden",
+      "name": "Södra stranden",
+      "icon": "🌿",
+      "initiallyUnlocked": false,
+      "position": {
+        "x": 1250,
+        "y": 813
+      },
+      "color": "#97db5d",
+      "description": "Strandäng och framtida båtplats med en trasig eka som senare kan repareras."
+    }
+  ],
+  "integrationStatus": "habitat-preview-only",
+  "notes": "Habitatgränserna täcker hela kartytan och delar gemensamma kanter. Förhandsvisning ligger i oster-steg-1-preview.html. Inte kopplat till elevens parkmärken eller startkartans navigering."
 }
