@@ -23,7 +23,7 @@
     .regions{position:absolute;inset:0;width:100%;height:100%;z-index:2}
     /* Samma princip som startkartans .build-zone: ingen synlig kant i viloläge,
        diskret ljus, streckad kontur och lätt toning först vid hover/fokus. */
-    .region{fill:transparent;stroke:transparent;stroke-width:3;stroke-dasharray:9 7;stroke-linejoin:round;vector-effect:non-scaling-stroke;cursor:pointer;transition:fill .15s,stroke .15s}
+    .region{fill:transparent;stroke:transparent;stroke-width:1.5;stroke-dasharray:5 6;stroke-linejoin:round;vector-effect:non-scaling-stroke;cursor:pointer;transition:fill .15s,stroke .15s}
     .region:hover,.region.hovered,.region:focus-visible{fill:rgba(255,255,225,.18);stroke:rgba(255,250,210,.95);outline:none}
     .no-borders .region:hover,.no-borders .region.hovered,.no-borders .region:focus-visible{fill:transparent;stroke:transparent}
     .labels{position:absolute;inset:0;z-index:3;pointer-events:none}
