@@ -1,0 +1,269 @@
+{
+  "id": "oster-djupsjon-draft-v1",
+  "habitatId": "oster_sjon",
+  "name": "Djupsjön",
+  "status": "design-draft-not-runtime",
+  "revision": "2026-11-14",
+  "intent": "Design proposal for lake decorations, plants, wildlife and seasonal behavior. Does not enable navigation, unlocks, purchases or wildlife.",
+  "habitatUnlockedFromStart": true,
+  "principles": [
+    "Water and shoreline items are player-placed; the base map is kept uncluttered.",
+    "Separate ice decorations from open-water plants and structures.",
+    "Owned items remain saved when hidden for a season, and return when conditions allow.",
+    "A species discovered elsewhere remains in the shared field guide; avoid duplicating the discovery merely for the eastern lake.",
+    "Freezing does not erase purchases, and summer species do not appear on a fully frozen lake."
+  ],
+  "decorationCatalogue": [
+    {
+      "id": "reeds",
+      "name": "Vass",
+      "origin": "existing",
+      "placement": "shoreline",
+      "season": "ice-free",
+      "wildlifeUse": [
+        "knipa",
+        "coot",
+        "duck"
+      ]
+    },
+    {
+      "id": "cattails",
+      "name": "Kaveldun",
+      "origin": "existing",
+      "placement": "shoreline",
+      "season": "ice-free",
+      "wildlifeUse": [
+        "knipa",
+        "duck"
+      ]
+    },
+    {
+      "id": "waterLily",
+      "name": "Näckros",
+      "origin": "existing",
+      "placement": "water",
+      "season": "ice-free",
+      "wildlifeUse": [
+        "coot",
+        "waterSnail",
+        "grebe"
+      ]
+    },
+    {
+      "id": "shoreStones",
+      "name": "Strandstenar",
+      "origin": "existing",
+      "placement": "shoreline",
+      "season": "all",
+      "wildlifeUse": [
+        "coot"
+      ]
+    },
+    {
+      "id": "shoreGrass",
+      "name": "Strandgräs",
+      "origin": "existing",
+      "placement": "shoreline",
+      "season": "ice-free",
+      "wildlifeUse": [
+        "duck"
+      ]
+    },
+    {
+      "id": "driftwood",
+      "name": "Drivved",
+      "origin": "existing",
+      "placement": "shoreline",
+      "season": "all",
+      "wildlifeUse": []
+    },
+    {
+      "id": "miniJetty",
+      "name": "Liten brygga",
+      "origin": "existing",
+      "placement": "shoreline",
+      "season": "all",
+      "wildlifeUse": []
+    },
+    {
+      "id": "lakeSign",
+      "name": "Sjöns skylt",
+      "origin": "existing",
+      "placement": "shoreline",
+      "season": "all",
+      "wildlifeUse": []
+    },
+    {
+      "id": "fishingChair",
+      "name": "Fiskestol",
+      "origin": "existing",
+      "placement": "shoreline",
+      "season": "ice-free",
+      "wildlifeUse": []
+    },
+    {
+      "id": "floatingBuoy",
+      "name": "Boj",
+      "origin": "new-art-needed",
+      "placement": "water",
+      "season": "ice-free",
+      "wildlifeUse": []
+    },
+    {
+      "id": "oldLakesideTree",
+      "name": "Gammalt sjöträd",
+      "origin": "new-art-needed",
+      "placement": "shoreline",
+      "season": "all",
+      "wildlifeUse": [
+        "osprey"
+      ]
+    },
+    {
+      "id": "snowLantern",
+      "name": "Snölykta",
+      "origin": "new-art-needed",
+      "placement": "ice",
+      "season": "frozen",
+      "wildlifeUse": []
+    },
+    {
+      "id": "iceSculpture",
+      "name": "Isskulptur",
+      "origin": "new-art-needed",
+      "placement": "ice",
+      "season": "frozen",
+      "wildlifeUse": []
+    },
+    {
+      "id": "iceSkateTrail",
+      "name": "Skridskospår",
+      "origin": "new-art-needed",
+      "placement": "ice",
+      "season": "frozen",
+      "wildlifeUse": []
+    },
+    {
+      "id": "winterMarketStall",
+      "name": "Julmarknadsstånd",
+      "origin": "new-art-needed",
+      "placement": "ice",
+      "season": "frozen-december",
+      "wildlifeUse": [],
+      "reservation": "Keep a separate seasonal activity zone on lake ice."
+    }
+  ],
+  "wildlifeRules": [
+    {
+      "id": "duck",
+      "name": "Gräsand",
+      "origin": "existing",
+      "season": "ice-free",
+      "requiredDecorations": [
+        "reeds",
+        "shoreGrass"
+      ],
+      "rarityProposal": "common",
+      "note": "Existing discovery at start-kartans Sjön should stay discovered."
+    },
+    {
+      "id": "coot",
+      "name": "Sothöna",
+      "origin": "existing",
+      "season": "ice-free",
+      "requiredDecorations": [
+        "reeds",
+        "waterLily",
+        "shoreStones"
+      ],
+      "rarityProposal": "uncommon"
+    },
+    {
+      "id": "waterSnail",
+      "name": "Vattensnäcka",
+      "origin": "existing",
+      "season": "ice-free",
+      "requiredDecorations": [
+        "waterLily",
+        "reeds"
+      ],
+      "rarityProposal": "uncommon"
+    },
+    {
+      "id": "knipa",
+      "name": "Knipa",
+      "origin": "new",
+      "season": "ice-free",
+      "requiredDecorations": [
+        "reeds",
+        "cattails"
+      ],
+      "rarityProposal": "uncommon"
+    },
+    {
+      "id": "grebe",
+      "name": "Skäggdopping",
+      "origin": "new",
+      "season": "ice-free",
+      "requiredDecorations": [
+        "waterLily",
+        "reeds"
+      ],
+      "rarityProposal": "rare"
+    },
+    {
+      "id": "osprey",
+      "name": "Fiskgjuse",
+      "origin": "new",
+      "season": "ice-free",
+      "requiredDecorations": [
+        "oldLakesideTree"
+      ],
+      "rarityProposal": "rare",
+      "specialCondition": "Deep lake considered fish-rich for the game; perch visible only at suitable tree."
+    }
+  ],
+  "seasons": {
+    "winterFrozen": {
+      "waterSurface": "ice",
+      "allowedPlacement": [
+        "ice",
+        "shoreline"
+      ],
+      "wildlifeDisabledForLake": true,
+      "hideButPersist": [
+        "water",
+        "ice-free shoreline plants"
+      ],
+      "specialEvents": [
+        "skating",
+        "christmas-market-in-december"
+      ]
+    },
+    "thawed": {
+      "waterSurface": "water",
+      "allowedPlacement": [
+        "water",
+        "shoreline"
+      ],
+      "wildlifeEnabledForLake": true,
+      "hideButPersist": [
+        "ice",
+        "frozen-only ornaments"
+      ],
+      "specialEvents": [
+        "future-deep-water-fishing"
+      ]
+    },
+    "edgeCase": "If a winter open-water area is later added, model it explicitly rather than allowing open-water wildlife on solid ice."
+  },
+  "unresolved": [
+    "Catalog pricing and park-badge requirements",
+    "Which species are new versus shared with start-map lake field guide",
+    "Exact placement masks for water, shoreline, ice, seasonal market",
+    "Wildlife visit probabilities and timers",
+    "Sprites for new items and species",
+    "How annual calendar dates and local season settings are controlled"
+  ],
+  "implementationSafety": "Documentation-only proposal; do not import directly into existing game without migration and teacher approval."
+}
