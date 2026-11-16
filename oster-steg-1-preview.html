@@ -22,6 +22,7 @@
     .background{width:100%;height:100%;display:block;object-fit:fill;user-select:none}
     /* Vinterlager över sommarens högupplösta underlag. Den ursprungliga bilden sparas orörd. */
     .stage.winter .background{filter:grayscale(.78) saturate(.43) brightness(1.48) contrast(.88)}
+    .stage:not(.winter) .winter-overlay{display:none}
     .winter-overlay{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
     .winter-overlay .snow-wash{fill:#e9f3fc;opacity:.30}
     .winter-overlay .lake-ice{fill:#89c5ec;opacity:.78}
@@ -81,6 +82,7 @@
   </header>
   <main>
     <div class="controls">
+      <label><input type="checkbox" id="winter" checked> Vinterläge</label>
       <label><input type="checkbox" id="borders" checked> Visa streckad gräns vid hovring</label>
       <label><input type="checkbox" id="labels" checked> Visa namnskyltar och lås</label>
     </div>
@@ -202,6 +204,7 @@
           swatch.style.background=h.color;item.append(swatch,document.createTextNode(h.name+" · "+(h.initiallyUnlocked?"Öppen":"Låst")));
           item.addEventListener("click",()=>choose(h,p));legend.appendChild(item);
         });
+        document.getElementById("winter").addEventListener("change",e=>stage.classList.toggle("winter",e.target.checked));
         document.getElementById("borders").addEventListener("change",e=>stage.classList.toggle("no-borders",!e.target.checked));
         document.getElementById("labels").addEventListener("change",e=>stage.classList.toggle("no-labels",!e.target.checked));
       } catch(err){
