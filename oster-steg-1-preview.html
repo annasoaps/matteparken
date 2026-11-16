@@ -45,6 +45,22 @@
     .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
     .legend button{display:flex;align-items:center;gap:6px;border:1px solid #c2c5ad;background:#fffdf6;border-radius:8px;padding:9px 11px;color:#34492f;cursor:pointer;font-weight:700}
     .swatch{width:15px;height:15px;border:2px solid #7b7f71;border-radius:4px}
+    /* Fasta julmarknadsobjekt: separata från elevens byggföremål, ingen dragning. */
+    .christmas-objects{position:absolute;inset:0;z-index:4;pointer-events:none}
+    .christmas-object{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;display:grid;place-items:center;cursor:pointer;background:none;border:0;padding:0;filter:drop-shadow(0 3px 2px #273f5750);transition:transform .14s,filter .14s;touch-action:manipulation}
+    .christmas-object:hover,.christmas-object:focus-visible{transform:translate(-50%,-104%) scale(1.06);filter:drop-shadow(0 5px 5px #273f576d);outline:0}
+    .christmas-object:focus-visible::after{content:"";position:absolute;inset:-4px;border:2px dashed white;border-radius:12px}
+    .christmas-object svg{width:100%;height:100%;overflow:visible;image-rendering:pixelated}
+    .christmas-object .object-name{position:absolute;top:100%;background:rgba(255,250,235,.94);border:1px solid #706044;color:#3b3527;border-radius:5px;padding:1px 5px;white-space:nowrap;font-weight:900;font-size:clamp(7px,.85vw,11px)}
+    .christmas-object.stall{width:13%;height:19%}
+    .christmas-object.tree{width:10%;height:20%}
+    .christmas-object.calendar{width:8%;height:17%}
+    .christmas-dialog{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:#1023319c;padding:16px}
+    .christmas-dialog.open{display:flex}
+    .christmas-dialog .dialog-card{width:min(450px,100%);border:5px solid #84613f;background:#fff5dd;border-radius:18px;box-shadow:0 16px 45px #15233266;padding:22px;text-align:center}
+    .christmas-dialog h2{margin:0 0 9px}
+    .christmas-dialog p{line-height:1.5}
+    .christmas-dialog button{padding:9px 17px;background:#4c7656;border:2px solid #264b30;border-radius:9px;color:white;font-weight:900;cursor:pointer}
     .note{color:#65725d;font-size:.88rem;line-height:1.5}
     .error{background:#ffe4df;color:#842c20;padding:20px;border-radius:10px}
     @media(max-width:720px){.private-pill{display:none}.stage{border-width:2px;border-radius:8px}.habitat-label.habitat-open{border-width:1px;padding:2px 3px}.habitat-label.habitat-locked{border-width:2px;border-radius:7px;box-shadow:0 2px 0 rgba(55,70,50,.24);min-width:80px;padding:2px 3px}.habitat-label .name{font-size:clamp(8px,1.65vw,12px)}.habitat-label .state{font-size:clamp(7px,1.25vw,10px)}main{padding-left:5px;padding-right:5px}.controls{padding:0 8px}}
@@ -64,6 +80,50 @@
       <img class="background" src="assets/oster-steg-1.webp" alt="Bakgrund för Öster Steg 1 med sjö, berg, å och strand">
       <svg class="regions" id="regions" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-label="Habitatgränser"></svg>
       <div class="labels" id="mapLabels"></div>
+      <div class="christmas-objects" aria-label="Fasta objekt på julmarknaden">
+        <button class="christmas-object stall" data-christmas="stall" type="button" style="left:12%;top:44%" aria-label="Öppna julmarknadens dekorationsstånd">
+          <svg viewBox="0 0 150 135" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M19 55h112v69H19z" fill="#8b5237" stroke="#4d3229" stroke-width="5"/>
+            <path d="M15 45 35 15h80l20 30v25H15z" fill="#a46b43" stroke="#533b2c" stroke-width="5"/>
+            <path d="M14 51h122v26H14z" fill="#fcf4dc"/>
+            <path d="M15 51h20v26H15zm40 0h20v26H55zm40 0h20v26H95z" fill="#b74735"/>
+            <path d="M9 48q8-15 16 0 8-17 16 0 8-17 16 0 8-17 16 0 8-17 16 0 8-17 16 0 8-17 16 0 8-17 16 0" fill="none" stroke="#f5faff" stroke-width="10" stroke-linecap="round"/>
+            <path d="M21 96h108v14H21z" fill="#c68d55" stroke="#67452d" stroke-width="4"/>
+            <path d="M53 114h44v10H53z" fill="#b13b31"/>
+            <circle cx="75" cy="119" r="9" fill="#2f714c"/><circle cx="75" cy="119" r="3" fill="#ecd058"/>
+            <circle cx="32" cy="33" r="6" fill="#ffd56d"/><circle cx="55" cy="30" r="6" fill="#ffd56d"/><circle cx="80" cy="29" r="6" fill="#ffd56d"/><circle cx="106" cy="33" r="6" fill="#ffd56d"/>
+            <rect x="32" y="83" width="13" height="17" rx="3" fill="#d7963e"/><rect x="53" y="80" width="14" height="20" rx="3" fill="#fff1bb"/><rect x="78" y="82" width="15" height="18" rx="3" fill="#ca8732"/>
+            <path d="M5 125h140" stroke="#eaf7fd" stroke-width="13" stroke-linecap="round"/>
+          </svg>
+          <span class="object-name">Julstånd</span>
+        </button>
+        <button class="christmas-object tree" data-christmas="tree" type="button" style="left:24%;top:46%" aria-label="Titta på julgranen">
+          <svg viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="44" y="117" width="14" height="30" fill="#81502d"/>
+            <path d="M50 11 22 61h16L12 99h22L5 131h91L66 99h20L61 61h17z" fill="#276440" stroke="#194b35" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M25 62h51M16 102h70M12 131h78" stroke="#eaf7ff" stroke-width="7" stroke-linecap="round" stroke-dasharray="17 11"/>
+            <path d="m50 0 5 10 11 2-8 8 2 12-10-6-10 6 2-12-8-8 11-2z" fill="#ffe073" stroke="#dc9f35" stroke-width="2"/>
+            <g fill="#fbd46c"><circle cx="50" cy="42" r="4"/><circle cx="34" cy="82" r="4"/><circle cx="64" cy="91" r="4"/><circle cx="31" cy="120" r="4"/><circle cx="74" cy="123" r="4"/></g>
+            <g fill="#bd463e"><circle cx="50" cy="68" r="6"/><circle cx="40" cy="108" r="6"/><circle cx="67" cy="115" r="6"/></g>
+            <path d="M8 145h84" stroke="#edf8fd" stroke-width="12" stroke-linecap="round"/>
+            <rect x="15" y="129" width="18" height="18" fill="#bb4438"/><path d="M24 129v18m-9-9h18" stroke="#e5c75f" stroke-width="3"/>
+            <rect x="65" y="134" width="17" height="13" fill="#d9b14c"/><path d="M73 134v13m-8-6h17" stroke="#b94942" stroke-width="3"/>
+          </svg>
+          <span class="object-name">Julgran</span>
+        </button>
+        <button class="christmas-object calendar" data-christmas="calendar" type="button" style="left:34%;top:45%" aria-label="Öppna adventskalendern">
+          <svg viewBox="0 0 86 132" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="m38 72-21 48m26-49 24 49m-25-41v44" stroke="#765033" stroke-width="8" stroke-linecap="round"/>
+            <rect x="10" y="24" width="67" height="74" rx="4" fill="#8d5e36" stroke="#5d3b27" stroke-width="5"/>
+            <rect x="17" y="31" width="53" height="57" rx="2" fill="#fff4d6"/>
+            <path d="M17 35q12-10 23 0 12-10 30 0" stroke="#285e40" stroke-width="10" fill="none" stroke-linecap="round"/>
+            <path d="M37 30 20 18m18 12 17-12" stroke="#b33e3a" stroke-width="10" stroke-linecap="round"/>
+            <text x="43" y="72" font-size="28" font-weight="900" text-anchor="middle" fill="#b23f35" font-family="sans-serif">24</text>
+            <path d="M6 124h74" stroke="#e9f5fa" stroke-width="11" stroke-linecap="round"/>
+          </svg>
+          <span class="object-name">Adventskalender</span>
+        </button>
+      </div>
     </div>
     <div class="panel" aria-live="polite">
       <h2 id="detailTitle">Välj ett habitat på kartan</h2>
@@ -72,8 +132,29 @@
       <div class="legend" id="legend"></div>
     </div>
     <p class="note">Förhandsvyn använder den riktiga bilden <code>assets/oster-steg-1.webp</code> och gränserna i <code>maps/oster-steg-1.json</code>. Gränserna syns endast vid hovring eller tangentbordsfokus, som byggytorna på startkartan. Inga parkmärken dras och inga elevparker ändras.</p>
+    <div id="christmasDialog" class="christmas-dialog" role="dialog" aria-modal="true" aria-labelledby="christmasDialogTitle" aria-hidden="true">
+      <div class="dialog-card">
+        <h2 id="christmasDialogTitle">Julmarknaden</h2>
+        <p id="christmasDialogMessage"></p>
+        <button type="button" id="closeChristmasDialog">Stäng</button>
+      </div>
+    </div>
   </main>
   <script>
+    (function(){
+      const d=document.getElementById("christmasDialog"),t=document.getElementById("christmasDialogTitle"),m=document.getElementById("christmasDialogMessage"),close=document.getElementById("closeChristmasDialog");
+      const entries={
+        stall:{title:"🎄 Julmarknadens vinterstånd",message:"Här ska man senare kunna köpa vinterns och julens dekorationer till sjön. Butiken är ännu inte aktiverad."},
+        tree:{title:"✨ Julgranen",message:"Julmarknadens fasta gran. Den är en del av miljön och kan inte flyttas."},
+        calendar:{title:"🎁 Matteparkens adventskalender",message:"Här ska adventskalendern med 24 klickbara luckor öppnas. Luckorna byggs i nästa steg."}
+      };
+      let origin=null;
+      document.querySelectorAll("[data-christmas]").forEach(el=>el.addEventListener("click",()=>{const entry=entries[el.dataset.christmas];origin=el;t.textContent=entry.title;m.textContent=entry.message;d.classList.add("open");d.setAttribute("aria-hidden","false");close.focus()}));
+      function shut(){d.classList.remove("open");d.setAttribute("aria-hidden","true");origin?.focus()}
+      close.addEventListener("click",shut);
+      d.addEventListener("click",e=>{if(e.target===d)shut()});
+      window.addEventListener("keydown",e=>{if(e.key==="Escape"&&d.classList.contains("open"))shut()});
+    })();
     (async function(){
       const stage=document.getElementById("stage"),svg=document.getElementById("regions"),labels=document.getElementById("mapLabels"),legend=document.getElementById("legend");
       const title=document.getElementById("detailTitle"),description=document.getElementById("detailDescription"),status=document.getElementById("detailStatus");
