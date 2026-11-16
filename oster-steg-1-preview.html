@@ -20,6 +20,14 @@
     /* Startkartans maxbredd är 1180px. Begränsa också efter tillgänglig skärmhöjd. */
     .stage{position:relative;width:min(1180px,100%,calc((100dvh - 185px) * 1.77683));aspect-ratio:1672/941;margin-inline:auto;overflow:hidden;background:#56724e;border:5px solid #70543b;border-radius:14px;box-shadow:0 10px 23px #45574636}
     .background{width:100%;height:100%;display:block;object-fit:fill;user-select:none}
+    /* Vinterlager över sommarens högupplösta underlag. Den ursprungliga bilden sparas orörd. */
+    .stage.winter .background{filter:grayscale(.78) saturate(.43) brightness(1.48) contrast(.88)}
+    .winter-overlay{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+    .winter-overlay .snow-wash{fill:#e9f3fc;opacity:.30}
+    .winter-overlay .lake-ice{fill:#89c5ec;opacity:.78}
+    .winter-overlay .ice-marks{fill:none;stroke:#ecf8ff;stroke-width:1.5;opacity:.48;stroke-linecap:round;stroke-linejoin:round}
+    .winter-overlay .snowflakes{fill:#fff;opacity:.61}
+
     .regions{position:absolute;inset:0;width:100%;height:100%;z-index:2}
     /* Samma princip som startkartans .build-zone: ingen synlig kant i viloläge,
        diskret ljus, streckad kontur och lätt toning först vid hover/fokus. */
@@ -76,8 +84,18 @@
       <label><input type="checkbox" id="borders" checked> Visa streckad gräns vid hovring</label>
       <label><input type="checkbox" id="labels" checked> Visa namnskyltar och lås</label>
     </div>
-    <div id="stage" class="stage" aria-label="Öster Steg 1 med fyra habitat">
+    <div id="stage" class="stage winter" aria-label="Öster Steg 1 i vinterskrud med fyra habitat">
       <img class="background" src="assets/oster-steg-1.webp" alt="Bakgrund för Öster Steg 1 med sjö, berg, å och strand">
+      <svg class="winter-overlay" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-hidden="true">
+        <rect class="snow-wash" width="1672" height="941"/>
+        <path id="lakeIce" class="lake-ice"/>
+        <g class="ice-marks">
+          <path d="M92 405l35-9 21 10 43-14 31 8M160 570l45-13 28 6 49-20M285 720l28-18 30 6 48-16M500 520l30-10 22 5 36-14"/>
+          <path d="M640 612l44-11 36 10 28-14M214 450l21 10 26-8m-10 26-11-18 4-15M372 632l21 9 30-12m-25 20-8-20 11-12"/>
+          <path d="M540 754l42-17 30 4 33-14M70 800l40-15 28 9 39-11"/>
+        </g>
+        <g id="snowflakes" class="snowflakes"/>
+      </svg>
       <svg class="regions" id="regions" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-label="Habitatgränser"></svg>
       <div class="labels" id="mapLabels"></div>
       <div class="christmas-objects" aria-label="Fasta objekt på julmarknaden">
@@ -101,7 +119,7 @@
       <small id="detailStatus">Det här är en granskningsvy. Parkmärken kan inte spenderas här och eleverna kommer inte hit från startkartan.</small>
       <div class="legend" id="legend"></div>
     </div>
-    <p class="note">Förhandsvyn använder den riktiga bilden <code>assets/oster-steg-1.webp</code> och gränserna i <code>maps/oster-steg-1.json</code>. Gränserna syns endast vid hovring eller tangentbordsfokus, som byggytorna på startkartan. Inga parkmärken dras och inga elevparker ändras.</p>
+    <p class="note">Vintervyn använder ett snö- och islager över den ursprungliga kartan <code>assets/oster-steg-1.webp</code>, som finns kvar till vårversionen. och gränserna i <code>maps/oster-steg-1.json</code>. Gränserna syns endast vid hovring eller tangentbordsfokus, som byggytorna på startkartan. Inga parkmärken dras och inga elevparker ändras.</p>
     <div id="christmasDialog" class="christmas-dialog" role="dialog" aria-modal="true" aria-labelledby="christmasDialogTitle" aria-hidden="true">
       <div class="dialog-card">
         <h2 id="christmasDialogTitle">Julmarknaden</h2>
@@ -140,6 +158,19 @@
           oster_baveran:[...b.riverNorth,[W,H],...reversed(b.southDivider).slice(0,1)],
           oster_sodra_stranden:[...b.lakeSouth,...b.southDivider.slice(1)]
         };
+
+        // Sjöns is följer samma områdespolygon som används för habitatgränsen.
+        const ice=document.getElementById("lakeIce");
+        ice.setAttribute("d","M"+polygons.oster_sjon.map(pt=>pt.join(" ")).join(" L")+" Z");
+        // Fasta, små snöpunkter ger struktur utan att skymma spelets objekt.
+        const snowfall=document.getElementById("snowflakes");
+        for(let i=0;i<320;i++){
+          const x=(i*379+83)%W,y=(i*617+31)%H;
+          const circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
+          circle.setAttribute("cx",x);circle.setAttribute("cy",y);
+          circle.setAttribute("r",i%7===0?"1.6":".65");
+          snowfall.appendChild(circle);
+        }
         const toPoints=(p)=>p.map(x=>x.join(",")).join(" ");
         const make=(tag,classes)=>{const el=document.createElement(tag);if(classes)el.className=classes;return el};
         const rgba=(hex,alpha)=>{const n=parseInt(hex.slice(1),16);return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+alpha+")"};
