@@ -62,6 +62,37 @@
     .christmas-dialog h2{margin:0 0 9px}
     .christmas-dialog p{line-height:1.5}
     .christmas-dialog button{padding:9px 17px;background:#4c7656;border:2px solid #264b30;border-radius:9px;color:white;font-weight:900;cursor:pointer}
+
+    /* Julmarknadens separat granskbara butik, baserad på startkartans dekorationslådor. */
+    .christmas-dialog .dialog-card.market-card{width:min(790px,100%);max-height:min(88dvh,800px);overflow:auto;text-align:left;padding:0;background:#fff9e8}
+    .market-header{padding:19px 22px 13px;background:linear-gradient(125deg,#346148,#54845b);color:#fff9e9;border-radius:12px 12px 0 0;border-bottom:5px solid #d2a458}
+    .market-header h2{margin:0 0 3px;font-size:clamp(23px,3.2vw,32px)}
+    .market-header p{margin:0;font-size:14px;color:#fff9e8}
+    .market-main{padding:18px 21px 10px}
+    .market-offer{display:grid;grid-template-columns:110px minmax(0,1fr);gap:17px;align-items:center;background:#f7edcf;border:2px solid #cdb889;border-radius:16px;padding:15px}
+    .market-crate{width:98px;height:98px;display:grid;place-items:center;font-size:66px;border:3px solid #b99e68;border-radius:14px;background:radial-gradient(circle at 50% 30%,#fffbef,#e9d49f)}
+    .market-offer h3{font-size:23px;margin:0 0 5px}
+    .market-offer p{margin:0 0 7px;line-height:1.4}
+    .market-tag{display:inline-block;background:#fff8e7;color:#704925;border:1px solid #d0ad73;border-radius:99px;padding:3px 9px;font-size:12px;font-weight:900}
+    .market-price{font-weight:900;color:#48663b}
+    .market-btn{background:#376c49!important;border-color:#285236!important;margin:8px 0 0;display:inline-flex;gap:7px;align-items:center}
+    .market-btn:focus-visible{outline:3px solid #d19c4a;outline-offset:2px}
+    .market-section-title{margin:20px 0 10px;font-size:19px}
+    .market-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+    .market-item{border:2px solid #d0c29e;border-radius:11px;background:#fffdf4;padding:10px 7px;min-height:93px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+    .market-item .emoji{font-size:30px;line-height:1.15}
+    .market-item .name{font-size:13px;font-weight:900}
+    .market-item .rarity{font-size:11px;color:#6a755b}
+    .market-hint{font-size:12px;color:#68735e;line-height:1.5;margin-top:11px}
+    .market-demo{padding:14px;margin-top:15px;border:2px dashed #b89d63;border-radius:12px;background:#fff3d6}
+    .market-demo[hidden]{display:none}
+    .market-demo h3{margin:0 0 5px;font-size:18px}
+    .market-demo p{margin:3px 0 12px;font-size:13px}
+    .market-demo .market-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .market-demo .market-item{border-color:#c6a156;min-height:100px}
+    .market-footer{display:flex;justify-content:flex-end;border-top:1px solid #d9cfb2;padding:12px 20px}
+    .market-footer button{background:#795b43;border-color:#5a4131}
+    @media(max-width:620px){.market-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.market-offer{grid-template-columns:70px 1fr;gap:10px;padding:10px}.market-crate{width:68px;height:68px;font-size:44px}.market-offer h3{font-size:19px}.market-main{padding:12px}.market-demo .market-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     .note{color:#65725d;font-size:.88rem;line-height:1.5}
     .error{background:#ffe4df;color:#842c20;padding:20px;border-radius:10px}
     @media(max-width:720px){.private-pill{display:none}.stage{border-width:2px;border-radius:8px}.habitat-label.habitat-open{border-width:1px;padding:2px 3px}.habitat-label.habitat-locked{border-width:2px;border-radius:7px;box-shadow:0 2px 0 rgba(55,70,50,.24);min-width:80px;padding:2px 3px}.habitat-label .name{font-size:clamp(8px,1.65vw,12px)}.habitat-label .state{font-size:clamp(7px,1.25vw,10px)}main{padding-left:5px;padding-right:5px}.controls{padding:0 8px}}
@@ -105,24 +136,91 @@
     </div>
     <p class="note">Den godkända vinterbakgrunden finns i <code>assets/oster-steg-1-winter.webp</code>. Den ursprungliga kartan <code>assets/oster-steg-1.webp</code> är bevarad. Marknadsståndet, granen och adventskalendern har osynliga klickytor, men kan inte flyttas. Gränserna läses från <code>maps/oster-steg-1.json</code>. Ingen elevnavigering eller faktiska köp har aktiverats.</p>
     <div id="christmasDialog" class="christmas-dialog" role="dialog" aria-modal="true" aria-labelledby="christmasDialogTitle" aria-hidden="true">
-      <div class="dialog-card">
-        <h2 id="christmasDialogTitle">Julmarknaden</h2>
-        <p id="christmasDialogMessage"></p>
-        <button type="button" id="closeChristmasDialog">Stäng</button>
+      <div class="dialog-card" id="christmasDialogCard">
+        <div id="marketView" hidden>
+          <div class="market-header">
+            <h2 id="christmasDialogTitle">🎄 Julmarknadens vinterstånd</h2>
+            <p>En liten överraskning till din vinterpark.</p>
+          </div>
+          <div class="market-main">
+            <section class="market-offer" aria-label="Vinterlådan">
+              <div class="market-crate" aria-hidden="true">🎁</div>
+              <div>
+                <h3>Vinterlådan</h3>
+                <p>Öppna en låda och välj <strong>en av tre</strong> jul- eller vinterdekorationer.</p>
+                <span class="market-tag">För Djupsjöns vintermiljö</span>
+                <p class="market-price">🌰 Förslag: 100 kottar</p>
+                <button class="market-btn" id="tryWinterCrate" type="button">🎁 Provöppna en låda</button>
+              </div>
+            </section>
+            <div class="market-demo" id="marketDemo" hidden aria-live="polite">
+              <h3>Tre överraskningar!</h3>
+              <p>I den riktiga butiken får eleven välja en. Här visar vi bara ett exempel.</p>
+              <div class="market-grid" id="marketDemoItems"></div>
+            </div>
+            <h3 class="market-section-title">Det här kan gömma sig i lådan</h3>
+            <div class="market-grid" id="marketCatalogue"></div>
+            <p class="market-hint">Det här är ett utkast. Lådorna kostar inga kottar i förhandsvisningen, ger inga föremål och ändrar inte elevens park. Vinterdekorationer sparas även när våren kommer.</p>
+          </div>
+        </div>
+        <div id="simpleChristmasView">
+          <h2 id="simpleChristmasTitle">Julmarknaden</h2>
+          <p id="christmasDialogMessage"></p>
+        </div>
+        <div class="market-footer"><button type="button" id="closeChristmasDialog">Stäng</button></div>
       </div>
     </div>
   </main>
   <script>
     (function(){
-      const d=document.getElementById("christmasDialog"),t=document.getElementById("christmasDialogTitle"),m=document.getElementById("christmasDialogMessage"),close=document.getElementById("closeChristmasDialog");
+      const d=document.getElementById("christmasDialog");
+      const market=document.getElementById("marketView"),simple=document.getElementById("simpleChristmasView"),card=document.getElementById("christmasDialogCard");
+      const message=document.getElementById("christmasDialogMessage"),title=document.getElementById("simpleChristmasTitle"),close=document.getElementById("closeChristmasDialog");
+      const catalog=document.getElementById("marketCatalogue"),tryBtn=document.getElementById("tryWinterCrate");
+      const demo=document.getElementById("marketDemo"),demoItems=document.getElementById("marketDemoItems");
+      const items=[
+        {name:"Snölykta",emoji:"🕯️",rarity:"Vanlig"},
+        {name:"Snögubbe",emoji:"⛄",rarity:"Vanlig"},
+        {name:"Liten snögran",emoji:"🌲",rarity:"Vanlig"},
+        {name:"Skridskospår",emoji:"⛸️",rarity:"Vanlig"},
+        {name:"Julklappar",emoji:"🎁",rarity:"Vanlig"},
+        {name:"Julig parklykta",emoji:"🏮",rarity:"Ovanlig"},
+        {name:"Isfigur",emoji:"🧊",rarity:"Ovanlig"},
+        {name:"Julbock",emoji:"🐐",rarity:"Ovanlig"},
+        {name:"Polkakäpp",emoji:"🍬",rarity:"Ovanlig"},
+        {name:"Vinterkrans",emoji:"🌿",rarity:"Ovanlig"},
+        {name:"Snöklädd bänk",emoji:"🪑",rarity:"Sällsynt"},
+        {name:"Lysande isskulptur",emoji:"✨",rarity:"Sällsynt"}
+      ];
+      function itemCard(item){
+        const node=document.createElement("div");
+        node.className="market-item";
+        const emoji=document.createElement("span");emoji.className="emoji";emoji.textContent=item.emoji;
+        const name=document.createElement("span");name.className="name";name.textContent=item.name;
+        const rarity=document.createElement("span");rarity.className="rarity";rarity.textContent=item.rarity;
+        node.append(emoji,name,rarity);return node;
+      }
+      items.forEach(item=>catalog.appendChild(itemCard(item)));
+      let origin=null;
       const entries={
-        stall:{title:"🎄 Julmarknadens vinterstånd",message:"Här ska man senare kunna köpa vinterns och julens dekorationer till sjön. Butiken är ännu inte aktiverad."},
         tree:{title:"✨ Julgranen",message:"Julmarknadens fasta gran. Den är en del av miljön och kan inte flyttas."},
         calendar:{title:"🎁 Matteparkens adventskalender",message:"Här ska adventskalendern med 24 klickbara luckor öppnas. Luckorna byggs i nästa steg."}
       };
-      let origin=null;
-      document.querySelectorAll("[data-christmas]").forEach(el=>el.addEventListener("click",()=>{const entry=entries[el.dataset.christmas];origin=el;t.textContent=entry.title;m.textContent=entry.message;d.classList.add("open");d.setAttribute("aria-hidden","false");close.focus()}));
-      function shut(){d.classList.remove("open");d.setAttribute("aria-hidden","true");origin?.focus()}
+      document.querySelectorAll("[data-christmas]").forEach(el=>el.addEventListener("click",()=>{
+        origin=el;
+        const stall=el.dataset.christmas==="stall";
+        market.hidden=!stall;simple.hidden=stall;card.classList.toggle("market-card",stall);
+        if(stall){demo.hidden=true;document.getElementById("christmasDialogTitle").textContent="🎄 Julmarknadens vinterstånd";}
+        else{title.textContent=entries[el.dataset.christmas].title;message.textContent=entries[el.dataset.christmas].message;}
+        d.classList.add("open");d.setAttribute("aria-hidden","false");
+        close.focus();
+      }));
+      tryBtn.addEventListener("click",()=>{
+        const pool=[...items];
+        for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+        demoItems.replaceChildren(...pool.slice(0,3).map(itemCard));demo.hidden=false;
+      });
+      function shut(){d.classList.remove("open");d.setAttribute("aria-hidden","true");origin?.focus();}
       close.addEventListener("click",shut);
       d.addEventListener("click",e=>{if(e.target===d)shut()});
       window.addEventListener("keydown",e=>{if(e.key==="Escape"&&d.classList.contains("open"))shut()});
