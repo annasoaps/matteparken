@@ -20,15 +20,8 @@
     /* Startkartans maxbredd är 1180px. Begränsa också efter tillgänglig skärmhöjd. */
     .stage{position:relative;width:min(1180px,100%,calc((100dvh - 185px) * 1.77683));aspect-ratio:1672/941;margin-inline:auto;overflow:hidden;background:#56724e;border:5px solid #70543b;border-radius:14px;box-shadow:0 10px 23px #45574636}
     .background{width:100%;height:100%;display:block;object-fit:fill;user-select:none}
-    /* Vinterlager över sommarens högupplösta underlag. Den ursprungliga bilden sparas orörd. */
-    .stage.winter .background{filter:grayscale(.78) saturate(.43) brightness(1.48) contrast(.88)}
-    .stage:not(.winter) .winter-overlay{display:none}
-    .winter-overlay{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
-    .winter-overlay .snow-wash{fill:#e9f3fc;opacity:.30}
-    .winter-overlay .lake-ice{fill:#89c5ec;opacity:.78}
-    .winter-overlay .ice-marks{fill:none;stroke:#ecf8ff;stroke-width:1.5;opacity:.48;stroke-linecap:round;stroke-linejoin:round}
-    .winter-overlay .snowflakes{fill:#fff;opacity:.61}
-
+    /* Den godkända vinterkartan är en egen bild, inte ett filter ovanpå sommarkartan. */
+    .background{image-rendering:auto}
     .regions{position:absolute;inset:0;width:100%;height:100%;z-index:2}
     /* Samma princip som startkartans .build-zone: ingen synlig kant i viloläge,
        diskret ljus, streckad kontur och lätt toning först vid hover/fokus. */
@@ -54,16 +47,15 @@
     .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
     .legend button{display:flex;align-items:center;gap:6px;border:1px solid #c2c5ad;background:#fffdf6;border-radius:8px;padding:9px 11px;color:#34492f;cursor:pointer;font-weight:700}
     .swatch{width:15px;height:15px;border:2px solid #7b7f71;border-radius:4px}
-    /* Fasta julmarknadsobjekt: separata från elevens byggföremål, ingen dragning. */
+    /* Osynliga klickytor över julmarknadens tre inbakade objekt. */
     .christmas-objects{position:absolute;inset:0;z-index:4;pointer-events:none}
-    .christmas-object{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;display:grid;place-items:center;cursor:pointer;background:none;border:0;padding:0;filter:drop-shadow(0 3px 2px #273f5750);transition:transform .14s,filter .14s;touch-action:manipulation}
-    .christmas-object:hover,.christmas-object:focus-visible{transform:translate(-50%,-104%) scale(1.06);filter:drop-shadow(0 5px 5px #273f576d);outline:0}
-    .christmas-object:focus-visible::after{content:"";position:absolute;inset:-4px;border:2px dashed white;border-radius:12px}
-    .christmas-object img{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;pointer-events:none}
-    .christmas-object .object-name{position:absolute;top:100%;background:rgba(255,250,235,.94);border:1px solid #706044;color:#3b3527;border-radius:5px;padding:1px 5px;white-space:nowrap;font-weight:900;font-size:clamp(7px,.85vw,11px)}
-    .christmas-object.stall{width:6.5%;height:9.5%}
-    .christmas-object.tree{width:5%;height:10%}
-    .christmas-object.calendar{width:4%;height:8.5%}
+    .stage:not(.winter) .christmas-objects{display:none}
+    .christmas-object{position:absolute;pointer-events:auto;cursor:pointer;background:transparent;border:0;padding:0;touch-action:manipulation}
+    .christmas-object:focus-visible{outline:2px dashed #fff8de;outline-offset:3px;border-radius:6px}
+    .christmas-object img,.christmas-object .object-name{display:none}
+    .christmas-object.stall{left:9%;top:23%;width:14%;height:26%}
+    .christmas-object.tree{left:21%;top:12%;width:9%;height:33%}
+    .christmas-object.calendar{left:29%;top:31%;width:7.5%;height:17%}
     .christmas-dialog{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:#1023319c;padding:16px}
     .christmas-dialog.open{display:flex}
     .christmas-dialog .dialog-card{width:min(450px,100%);border:5px solid #84613f;background:#fff5dd;border-radius:18px;box-shadow:0 16px 45px #15233266;padding:22px;text-align:center}
@@ -82,34 +74,24 @@
   </header>
   <main>
     <div class="controls">
-      <label><input type="checkbox" id="winter" checked> Vinterläge</label>
+      <label><input type="checkbox" id="winter" checked> Vinterbakgrund</label>
       <label><input type="checkbox" id="borders" checked> Visa streckad gräns vid hovring</label>
       <label><input type="checkbox" id="labels" checked> Visa namnskyltar och lås</label>
     </div>
     <div id="stage" class="stage winter" aria-label="Öster Steg 1 i vinterskrud med fyra habitat">
-      <img class="background" src="assets/oster-steg-1.webp" alt="Bakgrund för Öster Steg 1 med sjö, berg, å och strand">
-      <svg class="winter-overlay" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-hidden="true">
-        <rect class="snow-wash" width="1672" height="941"/>
-        <path id="lakeIce" class="lake-ice"/>
-        <g class="ice-marks">
-          <path d="M92 405l35-9 21 10 43-14 31 8M160 570l45-13 28 6 49-20M285 720l28-18 30 6 48-16M500 520l30-10 22 5 36-14"/>
-          <path d="M640 612l44-11 36 10 28-14M214 450l21 10 26-8m-10 26-11-18 4-15M372 632l21 9 30-12m-25 20-8-20 11-12"/>
-          <path d="M540 754l42-17 30 4 33-14M70 800l40-15 28 9 39-11"/>
-        </g>
-        <g id="snowflakes" class="snowflakes"/>
-      </svg>
+      <img class="background" id="mapBackground" src="assets/oster-steg-1-winter.avif" alt="Öster Steg 1 på vintern, med frusen sjö, julmarknadsstånd, julgran och adventskalender" onerror="this.onerror=null;this.src='assets/oster-steg-1.webp'">
       <svg class="regions" id="regions" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-label="Habitatgränser"></svg>
       <div class="labels" id="mapLabels"></div>
       <div class="christmas-objects" aria-label="Fasta objekt på julmarknaden">
-        <button class="christmas-object stall" data-christmas="stall" type="button" style="left:12%;top:44%" aria-label="Öppna julmarknadens dekorationsstånd">
+        <button class="christmas-object stall" data-christmas="stall" type="button"  aria-label="Öppna julmarknadens dekorationsstånd">
           <img src="assets/christmas/stall.svg" alt="" draggable="false" />
           <span class="object-name">Julstånd</span>
         </button>
-        <button class="christmas-object tree" data-christmas="tree" type="button" style="left:24%;top:46%" aria-label="Titta på julgranen">
+        <button class="christmas-object tree" data-christmas="tree" type="button"  aria-label="Titta på julgranen">
           <img src="assets/christmas/tree.svg" alt="" draggable="false" />
           <span class="object-name">Julgran</span>
         </button>
-        <button class="christmas-object calendar" data-christmas="calendar" type="button" style="left:34%;top:45%" aria-label="Öppna adventskalendern">
+        <button class="christmas-object calendar" data-christmas="calendar" type="button"  aria-label="Öppna adventskalendern">
           <img src="assets/christmas/calendar.svg" alt="" draggable="false" />
           <span class="object-name">Adventskalender</span>
         </button>
@@ -121,7 +103,7 @@
       <small id="detailStatus">Det här är en granskningsvy. Parkmärken kan inte spenderas här och eleverna kommer inte hit från startkartan.</small>
       <div class="legend" id="legend"></div>
     </div>
-    <p class="note">Vintervyn använder ett snö- och islager över den ursprungliga kartan <code>assets/oster-steg-1.webp</code>, som finns kvar till vårversionen. och gränserna i <code>maps/oster-steg-1.json</code>. Gränserna syns endast vid hovring eller tangentbordsfokus, som byggytorna på startkartan. Inga parkmärken dras och inga elevparker ändras.</p>
+    <p class="note">Den godkända vinterbakgrunden finns i <code>assets/oster-steg-1-winter.avif</code>. Den ursprungliga kartan <code>assets/oster-steg-1.webp</code> är bevarad. Marknadsståndet, granen och adventskalendern har osynliga klickytor, men kan inte flyttas. Gränserna läses från <code>maps/oster-steg-1.json</code>. Ingen elevnavigering eller faktiska köp har aktiverats.</p>
     <div id="christmasDialog" class="christmas-dialog" role="dialog" aria-modal="true" aria-labelledby="christmasDialogTitle" aria-hidden="true">
       <div class="dialog-card">
         <h2 id="christmasDialogTitle">Julmarknaden</h2>
@@ -161,18 +143,6 @@
           oster_sodra_stranden:[...b.lakeSouth,...b.southDivider.slice(1)]
         };
 
-        // Sjöns is följer samma områdespolygon som används för habitatgränsen.
-        const ice=document.getElementById("lakeIce");
-        ice.setAttribute("d","M"+polygons.oster_sjon.map(pt=>pt.join(" ")).join(" L")+" Z");
-        // Fasta, små snöpunkter ger struktur utan att skymma spelets objekt.
-        const snowfall=document.getElementById("snowflakes");
-        for(let i=0;i<320;i++){
-          const x=(i*379+83)%W,y=(i*617+31)%H;
-          const circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
-          circle.setAttribute("cx",x);circle.setAttribute("cy",y);
-          circle.setAttribute("r",i%7===0?"1.6":".65");
-          snowfall.appendChild(circle);
-        }
         const toPoints=(p)=>p.map(x=>x.join(",")).join(" ");
         const make=(tag,classes)=>{const el=document.createElement(tag);if(classes)el.className=classes;return el};
         const rgba=(hex,alpha)=>{const n=parseInt(hex.slice(1),16);return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+alpha+")"};
@@ -204,7 +174,13 @@
           swatch.style.background=h.color;item.append(swatch,document.createTextNode(h.name+" · "+(h.initiallyUnlocked?"Öppen":"Låst")));
           item.addEventListener("click",()=>choose(h,p));legend.appendChild(item);
         });
-        document.getElementById("winter").addEventListener("change",e=>stage.classList.toggle("winter",e.target.checked));
+        document.getElementById("winter").addEventListener("change",e=>{
+          const winter=e.target.checked;
+          stage.classList.toggle("winter",winter);
+          const image=document.getElementById("mapBackground");
+          image.src=winter?(data.winterBackground || "assets/oster-steg-1-winter.avif"):data.background;
+          image.alt=winter?"Öster Steg 1 med frusen sjö och julmarknad":"Öster Steg 1 utan snö";
+        });
         document.getElementById("borders").addEventListener("change",e=>stage.classList.toggle("no-borders",!e.target.checked));
         document.getElementById("labels").addEventListener("change",e=>stage.classList.toggle("no-labels",!e.target.checked));
       } catch(err){
