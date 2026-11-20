@@ -397,6 +397,21 @@ window.MATTEZOO_TEACHER_PLAN = {
   .placement-banner{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:15;display:none;align-items:center;gap:10px;padding:9px 13px;border:3px solid #6f805f;border-radius:12px;background:#fff7d8;box-shadow:0 4px 0 rgba(70,85,65,.25);font-weight:900}
   .placement-banner.open{display:flex}
   .placed-item{position:absolute;transform:translate(-50%,-50%);z-index:8;border:0;background:transparent;padding:0;cursor:pointer;filter:drop-shadow(0 5px 0 rgba(45,65,45,.14))}
+  /* Tydliga tillfälliga symboler tills vinterdekorationernas egna sprites ritas. */
+  .placed-item[class*="winter"]{width:72px;height:76px;display:grid;place-items:center}
+  .placed-item[class*="winter"]::before{content:"🎁";font-size:52px;line-height:1;display:block;position:static;text-shadow:0 3px 2px rgba(36,60,55,.18)}
+  .placed-item[class*="winter"]::after{content:none}
+  .placed-item.winterSnowman::before{content:"⛄"}
+  .placed-item.winterSnowLantern::before{content:"🕯️"}
+  .placed-item.winterGiftStack::before{content:"🎁"}
+  .placed-item.winterMiniTree::before{content:"🎄"}
+  .placed-item.winterKickSled::before{content:"🛷"}
+  .placed-item.winterLantern::before{content:"🏮"}
+  .placed-item.winterStringLights::before{content:"✨"}
+  .placed-item.winterIceFishing::before{content:"🎣"}
+  .placed-item.winterGarland::before{content:"🎀"}
+  .placed-item.winterFireBasket::before{content:"🔥"}
+
   /* v0.3.65: new/moved objects are positioned by their ground/base point. */
   .placed-item.base-anchored{transform:translate(-50%,-100%)}
   .placed-item.daisy{width:36px;height:40px}
@@ -3811,7 +3826,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   state.parkItems = state.parkItems.filter((item) => item?.type !== "parkSign");
   if(state.inventory && typeof state.inventory === "object") delete state.inventory.parkSign;
   if(!state.inventory || typeof state.inventory !== "object" || Array.isArray(state.inventory)) state.inventory = {};
-  ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom","halloweenBats","halloweenGhost","halloweenWeb","halloweenCauldron","halloweenTrailSign","halloweenSkeleton","halloweenGravestone","halloweenCandyBucket","halloweenWoodenGate"].forEach((type) => {
+  ["flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom","halloweenBats","halloweenGhost","halloweenWeb","halloweenCauldron","halloweenTrailSign","halloweenSkeleton","halloweenGravestone","halloweenCandyBucket","halloweenWoodenGate","winterSnowman","winterSnowLantern","winterGiftStack","winterMiniTree","winterKickSled","winterLantern","winterStringLights","winterIceFishing","winterGarland","winterFireBasket"].forEach((type) => {
     state.inventory[type] = Math.max(0, Number(state.inventory[type]) || 0);
   });
 
@@ -4591,6 +4606,19 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     {type:"boletes", name:"Soppar", icon:"🍄", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
     {type:"parasolMushroom", name:"Stolt fjällskivling", icon:"🍄", kind:"equipment", source:"seasonal", season:"autumn", habitat:"any", decorative:true},
 
+    // Vinterlådan. Samma dekorationer kan användas på startkartan och på Öster Steg 1.
+    // Unika typnamn bevarar elevens ägodelar vid framtida säsongsväxlingar.
+    {type:"winterSnowman",name:"Snögubbe",icon:"⛄",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterSnowLantern",name:"Snölykta",icon:"🕯️",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterGiftStack",name:"Julklappar",icon:"🎁",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterMiniTree",name:"Dekorerad liten gran",icon:"🎄",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterKickSled",name:"Spark",icon:"🛷",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterLantern",name:"Vinterlykta",icon:"🏮",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterStringLights",name:"Ljusslinga mellan stolpar",icon:"✨",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterIceFishing",name:"Isborr och pimpelhål",icon:"🎣",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterGarland",name:"Julgirlang med rosetter",icon:"🎀",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+    {type:"winterFireBasket",name:"Liten eldkorg",icon:"🔥",kind:"equipment",source:"seasonal",season:"christmas",habitat:"any",decorative:true},
+
     // Halloweenlådan. Separata typer: gamla höstköp bevaras i förråd och park.
     {type:"halloweenBats", name:"Sovande fladdermöss", icon:"🦇", kind:"equipment", source:"seasonal", season:"halloween", habitat:"any", decorative:true},
     {type:"halloweenGhost", name:"Svävande spöke", icon:"👻", kind:"equipment", source:"seasonal", season:"halloween", habitat:"any", decorative:true},
@@ -4615,7 +4643,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
   const seasonalCrateDefinitions = Object.freeze({
     autumn:{id:"autumn", name:"Höstlåda", icon:"🍂", price:100, enabled:false, start:"09-01", end:"11-30"},
     halloween:{id:"halloween", name:"Halloweenlåda", icon:"🎃", price:100, enabled:true, start:"10-19", end:"11-01"},
-    christmas:{id:"christmas", name:"Jullåda", icon:"🎄", price:100, enabled:false, start:"12-01", end:"01-06"},
+    christmas:{id:"christmas", name:"Vinterlåda", icon:"❄️", price:50, enabled:true, start:"11-01", end:"03-31"},
     valentine:{id:"valentine", name:"Alla hjärtans-låda", icon:"💘", price:100, enabled:false, start:"02-01", end:"02-16"}
   });
 
@@ -6484,7 +6512,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     fern:"ormbunke", blueberryBush:"blåbärsris", woodAnemone:"vitsippa", hepatica:"blåsippa", orchid:"skogsorkidé", spruce:"gran", pine:"tall", oak:"ek", heather:"ljung", rockThyme:"backtimjan", mountainShrub:"bergsbuske", reeds:"vass", cattails:"kaveldun", waterLily:"näckros", shoreGrass:"strandgräs"
   }[seed] || "växt");
 
-  const equipmentTypes = ["mushroomBasket","flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom","halloweenBats","halloweenGhost","halloweenWeb","halloweenCauldron","halloweenTrailSign","halloweenSkeleton","halloweenGravestone","halloweenCandyBucket","halloweenWoodenGate"];
+  const equipmentTypes = ["mushroomBasket","flowerShrub","bench","lantern","birdbath","decorRock","insectHotel","birdhouse","flowerPot","birch","fallenLog","stump","mushroomCluster","pineconePile","sunRock","cairn","cragRock","trailMarker","shoreStones","driftwood","miniJetty","lakeSign","fishingChair","fishingBucket","fishingCooler","firePit","pumpkins","pumpkinLantern","leafBasket","autumnPot","appleBasket","hayBale","leafPile","boletes","parasolMushroom","halloweenBats","halloweenGhost","halloweenWeb","halloweenCauldron","halloweenTrailSign","halloweenSkeleton","halloweenGravestone","halloweenCandyBucket","halloweenWoodenGate","winterSnowman","winterSnowLantern","winterGiftStack","winterMiniTree","winterKickSled","winterLantern","winterStringLights","winterIceFishing","winterGarland","winterFireBasket"];
   const natureTypes = ["daisy","tulip","lavender","sunflower","poppy","cornflower","marigold","fern","blueberryBush","woodAnemone","hepatica","orchid","spruce","pine","oak","heather","rockThyme","mountainShrub","reeds","cattails","waterLily","shoreGrass"];
   const isEquipment = (type) => equipmentTypes.includes(type);
   const isNature = (type) => natureTypes.includes(type);
@@ -6532,7 +6560,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     halloweenSkeleton:{name:"Hängande skelett", icon:"💀"},
     halloweenGravestone:{name:"Gravsten", icon:"🪦"},
     halloweenCandyBucket:{name:"Godishink", icon:"🍬"},
-    halloweenWoodenGate:{name:"Happy Halloween-port", icon:"🎃"}
+    halloweenWoodenGate:{name:"Happy Halloween-port", icon:"🎃"},
+    winterSnowman:{name:"Snögubbe",icon:"⛄"},winterSnowLantern:{name:"Snölykta",icon:"🕯️"},winterGiftStack:{name:"Julklappar",icon:"🎁"},winterMiniTree:{name:"Dekorerad liten gran",icon:"🎄"},winterKickSled:{name:"Spark",icon:"🛷"},winterLantern:{name:"Vinterlykta",icon:"🏮"},winterStringLights:{name:"Ljusslinga mellan stolpar",icon:"✨"},winterIceFishing:{name:"Isborr och pimpelhål",icon:"🎣"},winterGarland:{name:"Julgirlang med rosetter",icon:"🎀"},winterFireBasket:{name:"Liten eldkorg",icon:"🔥"}
   };
 
   const itemSprites = {
@@ -7642,9 +7671,7 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       button.textContent = `Placera (${count})`;
       button.addEventListener("click", () => {
         if((state.inventory[type] || 0) < 1) return;
-        state.inventory[type] -= 1;
-        storage.saveInventory();
-        updateShopUI();
+        // Föremålet ska finnas kvar i förrådet tills placeringen verkligen sparats.
         enterPlacementMode(type, "storage");
       });
       row.appendChild(button);
@@ -8017,7 +8044,8 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     if(placementSource === "purchase"){
       const purchased=MZ.rewards.findItem(placementMode);
       storage.addNaturePoints(Math.max(0,Number(purchased.catalogPrice)||0));
-    }else if((placementSource === "storage" || placementSource === "delivery") && (isEquipment(placementMode) || isNature(placementMode))){
+    }else if(placementSource === "delivery" && (isEquipment(placementMode) || isNature(placementMode))){
+      // Direktleveranser är ännu inte i förrådet, därför läggs de tillbaka vid avbrott.
       state.inventory[placementMode] = Math.max(0, Number(state.inventory[placementMode]) || 0) + 1;
       storage.saveInventory();
       updateShopUI();
@@ -8810,6 +8838,14 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
       return;
     }
 
+    // Förrådsdekorationer förbrukas först när en giltig plats faktiskt valts.
+    // Byte av karta, omladdning eller avbrott innan dess kan då inte förlora dem.
+    if(placementSource === "storage"){
+      if((Number(state.inventory[placementMode])||0)<1){
+        $("#status").textContent="Föremålet finns inte längre i förrådet. Öppna förrådet igen.";
+        exitPlacementMode();return;
+      }
+    }
     const catalogItem=MZ.rewards.findItem(placementMode);
     const purchasePrice=placementSource === "purchase" ? Math.max(0,Number(catalogItem.catalogPrice)||0) : 0;
 
@@ -8843,6 +8879,11 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
     }
 
     storage.saveParkItems();
+    if(placementSource === "storage"){
+      state.inventory[placedType] = Math.max(0,Number(state.inventory[placedType])||0)-1;
+      storage.saveInventory();
+      updateShopUI();
+    }
 
     if(placedType === "birdhouse" && state.onboarding.tutorialBirdhouseOrdered && !state.onboarding.tutorialComplete){
       state.onboarding.tutorialBirdhousePlaced=true;
@@ -9039,20 +9080,20 @@ body.awaiting-welcome .park>*:not(#boardBtn){pointer-events:none!important}body.
         }
         if(isCrate){
           const chosen=MZ.rewards.chooseCrate(type); MZ.closeModal("rewardModal"); updateShopUI();
-          if(chosen){ state.inventory[chosen.type]-=1; storage.saveInventory(); enterPlacementMode(chosen.type,"storage"); }
+          if(chosen){ $("#status").textContent="📦 "+chosen.name+" ligger tryggt i förrådet. Placera den när du vill."; updateRewardShelf(); }
           return;
         }
         if(isSeasonal){
           const chosen=MZ.rewards.chooseSeasonal(seasonId,type); MZ.closeModal("rewardModal"); updateShopUI();
           if(chosen){
-            if(chosen.placementSource==="storage"){ state.inventory[chosen.type]-=1; storage.saveInventory(); enterPlacementMode(chosen.type,"storage"); }
+            if(chosen.placementSource==="storage"){ $("#status").textContent="❄️ "+chosen.name+" finns nu i förrådet. Du kan välja karta innan du placerar den."; updateRewardShelf(); }
             else enterPlacementMode(chosen.type,"reward");
           }
           return;
         }
         const chosen=isBonus?MZ.rewards.chooseBonus(type):MZ.rewards.chooseDaily(type); MZ.closeModal("rewardModal"); renderDailyMission(); renderDailyQuest(); updateRewardShelf(); updateShopUI();
         if(chosen){
-          if(chosen.placementSource==="storage"){ state.inventory[chosen.type]-=1; storage.saveInventory(); enterPlacementMode(chosen.type,"storage"); }
+          if(chosen.placementSource==="storage"){ $("#status").textContent="🎁 "+chosen.name+" finns nu i förrådet."; updateRewardShelf(); }
           else enterPlacementMode(chosen.type,"reward");
         }
       });
