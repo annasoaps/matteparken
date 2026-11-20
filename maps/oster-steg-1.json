@@ -1,7 +1,7 @@
 {
   "id": "oster-steg-1",
   "name": "Öster Steg 1",
-  "background": "assets/oster-steg-1.webp",
+  "background": "assets/oster-steg-1-winter.avif",
   "width": 1672,
   "height": 941,
   "initialHabitat": "oster_sjon",
@@ -261,6 +261,44 @@
       "description": "Strandäng och framtida båtplats med en trasig eka som senare kan repareras."
     }
   ],
-  "integrationStatus": "habitat-preview-only",
-  "notes": "Habitatgränserna täcker hela kartytan och delar gemensamma kanter. Förhandsvisning ligger i oster-steg-1-preview.html. Inte kopplat till elevens parkmärken eller startkartans navigering."
+  "integrationStatus": "winter-background-with-clickable-preview",
+  "notes": "Godkänd vinterbild med inbakad julmarknad används som aktuell bakgrund. Osynliga klickytor för marknadsstånd, gran och adventskalender i fristående förhandsvisning. Sommarbakgrunden finns kvar. Ingen elevnavigering, köp eller lucklogik aktiverad.",
+  "summerBackground": "assets/oster-steg-1.webp",
+  "winterBackground": "assets/oster-steg-1-winter.avif",
+  "activeSeason": "winter",
+  "fixedInteractiveObjects": [
+    {
+      "id": "christmas_market_stall",
+      "name": "Julstånd",
+      "action": "openWinterShop",
+      "x": 150,
+      "y": 216,
+      "width": 234,
+      "height": 245,
+      "season": "winter",
+      "status": "preview-only"
+    },
+    {
+      "id": "christmas_tree",
+      "name": "Julgran",
+      "action": "showTreeInfo",
+      "x": 351,
+      "y": 113,
+      "width": 151,
+      "height": 310,
+      "season": "winter",
+      "status": "preview-only"
+    },
+    {
+      "id": "advent_calendar",
+      "name": "Adventskalender",
+      "action": "openAdventCalendar",
+      "x": 485,
+      "y": 292,
+      "width": 126,
+      "height": 160,
+      "season": "winter",
+      "status": "preview-only"
+    }
+  ]
 }
