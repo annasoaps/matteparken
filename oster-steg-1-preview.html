@@ -79,7 +79,7 @@
       <label><input type="checkbox" id="labels" checked> Visa namnskyltar och lås</label>
     </div>
     <div id="stage" class="stage winter" aria-label="Öster Steg 1 i vinterskrud med fyra habitat">
-      <img class="background" id="mapBackground" src="assets/oster-steg-1-winter.avif" alt="Öster Steg 1 på vintern, med frusen sjö, julmarknadsstånd, julgran och adventskalender" onerror="this.onerror=null;this.src='assets/oster-steg-1.webp'">
+      <img class="background" id="mapBackground" src="assets/oster-steg-1-winter.webp" alt="Öster Steg 1 på vintern, med frusen sjö, julmarknadsstånd, julgran och adventskalender" onerror="this.onerror=null;this.src='assets/oster-steg-1.webp'">
       <svg class="regions" id="regions" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-label="Habitatgränser"></svg>
       <div class="labels" id="mapLabels"></div>
       <div class="christmas-objects" aria-label="Fasta objekt på julmarknaden">
@@ -103,7 +103,7 @@
       <small id="detailStatus">Det här är en granskningsvy. Parkmärken kan inte spenderas här och eleverna kommer inte hit från startkartan.</small>
       <div class="legend" id="legend"></div>
     </div>
-    <p class="note">Den godkända vinterbakgrunden finns i <code>assets/oster-steg-1-winter.avif</code>. Den ursprungliga kartan <code>assets/oster-steg-1.webp</code> är bevarad. Marknadsståndet, granen och adventskalendern har osynliga klickytor, men kan inte flyttas. Gränserna läses från <code>maps/oster-steg-1.json</code>. Ingen elevnavigering eller faktiska köp har aktiverats.</p>
+    <p class="note">Den godkända vinterbakgrunden finns i <code>assets/oster-steg-1-winter.webp</code>. Den ursprungliga kartan <code>assets/oster-steg-1.webp</code> är bevarad. Marknadsståndet, granen och adventskalendern har osynliga klickytor, men kan inte flyttas. Gränserna läses från <code>maps/oster-steg-1.json</code>. Ingen elevnavigering eller faktiska köp har aktiverats.</p>
     <div id="christmasDialog" class="christmas-dialog" role="dialog" aria-modal="true" aria-labelledby="christmasDialogTitle" aria-hidden="true">
       <div class="dialog-card">
         <h2 id="christmasDialogTitle">Julmarknaden</h2>
@@ -178,7 +178,7 @@
           const winter=e.target.checked;
           stage.classList.toggle("winter",winter);
           const image=document.getElementById("mapBackground");
-          image.src=winter?(data.winterBackground || "assets/oster-steg-1-winter.avif"):data.background;
+          image.src=winter?(data.winterBackground || "assets/oster-steg-1-winter.webp"):(data.summerBackground || "assets/oster-steg-1.webp");
           image.alt=winter?"Öster Steg 1 med frusen sjö och julmarknad":"Öster Steg 1 utan snö";
         });
         document.getElementById("borders").addEventListener("change",e=>stage.classList.toggle("no-borders",!e.target.checked));
